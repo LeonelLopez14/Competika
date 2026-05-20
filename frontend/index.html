@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6H" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/fastbootstrap@2.2.0/dist/css/fastbootstrap.min.css" rel="stylesheet" integrity="sha256-V6lu+OdYNKTKTsVFBuQsyIlDiRWiOmtC8VQ8Lzdm2i4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <title>COMPETIKA</title>
+</head>
+<body>
+    <video autoplay muted loop id="background-video"> <!-- Video de fondo que se reproduce automáticamente, sin sonido y en bucle -->
+        <source src="assets/video/vid1.mp4" type="video/mp4">
+    </video>
+    <!-- El header se mantiene fijo en la parte superior de la página -->
+    <!-- Contiene el logo y el menú de navegación -->
+    <header id="menu">
+        <nav class="navbar"> <!-- Menu de navegación -->
+            <a href="index.html"><img src="assets/img/logologito.png" alt="logolocotron" class="logo" width="50" height="100"></a>
+            <ul class="navbar-list"> <!-- Lista de enlaces de navegación -->
+                <li class="nav-links"><a href="index.html" class="link">Inicio</a></li> <!-- Enlace a la página de inicio -->
+                <li class="nav-links"><a href="tournament_search.html" class="link">Torneos</a></li> <!-- Enlace a la página de búsqueda de torneos -->
+                <li class="nav-links"><a href="tournament_details.html" class="link">Características</a></li> <!-- Enlace a la página de detalles del torneo -->
+                <li class="nav-links"><a href="login.html" class="link">Iniciar sesión</a></li> <!-- Enlace a la página de inicio de sesión -->
+                <li class="nav-links"><a href="register.html" class="link">Registrarse</a></li> <!-- Enlace a la página de registro -->
+            </ul>
+        </nav>
+    </header>
+    <!-- El contenido principal de la página se divide en varias secciones -->
+    <main id="content">
+        <section id="welcome">
+            <!-- Sección de bienvenida con tarjetas para los distintos tipos de usuarios -->
+            <div class="info-container">
+                <div class="info-header"> <!-- Encabezado de la sección de bienvenida -->
+                    <h1 class="info-h1">BIENVENIDO A COMPETIKA</h1>
+                    <p class="cursor info-paragraph">LA ESTRUCTURA DETRAS DE LA COMPETENCIA.</p>
+                </div>
+                <div class="card-container"> <!-- Contenedor para las tarjetas de usuario -->
+                    <div class="card"> <!-- Tarjeta para organizadores -->
+                        <h2 class="card-h2">ORGANIZADORES</h2>
+                        <p class="card-paragraph">INFO ORGANIZADORES</p>
+                        <button class="btn-card">Organizar torneo</button>
+                    </div>
+                    <div class="card"> <!-- Tarjeta para participantes -->
+                        <h2 class="card-h2">PARTICIPANTES</h2>
+                        <p class="card-paragraph">INFO PARTICIPANTES</p>
+                        <button class="btn-card">Ingresar a torneo</button>
+                    </div>
+                    <div class="card"> <!-- Tarjeta para observadores -->
+                        <h2 class="card-h2">OBSERVADORES</h2>
+                        <p class="card-paragraph">INFO OBSERVADORES</p>
+                        <button class="btn-card">Seguir torneo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="sports">
+            <!-- Sección de deportes con tarjetas para cada deporte disponible en la plataforma -->
+            <div class="sports-container"> <!-- Contenedor para las tarjetas de deportes -->
+                <h1 class="sports-h1">ELIGE EL DEPORTE QUE MÁS TE GUSTE</h1>
+                <div class="sport-card"> <!-- Tarjeta para fútbol -->
+                    <h3 class="sport-h3">Fútbol</h3>
+                    <p class="sport-paragraph">INFO FUT</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para basketball -->
+                    <h3 class="sport-h3">Basketball</h3>
+                    <p class="sport-paragraph">INFO BASKET</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para tenis -->
+                    <h3 class="sport-h3">Tenis</h3>
+                    <p class="sport-paragraph">INFO TENIS</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para ajedrez -->
+                    <h3 class="sport-h3">Ajedrez</h3>
+                    <p class="sport-paragraph">INFO AJEDREZ</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para juegos de cartas -->
+                    <h3 class="sport-h3">Juegos de cartas</h3>
+                    <p class="sport-paragraph">INFO CARTAS</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para videojuegos -->
+                    <h3 class="sport-h3">Videojuegos</h3>
+                    <p class="sport-paragraph">INFO VIDEOJUEGOS</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para volleyball -->
+                    <h3 class="sport-h3">Volleyball</h3>
+                    <p class="sport-paragraph">INFO VOLLEY</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para natación -->
+                    <h3 class="sport-h3">Natación</h3>
+                    <p class="sport-paragraph">INFO NATACIÓN</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para rugby -->
+                    <h3 class="sport-h3">Rugby</h3>
+                    <p class="sport-paragraph">INFO RUGBY</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para baseball -->
+                    <h3 class="sport-h3">Baseball</h3>
+                    <p class="sport-paragraph">INFO BASEBALL</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para running -->
+                    <h3 class="sport-h3">Running</h3>
+                    <p class="sport-paragraph">INFO RUNNING</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para artes marciales -->
+                    <h3 class="sport-h3">Artes marciales</h3>
+                    <p class="sport-paragraph">INFO ARTES MARCIALES</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para boxeo -->
+                    <h3 class="sport-h3">Boxeo</h3>
+                    <p class="sport-paragraph">INFO BOXEO</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para gimnasia -->
+                    <h3 class="sport-h3">Gimnasia</h3>
+                    <p class="sport-paragraph">INFO GIMNASIA</p>
+                </div>
+                <div class="sport-card"> <!-- Tarjeta para otros deportes -->
+                    <h3 class="sport-h3">Otros</h3>
+                    <p class="sport-paragraph">INFO OTROS</p>
+                </div>
+            </div>
+        </section>
+        <section id="banner">
+            <!-- Sección de banner para unirse a la competencia -->
+            <div class="banner-container"> <!-- Contenedor para el banner de unirse a la competencia -->
+                <h1 class="banner-h1">¡ÚNETE A LA COMPETENCIA!</h1>
+                <p class="banner-paragraph">Descubre nuevos torneos, desafía a tus amigos y conviértete en el campeón que siempre has soñado ser.</p>
+                <button class="btn-create">Crea un torneo</button>
+                <button class="btn-join">Únete a un torneo</button>
+                <button class="btn-observer">Sigue un torneo</button>
+            </div>
+        </section>
+    </main>
+    <footer id="bottom">
+        <!-- El footer contiene enlaces a páginas adicionales y derechos de autor -->
+        <ul>
+            <li><a href="about.html">Sobre nosotros</a></li> <!-- Enlace a la página de información sobre la empresa -->
+            <li><a href="contact.html">Contacto</a></li> <!-- Enlace a la página de contacto -->
+            <li><a href="privacy.html">Política de privacidad</a></li> <!-- Enlace a la página de política de privacidad -->
+        </ul>
+        <p>&copy; 2026 Torneos. Todos los derechos reservados.</p> <!-- Derechos de autor -->
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
