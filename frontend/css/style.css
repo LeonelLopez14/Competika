@@ -8,11 +8,17 @@
 @import url(https://fonts.googleapis.com/css?family=Anonymous+Pro);
 
 :root {
-  --sun-glare: #E2FF00;       /* 13-0663 TSX - Amarillo neón / Lima */
-  --exuberant-orange: #FF5A2B; /* 17-1363 TSX - Naranja vibrante */
-  --blue-violet: #6863F2;      /* 2725 C - Violeta azulado */
-  --cloud-dancer: #F0EEE9;     /* 11-4201 TPG - Blanco roto / Crudo */
-  --darkest-hour: #212121;     /* 20-0199 TPM - Negro mate / Gris oscuro */
+    --sun-glare: #E2FF00;       /* 13-0663 TSX - Amarillo neón / Lima */
+    --sun-glare-dark: #a7bd00;
+    --sun-glare-light: #e6f190;
+    --exuberant-orange: #FF5A2B; /* 17-1363 TSX - Naranja vibrante */
+    --exuberant-orange-dark: #e43403; 
+    --exuberant-orange-light: #ec7e60; 
+    --blue-violet: #6863F2;      /* 2725 C - Violeta azulado */
+    --blue-violet-dark: #3a34e6;
+    --blue-violet-light: #8b89da;
+    --cloud-dancer: #F0EEE9;     /* 11-4201 TPG - Blanco roto / Crudo */
+    --darkest-hour: #212121;     /* 20-0199 TPM - Negro mate / Gris oscuro */
 }
 
 .fira-code- {
@@ -48,8 +54,8 @@ video {
 }
 
 .logo {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
 }
 
 .navbar-list {
@@ -65,11 +71,15 @@ video {
     font-size: 17px;
     font-weight: bold;
     transition: color 0.3s ease;
+    transition: 0.5s;
+    display: inline-block;
 }
 
 
 .nav-links a:hover {
     color: var(--sun-glare);
+    transform: scale(1.2);
+    transition: 0.5s;
 }
 
 /*INFO PRINCIPAL*/
@@ -161,10 +171,24 @@ video {
     gap: 150px;
     padding: 150px;
     padding-top: 50px;
+    position: relative;
 }
+
+.img-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    height: 20px;
+    width: 30px;
+}
+
 .card {
-    background-color: var(--blue-violet);
-    height: 450px;
+    background-image: linear-gradient(var(--blue-violet), var(--blue-violet-dark));
+    object-fit: cover;
+    background-position: center;
+    background-size: 600px;
+    height: 535px;
     border-radius: 2%;
     flex-direction: column;
     justify-content: space-between;
@@ -175,17 +199,19 @@ video {
     transform: scale(1);
 }
 
+
 .card:hover {
     transition: 0.5s;
     transform: scale(1.1);
-    box-shadow: 5px 5px 10px rgb(143, 142, 142), -5px 5px 10px rgb(143, 142, 142);
+    box-shadow: 5px 5px 20px rgb(143, 142, 142), -5px 5px 20px rgb(143, 142, 142);
 }
+
 
 .btn-card {
     background-color: var(--sun-glare);
     color: var(--darkest-hour);
     border: none;
-    border-radius: 50px;
+    border-radius: 50px 10px;
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
