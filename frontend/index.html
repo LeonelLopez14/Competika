@@ -1,111 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6H" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/fastbootstrap@2.2.0/dist/css/fastbootstrap.min.css" rel="stylesheet" integrity="sha256-V6lu+OdYNKTKTsVFBuQsyIlDiRWiOmtC8VQ8Lzdm2i4=" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="assets/img/logologito.png" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/style.css">
     <title>COMPETIKA</title>
-    
 </head>
 <body>
-    <video autoplay muted loop id="background-video"> <!-- Video de fondo que se reproduce automáticamente, sin sonido y en bucle -->
+
+    <!-- VIDEO FONDO -->
+    <video autoplay muted loop playsinline id="background-video">
         <source src="assets/video/vid1.mp4" type="video/mp4">
     </video>
-    <!-- El header se mantiene fijo en la parte superior de la página -->
-    <!-- Contiene el logo y el menú de navegación -->
+
+    <!-- NAVBAR -->
     <header id="menu">
-        <nav class="navbar"> <!-- Menu de navegación -->
-            <a href="index.html"><img src="assets/img/logologito.png" alt="logolocotron" class="logo" width="50" height="100"></a>
-            <ul class="navbar-list"> <!-- Lista de enlaces de navegación -->
-                <li class="nav-links"><a href="index.html" class="link">Inicio</a></li> <!-- Enlace a la página de inicio -->
-                <li class="nav-links"><a href="tournament_search.html" class="link">Torneos</a></li> <!-- Enlace a la página de búsqueda de torneos -->
-                <li class="nav-links"><a href="tournament_details.html" class="link">Características</a></li> <!-- Enlace a la página de detalles del torneo -->
-                <li class="nav-links"><a href="login.html" class="link">Iniciar sesión</a></li> <!-- Enlace a la página de inicio de sesión -->
-                <li class="nav-links"><a href="register.html" class="link">Registrarse</a></li> <!-- Enlace a la página de registro -->
+        <nav class="navbar">
+            <a href="index.html" class="navbar-logo">
+                <img src="assets/img/competika.png" alt="Competika logo" class="logo">
+            </a>
+
+            <ul class="navbar-list" id="navbar-list">
+                <li class="nav-links"><a href="index.html">Inicio</a></li>
+                <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
+                <li class="nav-links"><a href="tournament_details.html">Características</a></li>
+                <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
+                <li class="nav-links"><a href="register.html">Registrarse</a></li>
             </ul>
+
+            <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+            </button>
         </nav>
+
+        <!-- Backdrop oscuro -->
+        <div class="mobile-backdrop" id="mobile-backdrop"></div>
+
+        <!-- Drawer lateral -->
+        <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
+            <p class="mobile-menu-logo">COMPETIKA</p>
+            <ul class="mobile-menu-list">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="tournament_search.html">Torneos</a></li>
+                <li><a href="tournament_details.html">Características</a></li>
+                <li><a href="login.html">Iniciar sesión</a></li>
+                <li><a href="register.html">Registrarse</a></li>
+            </ul>
+        </div>
     </header>
-    <!-- El contenido principal de la página se divide en varias secciones -->
+
     <main id="content">
+
+        <!-- ======== WELCOME ======== -->
         <section id="welcome">
-            <!-- Sección de bienvenida con tarjetas para los distintos tipos de usuarios -->
             <div class="info-container">
-                <img src="/frontend/assets/img/solomorado2.png" alt="" class="background-purple">
-                <img src="/frontend/assets/img/solonaranja2.png" alt="" class="background-orange">
-                <img src="/frontend/assets/img/soloamarillo2.png" alt="" class="background-yellow">
-                <div class="info-header"> <!-- Encabezado de la sección de bienvenida -->
-                    <h1 class="info-h1"><span class="welcome-to-span">BIENVENIDO A </span><span class="competika-span">COMPETIKA</span></h1>
-                    <p class="cursor info-paragraph">LA ESTRUCTURA DETRAS DE LA COMPETENCIA.</p>
+                <div class="info-header">
+
+                    <!-- LEFT: podio + descripción -->
+                    <div class="info-left" id="info-left">
+                        <div class="podium-scene">
+                            <div class="trophy-wrap">
+                                <svg class="trophy-svg" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 10 Q10 10 10 25 Q10 45 25 52 L27 65 H18 V72 H62 V65 H53 L55 52 Q70 45 70 25 Q70 10 60 10 Z" fill="url(#trofGrad)" stroke="var(--sun-glare)" stroke-width="1.2"/>
+                                    <path d="M10 18 Q0 18 0 28 Q0 38 10 38" stroke="var(--sun-glare)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M70 18 Q80 18 80 28 Q80 38 70 38" stroke="var(--sun-glare)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                    <path d="M40 22 L42.5 30 L51 30 L44.5 35 L47 43 L40 38 L33 43 L35.5 35 L29 30 L37.5 30 Z" fill="var(--sun-glare)" opacity="0.9"/>
+                                    <defs>
+                                        <linearGradient id="trofGrad" x1="10" y1="10" x2="70" y2="72" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%" stop-color="var(--blue-violet)"/>
+                                            <stop offset="100%" stop-color="var(--blue-violet-dark)"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="trophy-shine"></div>
+                            </div>
+
+                            <div class="podium">
+                                <div class="podium-block pos-2"><span class="podium-num">2</span></div>
+                                <div class="podium-block pos-1"><span class="podium-num">1</span></div>
+                                <div class="podium-block pos-3"><span class="podium-num">3</span></div>
+                            </div>
+                        </div>
+
+                        <div class="info-desc">
+                            <p class="info-desc-line"><span class="info-tag">01</span> Crea torneos en segundos</p>
+                            <p class="info-desc-line"><span class="info-tag">02</span> Inscribí a tus equipos</p>
+                            <p class="info-desc-line"><span class="info-tag">03</span> Seguí cada resultado en vivo</p>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: título + tagline -->
+                    <div class="info-right">
+                        <h1 class="info-h1">
+                            <span class="welcome-to-span">BIENVENIDO A </span><span class="competika-span">COMPETIKA</span>
+                        </h1>
+                        <p class="cursor info-paragraph">LA ESTRUCTURA DETRÁS DE LA COMPETENCIA.</p>
+                    </div>
                 </div>
-                <div class="card-container"> <!-- Contenedor para las tarjetas de usuario -->
-                    <div class="card-background">
-                        <div class="card"> <!-- Tarjeta para organizadores -->
-                            <h2 class="card-h2">ORGANIZADORES</h2>
-                            <p class="card-paragraph">INFO ORGANIZADORES</p>
-                            <button class="btn-card">Organizar torneo</but>
-                        </div>
+
+                <!-- Tarjetas de roles -->
+                <div class="card-container">
+                    <div class="card">
+                        <div class="card-icon-top"><i class="ti ti-tournament"></i></div>
+                        <h2 class="card-h2">ORGANIZADORES</h2>
+                        <p class="card-paragraph">Crea y gestioná torneos de cualquier deporte. Definí formatos, rondas y fases eliminatorias con total flexibilidad.</p>
+                        <button class="btn-card">Organizar torneo</button>
                     </div>
-                    <div class="card-background">
-                        <div class="card"> <!-- Tarjeta para participantes -->
-                            <h2 class="card-h2">PARTICIPANTES</h2>
-                            <p class="card-paragraph">INFO PARTICIPANTES</p>
-                            <button class="btn-card">Ingresar a torneo</button>
-                        </div>
+                    <div class="card">
+                        <div class="card-icon-top"><i class="ti ti-users"></i></div>
+                        <h2 class="card-h2">PARTICIPANTES</h2>
+                        <p class="card-paragraph">Encontrá torneos cerca tuyo, inscribite con tu equipo y competí al más alto nivel en el deporte que más te apasiona.</p>
+                        <button class="btn-card">Ingresar a torneo</button>
                     </div>
-                    <div class="card-background">
-                        <div class="card"> <!-- Tarjeta para observadores -->
-                            <h2 class="card-h2">OBSERVADORES</h2>
-                            <p class="card-paragraph">INFO OBSERVADORES</p>
-                            <button class="btn-card">Seguir torneo</button>
-                        </div>
-                    </div>    
+                    <div class="card">
+                        <div class="card-icon-top"><i class="ti ti-eye"></i></div>
+                        <h2 class="card-h2">OBSERVADORES</h2>
+                        <p class="card-paragraph">Seguí el torneo de tu equipo favorito, mirá tablas de posiciones y resultados actualizados en tiempo real.</p>
+                        <button class="btn-card">Seguir torneo</button>
+                    </div>
                 </div>
             </div>
         </section>
+
+        <!-- ======== SPORTS CAROUSEL ======== -->
         <section id="sports">
             <div class="sports-container">
-            <h1 class="sports-h1">ELIGE EL DEPORTE QUE MÁS TE GUSTE</h1>
-            <div class="carousel-wrapper" role="region" aria-label="Deportes disponibles">
-                <div class="carousel-stage" id="stage">
-                <!-- Las tarjetas se generan dinámicamente desde carousel.js -->
-                </div>
-                <div class="controls">
-                    <button class="btn-nav" id="prev" aria-label="Anterior">&#8249;</button>
-                    <div class="dots" id="dots"></div>
+                <h1 class="sports-h1">ELIGE EL DEPORTE QUE MÁS TE GUSTE</h1>
+                <div class="carousel-wrapper" role="region" aria-label="Deportes disponibles">
+                    <div class="carousel-stage" id="stage"></div>
+                    <div class="controls">
+                        <button class="btn-nav" id="prev" aria-label="Anterior">&#8249;</button>
+                        <div class="dots" id="dots"></div>
                         <button class="btn-nav" id="next" aria-label="Siguiente">&#8250;</button>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- ======== BANNER ======== -->
         <section id="banner">
-            <!-- Sección de banner para unirse a la competencia -->
-            <div class="banner-container"> <!-- Contenedor para el banner de unirse a la competencia -->
-                <h1 class="banner-h1">¡ÚNETE A LA COMPETENCIA!</h1>
-                <p class="banner-paragraph">Descubre nuevos torneos, desafía a tus amigos y conviértete en el campeón que siempre has soñado ser.</p>
-                <button class="btn-create">Crea un torneo</button>
-                <button class="btn-join">Únete a un torneo</button>
-                <button class="btn-observer">Sigue un torneo</button>
+            <div class="banner-bg">
+                <div class="banner-noise"></div>
+                <div class="banner-container">
+                    <div class="banner-text">
+                        <span class="banner-eyebrow">¿Listo para competir?</span>
+                        <h2 class="banner-h1">¡ÚNETE A LA<br><em>COMPETENCIA!</em></h2>
+                        <p class="banner-paragraph">Descubrí nuevos torneos, desafiá a tus amigos y convertite en el campeón que siempre soñaste ser.</p>
+                    </div>
+                    <div class="banner-actions">
+                        <a href="tournament_search.html" class="btn-banner btn-banner--primary">
+                            <i class="ti ti-tournament"></i><span>Crea un torneo</span>
+                        </a>
+                        <a href="tournament_search.html" class="btn-banner btn-banner--secondary">
+                            <i class="ti ti-door-enter"></i><span>Únete a un torneo</span>
+                        </a>
+                        <a href="tournament_search.html" class="btn-banner btn-banner--ghost">
+                            <i class="ti ti-eye"></i><span>Seguí un torneo</span>
+                        </a>
+                    </div>
+                    <div class="banner-deco">
+                        <div class="deco-ring deco-ring--1"></div>
+                        <div class="deco-ring deco-ring--2"></div>
+                        <div class="deco-ring deco-ring--3"></div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
+
+    <!-- ======== FOOTER ======== -->
     <footer id="bottom">
-        <!-- El footer contiene enlaces a páginas adicionales y derechos de autor -->
-        <ul>
-            <li><a href="about.html">Sobre nosotros</a></li> <!-- Enlace a la página de información sobre la empresa -->
-            <li><a href="contact.html">Contacto</a></li> <!-- Enlace a la página de contacto -->
-            <li><a href="privacy.html">Política de privacidad</a></li> <!-- Enlace a la página de política de privacidad -->
-        </ul>
-        <p>&copy; 2026 Torneos. Todos los derechos reservados.</p> <!-- Derechos de autor -->
+        <div class="footer-inner">
+            <div class="footer-col footer-col--brand">
+                <img src="assets/img/logologito.png" alt="Competika" class="footer-logo">
+                <p class="footer-brand-name">COMPETIKA</p>
+                <p class="footer-tagline">La estructura detrás de la competencia.</p>
+                <div class="footer-contact">
+                    <a href="mailto:hola@competika.com" class="footer-contact-link">
+                        <i class="ti ti-mail"></i> hola@competika.com
+                    </a>
+                    <a href="tel:+59899000000" class="footer-contact-link">
+                        <i class="ti ti-phone"></i> +598 99 000 000
+                    </a>
+                    <span class="footer-contact-link">
+                        <i class="ti ti-map-pin"></i> Montevideo, Uruguay
+                    </span>
+                </div>
+            </div>
+
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-heading">Plataforma</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="tournament_search.html">Buscar torneos</a></li>
+                    <li><a href="tournament_details.html">Características</a></li>
+                    <li><a href="login.html">Iniciar sesión</a></li>
+                    <li><a href="register.html">Registrarse</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col footer-col--social">
+                <h4 class="footer-heading">Comunidad</h4>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link" aria-label="Instagram"><i class="ti ti-brand-instagram"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="X / Twitter"><i class="ti ti-brand-x"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="TikTok"><i class="ti ti-brand-tiktok"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="Discord"><i class="ti ti-brand-discord"></i></a>
+                </div>
+                <ul class="footer-links footer-links--legal">
+                    <li><a href="about.html">Sobre nosotros</a></li>
+                    <li><a href="contact.html">Contacto</a></li>
+                    <li><a href="privacy.html">Política de privacidad</a></li>
+                    <li><a href="#">Términos de uso</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
+            <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
+        </div>
     </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-    <script src="js/main.js"></script>
+
+    <script src="/js/main.js"></script>
 </body>
 </html>
