@@ -816,7 +816,7 @@ body::after {
     text-transform: uppercase;
     border: 2px solid transparent;
     transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
-    min-width: 260px;
+    min-width: 300px;
     justify-content: center;
 }
 

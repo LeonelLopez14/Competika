@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="assets/img/logologito.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    <title>Iniciar sesión — COMPETIKA</title>
+</head>
+<body>
+ 
+    <video autoplay muted loop playsinline id="background-video">
+        <source src="assets/video/vid1.mp4" type="video/mp4">
+    </video>
+ 
+    <header id="menu">
+        <nav class="navbar">
+            <a href="index.html" class="navbar-logo">
+                <img src="assets/img/competika.png" alt="Competika logo" class="logo">
+            </a>
+            <ul class="navbar-list" id="navbar-list">
+                <li class="nav-links"><a href="index.html">Inicio</a></li>
+                <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
+                <li class="nav-links"><a href="tournament_details.html">Características</a></li>
+                <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
+                <li class="nav-links"><a href="register.html">Registrarse</a></li>
+            </ul>
+            <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                <span class="ham-line"></span><span class="ham-line"></span><span class="ham-line"></span>
+            </button>
+        </nav>
+        <div class="mobile-backdrop" id="mobile-backdrop"></div>
+        <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
+            <p class="mobile-menu-logo">COMPETIKA</p>
+            <ul class="mobile-menu-list">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="tournament_search.html">Torneos</a></li>
+                <li><a href="tournament_details.html">Características</a></li>
+                <li><a href="login.html">Iniciar sesión</a></li>
+                <li><a href="register.html">Registrarse</a></li>
+            </ul>
+        </div>
+    </header>
+ 
+    <main id="content">
+        <section class="auth-section">
+            <div class="auth-split">
+ 
+                <!-- LEFT: branding panel -->
+                <div class="auth-panel auth-panel--brand">
+                    <div class="auth-brand-inner">
+                        <div class="auth-brand-logo">
+                            <svg class="auth-trophy" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 10 Q10 10 10 25 Q10 45 25 52 L27 65 H18 V72 H62 V65 H53 L55 52 Q70 45 70 25 Q70 10 60 10 Z" fill="url(#authGrad)" stroke="var(--sun-glare)" stroke-width="1.2"/>
+                                <path d="M10 18 Q0 18 0 28 Q0 38 10 38" stroke="var(--sun-glare)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                <path d="M70 18 Q80 18 80 28 Q80 38 70 38" stroke="var(--sun-glare)" stroke-width="2" fill="none" stroke-linecap="round"/>
+                                <path d="M40 22 L42.5 30 L51 30 L44.5 35 L47 43 L40 38 L33 43 L35.5 35 L29 30 L37.5 30 Z" fill="var(--sun-glare)" opacity="0.9"/>
+                                <defs>
+                                    <linearGradient id="authGrad" x1="10" y1="10" x2="70" y2="72" gradientUnits="userSpaceOnUse">
+                                        <stop offset="0%" stop-color="var(--blue-violet)"/>
+                                        <stop offset="100%" stop-color="var(--blue-violet-dark)"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <h2 class="auth-brand-title">COMPETIKA</h2>
+                        <p class="auth-brand-sub">La estructura detrás de la competencia.</p>
+                        <ul class="auth-feature-list">
+                            <li><i class="ti ti-check"></i> Organizá torneos en segundos</li>
+                            <li><i class="ti ti-check"></i> Resultados en tiempo real</li>
+                            <li><i class="ti ti-check"></i> Cualquier deporte, cualquier formato</li>
+                        </ul>
+                        <div class="auth-brand-rings">
+                            <div class="auth-ring auth-ring--1"></div>
+                            <div class="auth-ring auth-ring--2"></div>
+                        </div>
+                    </div>
+                </div>
+ 
+                <!-- RIGHT: form -->
+                <div class="auth-panel auth-panel--form">
+                    <div class="auth-form-inner">
+                        <div class="auth-form-header">
+                            <span class="auth-eyebrow">Bienvenido de vuelta</span>
+                            <h1 class="auth-form-title">Iniciar sesión</h1>
+                            <p class="auth-form-desc">Ingresá a tu cuenta para gestionar tus torneos.</p>
+                        </div>
+ 
+                        <form class="auth-form" id="login-form" novalidate>
+                            <div class="form-group">
+                                <label class="form-label" for="email">Correo electrónico</label>
+                                <div class="input-wrap">
+                                    <i class="ti ti-mail input-icon"></i>
+                                    <input class="form-input" type="email" id="email" name="email" placeholder="tu@email.com" autocomplete="email" required>
+                                </div>
+                            </div>
+ 
+                            <div class="form-group">
+                                <label class="form-label" for="password">
+                                    Contraseña
+                                    <a href="#" class="form-label-link">¿Olvidaste tu contraseña?</a>
+                                </label>
+                                <div class="input-wrap">
+                                    <i class="ti ti-lock input-icon"></i>
+                                    <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                                    <button type="button" class="input-toggle-pass" aria-label="Mostrar contraseña" tabindex="-1">
+                                        <i class="ti ti-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+ 
+                            <div class="form-check">
+                                <label class="check-label">
+                                    <input type="checkbox" class="check-input" id="remember">
+                                    <span class="check-box"></span>
+                                    Recordarme
+                                </label>
+                            </div>
+ 
+                            <button type="submit" class="btn-submit">
+                                <span>Ingresar</span>
+                                <i class="ti ti-arrow-right"></i>
+                            </button>
+ 
+                            <div class="auth-divider"><span>o continuá con</span></div>
+ 
+                            <div class="social-auth">
+                                <button type="button" class="btn-social">
+                                    <i class="ti ti-brand-google"></i> Google
+                                </button>
+                                <button type="button" class="btn-social">
+                                    <i class="ti ti-brand-discord"></i> Discord
+                                </button>
+                            </div>
+ 
+                            <p class="auth-switch">
+                                ¿No tenés cuenta? <a href="register.html">Registrate gratis</a>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+ 
+            </div>
+        </section>
+    </main>
+ 
+    <footer id="bottom">
+        <div class="footer-inner">
+            <div class="footer-col footer-col--brand">
+                <img src="assets/img/logologito.png" alt="Competika" class="footer-logo">
+                <p class="footer-brand-name">COMPETIKA</p>
+                <p class="footer-tagline">La estructura detrás de la competencia.</p>
+                <div class="footer-contact">
+                    <a href="mailto:hola@competika.com" class="footer-contact-link"><i class="ti ti-mail"></i> hola@competika.com</a>
+                    <a href="tel:+59899000000" class="footer-contact-link"><i class="ti ti-phone"></i> +598 99 000 000</a>
+                    <span class="footer-contact-link"><i class="ti ti-map-pin"></i> Montevideo, Uruguay</span>
+                </div>
+            </div>
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-heading">Plataforma</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="tournament_search.html">Buscar torneos</a></li>
+                    <li><a href="tournament_details.html">Características</a></li>
+                    <li><a href="login.html">Iniciar sesión</a></li>
+                    <li><a href="register.html">Registrarse</a></li>
+                </ul>
+            </div>
+            <div class="footer-col footer-col--social">
+                <h4 class="footer-heading">Comunidad</h4>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link" aria-label="Instagram"><i class="ti ti-brand-instagram"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="X / Twitter"><i class="ti ti-brand-x"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="TikTok"><i class="ti ti-brand-tiktok"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="Discord"><i class="ti ti-brand-discord"></i></a>
+                </div>
+                <ul class="footer-links footer-links--legal">
+                    <li><a href="about.html">Sobre nosotros</a></li>
+                    <li><a href="contact.html">Contacto</a></li>
+                    <li><a href="privacy.html">Política de privacidad</a></li>
+                    <li><a href="#">Términos de uso</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
+            <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
+        </div>
+    </footer>
+ 
+    <script src="/js/main.js"></script>
+    <script src="/js/pages.js"></script>
+</body>
+</html>
