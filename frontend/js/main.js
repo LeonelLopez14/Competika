@@ -54,7 +54,7 @@ if (paragraph) {
     obs.observe(paragraph);
 }
 
-// ── Título principal (slide-in desde derecha) ──────────────────────────────
+// ── Título principal ──────────────────────────────
 const competika = document.querySelector('.info-h1');
 
 if (competika) {
@@ -74,15 +74,9 @@ if (infoLeft) {
     const obsLeft = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                // Fade-in del contenedor
                 entry.target.classList.add('show');
-
-                // Animar bloques del podio con stagger ya definido en CSS
                 document.querySelectorAll('.podium-block').forEach(b => b.classList.add('animated'));
-
-                // Animar líneas de descripción
                 document.querySelectorAll('.info-desc-line').forEach(l => l.classList.add('show'));
-
                 obsLeft.unobserve(entry.target);
             }
         });
@@ -109,9 +103,9 @@ const cardData = [
     { title: "Otros",            icon: "ti-dots-circle-horizontal", paragraph: "¿Tu deporte no está en la lista? Igual podés crear y gestionar tu torneo." },
 ];
 
-const TOTAL       = cardData.length;
-let   current     = 0;
-let   isAnimating = false;
+const TOTAL = cardData.length;
+let current = 0;
+let isAnimating = false;
 
 const stage  = document.getElementById('stage');
 const dotsEl = document.getElementById('dots');
@@ -192,7 +186,7 @@ if (stage && dotsEl) {
 
     document.getElementById('prev')?.addEventListener('click', () => navigate(-1));
     document.getElementById('next')?.addEventListener('click', () => navigate(1));
-
+    // Swipe con flechas del teclado
     document.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft')  navigate(-1);
         if (e.key === 'ArrowRight') navigate(1);
@@ -234,7 +228,7 @@ if (sportsH1) {
     obsTitle.observe(sportsH1);
 }
 
-// ── Banner fade-in ──────────────────────────────────────────────────────────
+// ── Banner ──────────────────────────────────────────────────────────
 const bannerContainer = document.querySelector('.banner-container');
 
 if (bannerContainer) {
