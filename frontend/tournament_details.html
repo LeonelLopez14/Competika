@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <title>Características de los torneos</title>
+    <title>CARACTERÍSTICAS</title>
 </head>
 <body>
-        <!-- VIDEO FONDO -->
+
+    <!-- VIDEO FONDO -->
     <video autoplay muted loop playsinline id="background-video">
         <source src="assets/video/Fondo pagg.mp4" type="video/mp4">
     </video>
@@ -42,7 +42,7 @@
             </button>
         </nav>
 
-        <!-- Backdrop -->
+        <!-- Backdrop oscuro -->
         <div class="mobile-backdrop" id="mobile-backdrop"></div>
 
         <!-- Drawer lateral -->
@@ -60,7 +60,27 @@
     </header>
     <main id="content">
         <section id="tournament-types">
-            
+            <h1 class="tournament-types-presentation">Características de los Torneos</h1>
+            <div class="tournament-types-container">
+                <img src="assets/img/tournament_types.png" alt="Tipos de torneos" class="tournament-types-image">
+                <div class="info-types">
+                    <h2 class="tournament-types-title">Nombre torneo</h2>
+                    <h3 class="tournament-types-subtitle">Tipo de torneo</h3>
+                    <p class="tournament-types-description">Descubre los diferentes tipos de torneos disponibles en Competika.</p>
+                </div>
+                <div class="sports-supported">
+                    <i class="ti ti-sport-bowling"></i>
+                    <i class="ti ti-sport-basketball"></i>
+                </div>
+                <div class="types-navigation">
+                    <button class="types-nav-btn types-nav-btn--prev" aria-label="Anterior torneo">
+                        <i class="ti ti-chevron-left"></i>
+                    </button>
+                    <div class="dots-types" id="dots-types"></div>
+                    <button class="types-nav-btn types-nav-btn--next" aria-label="Siguiente torneo">
+                        <i class="ti ti-chevron-right"></i>
+                    </button>
+            </div>
         </section>
         <!-- ======== BANNER ======== -->
         <section id="banner">
@@ -73,7 +93,7 @@
                         <p class="banner-paragraph">Descubrí nuevos torneos, demostrá tus habilidades y destacate en tu deporte favorito.</p>
                     </div>
                     <div class="banner-actions">
-                        <a href="tournament_search.html" class="btn-banner btn-banner--primary">
+                        <a href="tournament_form.html" class="btn-banner btn-banner--primary">
                             <i class="ti ti-tournament"></i><span>Creá un torneo</span>
                         </a>
                         <a href="tournament_search.html" class="btn-banner btn-banner--secondary">
@@ -92,7 +112,8 @@
             </div>
         </section>
     </main>
-        <!-- ======== FOOTER ======== -->
+
+    <!-- ======== FOOTER ======== -->
     <footer id="bottom">
         <div class="footer-inner">
             <div class="footer-col footer-col--brand">
@@ -145,6 +166,7 @@
             <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
         </div>
     </footer>
+
     <script src="js/main.js"></script>
 </body>
 </html>
