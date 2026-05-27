@@ -105,7 +105,7 @@ body::after {
 }
 
 .navbar-logo { display: flex; align-items: center; }
-.logo { width: 85px; height: 85px; object-fit: contain; }
+.logo { width: 85px; height: 90px; object-fit: contain; }
 
 .navbar-list {
     display: flex;
