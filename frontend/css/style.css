@@ -943,6 +943,106 @@ body::after {
 .footer-made { display: flex; align-items: center; gap: 4px; }
 .footer-heart { color: var(--exuberant-orange); }
 
+/* ========================================
+    TOURNAMENT TYPES
+    ======================================= */
+.tournament-types-container {
+    background: transparent;
+    padding: 80px 5% 120px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    height: 80vh;
+}
+
+.tournament-types-image {
+    height: 600px;
+    width: 580px;
+    border-radius: 12px;
+    filter: drop-shadow(0 12px 32px rgba(104,99,242,0.25));
+}
+
+.info-types-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 50%;
+    height: 600px;
+    max-height: 100%;
+    text-align: justify;
+    font-size: 1.5rem;
+    font-weight: 400;
+    
+}
+
+.info-types-container .tournament-types-title {
+    font-family: var(--font-body);
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--darkest-hour);
+    letter-spacing: 3px;
+}
+
+.info-types-container .tournament-types-subtitle {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--darkest-hour);
+    margin-bottom: 15px;
+}
+
+.tournament-types-attributes {
+    display: flex;
+    flex-direction: column;
+    padding-top: 30px;
+    transform: translatey(60px);
+}
+
+.tournament-types-attributes-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 8px;
+    list-style: none;
+}
+
+.attribute-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sports-supported {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    max-height: 80dvh;
+    width: 80%;
+    transform: translatex(40px);
+}
+
+.sports-supported i{
+    font-size: 5rem;
+    color: var(--darkest-hour);
+}
+
+.sports-supported-title {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--darkest-hour);
+    text-align: center;
+    gap: 12px;
+    padding-bottom: 20px;
+}
+
+
 /* =====================================================
     RESPONSIVE
    ===================================================== */
