@@ -1057,6 +1057,7 @@ body::after {
 .sports-supported i{
     font-size: 4rem;
     color: var(--darkest-hour);
+    transition: 0.5s
 }
 
 .sports-supported-title {
@@ -1067,6 +1068,12 @@ body::after {
     text-align: center;
     gap: 12px;
     padding-bottom: 20px;
+}
+
+.sports-supported i:hover{
+    scale: 1.2;
+    color: var(--darkest-hour);
+    transition: 0.5s;
 }
 
 .tournament-types-navigation {
