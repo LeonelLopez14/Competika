@@ -11,15 +11,15 @@
 }
 
 :root {
-    --sun-glare:             #7cf59e;
-    --sun-glare-dark:        #55d76d;
-    --sun-glare-light:       #94f69c;
+    --sun-glare:             rgb(165, 250, 189);
+    --sun-glare-dark:        #43C59E;
+    --sun-glare-light:       #80ceb6;
     --exuberant-orange:      #3B82F6;
     --exuberant-orange-dark: #1D4ED8;
     --exuberant-orange-light:#93C5FD;
-    --blue-violet:           #7d39eb;
+    --blue-violet:           #5f1fc5;
     --blue-violet-dark:      #6a23dc;
-    --blue-violet-light:     #9053f2;
+    --blue-violet-light:     #824cda;
     --cloud-dancer:          #F0EEE9;
     --darkest-hour:          #212121;
     --font-display: "Finlandica Text", serif;
