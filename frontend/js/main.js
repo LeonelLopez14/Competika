@@ -245,3 +245,13 @@ if (bannerContainer) {
     }, { threshold: 0.15 });
     obsBanner.observe(bannerContainer);
 }
+
+// ── TOURNAMENT TYPES NAVIGATION ─────────────────────────────────────
+const list = document.querySelectorAll('.navigation-list');
+function activeLink(){
+    list.forEach((item) =>
+    item.classList.remove('active'));
+    this.classList.add('active');
+}
+list.forEach((item) =>
+item.addEventListener('click', activeLink));
