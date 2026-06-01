@@ -255,3 +255,22 @@ function activeLink(){
 }
 list.forEach((item) =>
 item.addEventListener('click', activeLink));
+
+const typesTitle = document.querySelector('.tournament-types-presentation');
+
+if (typesTitle) {
+    const obsTitle = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('showTitle');
+                obsTitle.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.25 });
+    obsTitle.observe(typesTitle);
+}
+
+
+
+
+
