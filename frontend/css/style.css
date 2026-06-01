@@ -960,7 +960,19 @@ body::after {
     font-size: 5rem;
     font-weight: 900;
     text-transform: uppercase;
+    transform: translateY(0);
+    transition: 1s ease;
+    opacity: 0;
+    filter: blur(7px);
+    
+}
+
+.showTitle {
+    transition: 1s ease;
     transform: translateY(60px);
+    opacity: 1;
+    filter: blur(0);
+    
 }
 
 #tournament-types { 
@@ -987,10 +999,11 @@ body::after {
 }
 
 .tournament-types-image {
-    height: 550px;
+    height: 530px;
     width: 480px;
     border-radius: 12px;
     filter: drop-shadow(0 12px 32px rgba(104,99,242,0.25));
+    box-shadow: inset 30px 30px 30px rgba(0, 0, 0, 2.5);
 }
 
 .info-types-container {
@@ -1055,8 +1068,16 @@ body::after {
 }
 
 .sports-supported i{
-    font-size: 4rem;
+    font-size: 3.9rem;
     color: var(--darkest-hour);
+    filter: brightness(100%);
+    transition: transform 0.6s ease, opacity 0.6s ease;
+}
+
+.sports-supported i:hover {
+    color: var(--blue-violet);
+    transform: scale(1.2);
+    filter: brightness(126%);
 }
 
 .sports-supported-title {
@@ -1080,6 +1101,7 @@ body::after {
     border-radius: 10px 10px 0 0;
     padding-bottom: 0px;
     margin-bottom: 0px;
+    
 }
 
 .tournament-types-navigation ul {
@@ -1167,7 +1189,7 @@ body::after {
 }
 
 .rotated {
-    transform: translateY(-158%) translateX(34%) rotate(180deg);
+    transform: translateY(-185%) translateX(34%) rotate(180deg);
 }
 /* =====================================================
     RESPONSIVE
