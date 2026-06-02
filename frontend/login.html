@@ -17,7 +17,7 @@
 
     <!-- VIDEO FONDO -->
     <video autoplay muted loop playsinline id="background-video">
-        <source src="assets/video/Fondo pagg.mp4" type="video/mp4">
+        <source src="assets/video/Fondo de la pagina.mp4" type="video/mp4">
     </video>
 
     <!-- NAVBAR -->
@@ -59,7 +59,55 @@
         </div>
     </header>
     <main id="content">
-        <section id="tournament-types">
+        <!-- ======== LOGIN ======== -->
+        <section id="login">
+            <div class="login-container">
+                <div class="form-container">
+                
+                <div class="form-header">
+                    <p class="form-description">Ingrese sus datos.</p>
+                    <h1 class="form-title">Bienvenido de nuevo</h1>
+                </div>
+                <form class="form-box">
+                    <div class="input-group">
+                        <input type="email" id="email" name="email" class="input-field" placeholder="" required>
+                        <label for="email" class="floating-label">Correo electrónico</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" class="input-field" placeholder="" required>
+                        <label for="password" class="floating-label">Contraseña</label>
+                        
+                    </div>
+                    <div class="input-group checkbox-group">
+                        <div class="form-col remember-me">
+                            <input type="checkbox" id="remember-me-checkbox" name="remember-me" class="checkbox-field">
+                            <label for="remember-me-checkbox" class="checkbox-label">Recordarme</label>
+                        </div>
+                        <div class="form-col">
+                            <a href="#" class="form-link">¿Olvidaste tu contraseña?</a>
+                        </div>
+                    </div>
+                    <button type="submit" class="form-btn form-btn--submit">Iniciar sesión</button>
+                </form>
+                <div class="form-divider">
+                    <p>O</p>
+                </div>
+                <div class="form-bottom">
+                    <div class="form-socials">
+                        <button class="form-btn form-btn--social">
+                            <i class="ti ti-brand-google btn-icon"></i>
+                        </button>
+                        <button class="form-btn form-btn--social">
+                            <i class="ti ti-brand-facebook btn-icon"></i>
+                        </button>
+                        <button class="form-btn form-btn--social">
+                            <i class="ti ti-brand-apple btn-icon"></i>
+                        </button>
+                    </div>
+                    <p>No tienes una cuenta? <a href="register.html" class="form-link">Regístrate aquí</a></p>
+                </div>
+            </div>
+            </div>
             
         </section>
         <!-- ======== BANNER ======== -->

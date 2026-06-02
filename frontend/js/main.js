@@ -352,11 +352,11 @@ const tournamentTypes = [
         ],
     },
 ];
- 
+
 // ── Estado ────────────────────────────────────────────────────────────────────
 let ttCurrentType = 0;
 let ttCurrentSub  = 0;
- 
+
 // ── Referencias DOM ───────────────────────────────────────────────────────────
 const ttNavItems       = document.querySelectorAll('.navigation-list[data-type]');
 const ttInfo           = document.getElementById('tt-info');
@@ -369,20 +369,18 @@ const ttImage          = document.getElementById('tt-image');
 const ttSubPrev        = document.getElementById('tt-sub-prev');
 const ttSubNext        = document.getElementById('tt-sub-next');
 const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
- 
+
 // ── Actualiza el contenido sin animación de salida ────────────────────────────
 function ttUpdateContent(sub) {
     if (ttTitle)        ttTitle.textContent       = sub.title;
     if (ttSubtitleEl)   ttSubtitleEl.textContent  = sub.subtitle;
     if (ttDescriptionEl) ttDescriptionEl.textContent = sub.description;
- 
     // Atributos — recrear nodos para re-disparar la animación CSS
     if (ttAttrList) {
         ttAttrList.innerHTML = sub.attributes
             .map(a => `<li class="attribute-item"><i class="ti ti-chevron-right"></i>${a}</li>`)
             .join('');
     }
- 
     // Deportes con animación pop
     if (ttSportsIcons) {
         ttSportsIcons.classList.remove('tt-sports-anim');
@@ -393,12 +391,11 @@ function ttUpdateContent(sub) {
         ttSportsIcons.classList.add('tt-sports-anim');
     }
 }
- 
+
 // ── Render completo con animación texto ───────────────────────────────────────
 function ttRender(animate = true) {
     const tipo = tournamentTypes[ttCurrentType];
     const sub  = tipo.subtipos[ttCurrentSub];
- 
     if (animate && ttInfo) {
         // Salida
         ttInfo.classList.remove('tt-text-in', 'ttInitIn');
@@ -413,14 +410,12 @@ function ttRender(animate = true) {
     } else {
         ttUpdateContent(sub);
     }
- 
     // Flechas subtipos
     if (ttSubPrev && ttSubNext) {
         const show = tipo.subtipos.length > 1;
         ttSubPrev.classList.toggle('hidden', !show);
         ttSubNext.classList.toggle('hidden', !show);
     }
- 
     // Puntos indicadores subtipos
     if (ttSubIndicatorEl) {
         ttSubIndicatorEl.innerHTML = '';
@@ -431,11 +426,9 @@ function ttRender(animate = true) {
             ttSubIndicatorEl.appendChild(dot);
         });
     }
- 
     // Nav principal — active
     ttNavItems.forEach((item, idx) => item.classList.toggle('active', idx === ttCurrentType));
 }
- 
 // ── Eventos nav principal ─────────────────────────────────────────────────────
 ttNavItems.forEach((item) => {
     item.addEventListener('click', () => {
@@ -446,7 +439,6 @@ ttNavItems.forEach((item) => {
         ttRender();
     });
 });
- 
 // ── Flechas subtipos ──────────────────────────────────────────────────────────
 if (ttSubPrev) {
     ttSubPrev.addEventListener('click', () => {
@@ -456,7 +448,6 @@ if (ttSubPrev) {
         ttRender();
     });
 }
- 
 if (ttSubNext) {
     ttSubNext.addEventListener('click', () => {
         const len = tournamentTypes[ttCurrentType].subtipos.length;
@@ -465,21 +456,55 @@ if (ttSubNext) {
         ttRender();
     });
 }
- 
 // ── Init ──────────────────────────────────────────────────────────────────────
 if (ttTitle) {
     ttRender(false); // carga inicial sin animación de salida
 }
- 
-// ── Título: aparece de inmediato (ya está en el viewport al cargar) ────────────
 const typesTitle = document.querySelector('.tournament-types-presentation');
 if (typesTitle) {
-    // Pequeño delay para que la transición CSS sea visible
     requestAnimationFrame(() => {
         setTimeout(() => typesTitle.classList.add('showTitle'), 80);
     });
 }
 
+const imgTypes = document.querySelector('.tournament-types-image');
+if (imgTypes) {
+    const obsImg = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                imgTypes.classList.add('showImg');
+                obsImg.unobserve(imgTypes);
+            }
+        });
+    }, { threshold: 0.15 });
+    obsImg.observe(imgTypes);
+}
+
+const navTypes = document.querySelector('.tournament-types-navigation');
+if (navTypes) {
+    const obsNav = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navTypes.classList.add('showTypesNav');
+                obsNav.unobserve(navTypes);
+            }
+        });
+    }, { threshold: 0.15 });
+    obsNav.observe(navTypes);
+}
+
+const subArrows = document.querySelectorAll('.tt-sub-arrow');
+if (subArrows.length > 0) {
+    const obsSubArrows = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                subArrows.forEach(arrow => arrow.classList.add('showSubArrows'));
+                obsSubArrows.disconnect();
+            } 
+        });
+    }, { threshold: 0.15 });
+    subArrows.forEach(arrow => obsSubArrows.observe(arrow));
+}
 
 
 
