@@ -246,30 +246,239 @@ if (bannerContainer) {
     obsBanner.observe(bannerContainer);
 }
 
-// ── TOURNAMENT TYPES NAVIGATION ─────────────────────────────────────
-const list = document.querySelectorAll('.navigation-list');
-function activeLink(){
-    list.forEach((item) =>
-    item.classList.remove('active'));
-    this.classList.add('active');
+// ── TOURNAMENT TYPES — datos y lógica ───────────────────────────────────────
+
+const tournamentTypes = [
+    {
+        icon: 'ti-list-details',
+        subtipos: [
+            {
+                title: 'LIGA TODOS VS TODOS',
+                subtitle: 'Round Robin Simple',
+                description: 'Cada participante enfrenta a todos los demás exactamente una vez. El campeón se determina por puntos acumulados al finalizar todas las fechas. Ideal para torneos donde se busca el rendimiento constante a lo largo del tiempo.',
+                attributes: ['Todos juegan contra todos', 'Clasificación por puntos acumulados', 'Sin eliminación directa', 'Alta cantidad de partidos garantizados'],
+                sports: ['ti-ball-football', 'ti-ball-basketball', 'ti-ball-volleyball', 'ti-swimming', 'ti-run'],
+            },
+            {
+                title: 'LIGA DOBLE VUELTA',
+                subtitle: 'Round Robin Doble',
+                description: 'Cada participante enfrenta a todos los demás dos veces: una como local y otra como visitante. Formato muy usado en ligas profesionales para mayor equidad y emoción a lo largo de la temporada.',
+                attributes: ['Dos rondas completas por equipo', 'Local y visitante por turno', 'Doble cantidad de partidos', 'Formato estándar de ligas profesionales'],
+                sports: ['ti-ball-football', 'ti-ball-basketball', 'ti-ball-volleyball', 'ti-ball-american-football', 'ti-ball-baseball'],
+            },
+        ],
+    },
+    {
+        icon: 'ti-x',
+        subtipos: [
+            {
+                title: 'ELIMINACIÓN SIMPLE',
+                subtitle: 'Single Elimination',
+                description: 'El perdedor queda fuera y el ganador avanza. Un único partido decide el destino de cada equipo. Formato veloz, tenso y muy popular en competiciones de todos los niveles.',
+                attributes: ['Rondas sucesivas de eliminación', 'Perdedor queda eliminado', 'Ganador avanza a siguiente ronda', 'Máxima emoción por partido'],
+                sports: ['ti-ball-volleyball', 'ti-ball-american-football', 'ti-ball-basketball', 'ti-ball-tennis', 'ti-chess'],
+            },
+            {
+                title: 'DOBLE ELIMINACIÓN',
+                subtitle: 'Double Elimination',
+                description: 'Cada participante puede perder una vez y seguir en competencia a través del bracket de perdedores. Solo la segunda derrota significa la eliminación definitiva.',
+                attributes: ['Bracket ganadores y perdedores', 'Segunda oportunidad tras una derrota', 'Mayor cantidad de partidos', 'Popular en esports y ajedrez'],
+                sports: ['ti-device-gamepad-2', 'ti-chess', 'ti-cards', 'ti-ball-tennis', 'ti-karate'],
+            },
+        ],
+    },
+    {
+        icon: 'ti-exposure-plus-1',
+        subtipos: [
+            {
+                title: 'SISTEMA DE PUNTOS',
+                subtitle: 'Points System',
+                description: 'Los participantes acumulan puntos a lo largo de varias pruebas o fechas. La clasificación final refleja el desempeño global, no un único resultado. Muy usado en deportes individuales y competencias por etapas.',
+                attributes: ['Acumulación de puntos por fecha', 'Ranking global actualizable', 'Sin eliminación por resultado único', 'Ideal para deportes individuales'],
+                sports: ['ti-run', 'ti-swimming', 'ti-gymnastics', 'ti-ball-tennis', 'ti-bell-school'],
+            },
+            {
+                title: 'VIDAS / CONTINUACIONES',
+                subtitle: 'Lives System',
+                description: 'Cada participante comienza con un número fijo de vidas o intentos. Al agotar sus vidas, queda eliminado. Muy popular en torneos de videojuegos y competencias arcade.',
+                attributes: ['Número fijo de vidas por jugador', 'Eliminación al agotar vidas', 'Alta interacción entre participantes', 'Popular en esports y gaming'],
+                sports: ['ti-device-gamepad-2', 'ti-cards', 'ti-chess', 'ti-ball-tennis', 'ti-karate'],
+            },
+        ],
+    },
+    {
+        icon: 'ti-arrows-shuffle',
+        subtipos: [
+            {
+                title: 'SISTEMA SUIZO',
+                subtitle: 'Swiss System',
+                description: 'Los participantes se enfrentan a rivales con puntaje similar en cada ronda, sin que nadie quede eliminado temprano. Equilibra el nivel de los cruces automáticamente a lo largo del torneo.',
+                attributes: ['Cruces por puntaje similar', 'Nadie es eliminado prematuramente', 'Número fijo de rondas', 'Muy usado en ajedrez y TCG'],
+                sports: ['ti-chess', 'ti-cards', 'ti-device-gamepad-2', 'ti-ball-tennis', 'ti-karate'],
+            },
+            {
+                title: 'GRUPOS + ELIMINACIÓN',
+                subtitle: 'Group Stage + Knockout',
+                description: 'Fase de grupos donde todos compiten entre sí, seguida de una eliminación directa entre los clasificados. El estándar de grandes torneos internacionales.',
+                attributes: ['Fase de grupos inicial', 'Clasificados pasan a eliminatoria', 'Alta cantidad de partidos garantizados', 'Formato de Mundiales y Olimpiadas'],
+                sports: ['ti-ball-football', 'ti-ball-basketball', 'ti-ball-volleyball', 'ti-ball-american-football', 'ti-swimming'],
+            },
+        ],
+    },
+    {
+        icon: 'ti-trophy',
+        subtipos: [
+            {
+                title: 'TORNEO RELÁMPAGO',
+                subtitle: 'Blitz / Flash Tournament',
+                description: 'Todas las fases se juegan en un solo día o jornada. Ideal para eventos presenciales, torneos sociales o cuando el tiempo disponible es limitado.',
+                attributes: ['Todo en una sola jornada', 'Rondas más cortas', 'Alta energía y ritmo rápido', 'Ideal para eventos sociales'],
+                sports: ['ti-chess', 'ti-cards', 'ti-device-gamepad-2', 'ti-bell-school', 'ti-ball-tennis'],
+            },
+            {
+                title: 'GRAN PREMIO',
+                subtitle: 'Grand Prix / Season',
+                description: 'Serie de torneos a lo largo de una temporada donde los puntos se acumulan. Al final, el participante con más puntos totales es coronado campeón.',
+                attributes: ['Serie de torneos en temporada', 'Puntos acumulativos por evento', 'Clasificación anual o semestral', 'Formato de F1 y grandes ligas'],
+                sports: ['ti-run', 'ti-swimming', 'ti-ball-tennis', 'ti-gymnastics', 'ti-ball-baseball'],
+            },
+            {
+                title: 'COPA DESAFÍO',
+                subtitle: 'Challenge Cup',
+                description: 'El campeón defiende el título frente a retadores en sucesivos enfrentamientos. El primero en perder cede la corona. Formato clásico en boxeo, snooker y juegos de tablero.',
+                attributes: ['Campeón defiende el título', 'Retadores en orden de ranking', 'El perdedor cede la posición', 'Popular en deportes de combate'],
+                sports: ['ti-bell-school', 'ti-karate', 'ti-chess', 'ti-ball-tennis', 'ti-cards'],
+            },
+        ],
+    },
+];
+ 
+// ── Estado ────────────────────────────────────────────────────────────────────
+let ttCurrentType = 0;
+let ttCurrentSub  = 0;
+ 
+// ── Referencias DOM ───────────────────────────────────────────────────────────
+const ttNavItems       = document.querySelectorAll('.navigation-list[data-type]');
+const ttInfo           = document.getElementById('tt-info');
+const ttTitle          = document.getElementById('tt-title');
+const ttSubtitleEl     = document.getElementById('tt-subtitle');
+const ttDescriptionEl  = document.getElementById('tt-description');
+const ttAttrList       = document.getElementById('tt-attributes');
+const ttSportsIcons    = document.getElementById('tt-sports-icons');
+const ttImage          = document.getElementById('tt-image');
+const ttSubPrev        = document.getElementById('tt-sub-prev');
+const ttSubNext        = document.getElementById('tt-sub-next');
+const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
+ 
+// ── Actualiza el contenido sin animación de salida ────────────────────────────
+function ttUpdateContent(sub) {
+    if (ttTitle)        ttTitle.textContent       = sub.title;
+    if (ttSubtitleEl)   ttSubtitleEl.textContent  = sub.subtitle;
+    if (ttDescriptionEl) ttDescriptionEl.textContent = sub.description;
+ 
+    // Atributos — recrear nodos para re-disparar la animación CSS
+    if (ttAttrList) {
+        ttAttrList.innerHTML = sub.attributes
+            .map(a => `<li class="attribute-item"><i class="ti ti-chevron-right"></i>${a}</li>`)
+            .join('');
+    }
+ 
+    // Deportes con animación pop
+    if (ttSportsIcons) {
+        ttSportsIcons.classList.remove('tt-sports-anim');
+        void ttSportsIcons.offsetWidth; // reflow fuerza re-inicio de animación
+        ttSportsIcons.innerHTML = sub.sports.slice(0, 5)
+            .map(icon => `<i class="icon-sports-supported ti ${icon}"></i>`)
+            .join('');
+        ttSportsIcons.classList.add('tt-sports-anim');
+    }
 }
-list.forEach((item) =>
-item.addEventListener('click', activeLink));
-
-const typesTitle = document.querySelector('.tournament-types-presentation');
-
-if (typesTitle) {
-    const obsTitle = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('showTitle');
-                obsTitle.unobserve(entry.target);
-            }
+ 
+// ── Render completo con animación texto ───────────────────────────────────────
+function ttRender(animate = true) {
+    const tipo = tournamentTypes[ttCurrentType];
+    const sub  = tipo.subtipos[ttCurrentSub];
+ 
+    if (animate && ttInfo) {
+        // Salida
+        ttInfo.classList.remove('tt-text-in', 'ttInitIn');
+        void ttInfo.offsetWidth;
+        ttInfo.classList.add('tt-text-out');
+        setTimeout(() => {
+            ttUpdateContent(sub);
+            ttInfo.classList.remove('tt-text-out');
+            void ttInfo.offsetWidth;
+            ttInfo.classList.add('tt-text-in');
+        }, 230);
+    } else {
+        ttUpdateContent(sub);
+    }
+ 
+    // Flechas subtipos
+    if (ttSubPrev && ttSubNext) {
+        const show = tipo.subtipos.length > 1;
+        ttSubPrev.classList.toggle('hidden', !show);
+        ttSubNext.classList.toggle('hidden', !show);
+    }
+ 
+    // Puntos indicadores subtipos
+    if (ttSubIndicatorEl) {
+        ttSubIndicatorEl.innerHTML = '';
+        tipo.subtipos.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'tt-sub-dot' + (i === ttCurrentSub ? ' active' : '');
+            dot.addEventListener('click', () => { if (i !== ttCurrentSub) { ttCurrentSub = i; ttRender(); } });
+            ttSubIndicatorEl.appendChild(dot);
         });
-    }, { threshold: 0.25 });
-    obsTitle.observe(typesTitle);
+    }
+ 
+    // Nav principal — active
+    ttNavItems.forEach((item, idx) => item.classList.toggle('active', idx === ttCurrentType));
 }
-
+ 
+// ── Eventos nav principal ─────────────────────────────────────────────────────
+ttNavItems.forEach((item) => {
+    item.addEventListener('click', () => {
+        const newType = parseInt(item.dataset.type, 10);
+        if (newType === ttCurrentType) return;
+        ttCurrentType = newType;
+        ttCurrentSub  = 0;
+        ttRender();
+    });
+});
+ 
+// ── Flechas subtipos ──────────────────────────────────────────────────────────
+if (ttSubPrev) {
+    ttSubPrev.addEventListener('click', () => {
+        const len = tournamentTypes[ttCurrentType].subtipos.length;
+        ttCurrentSub = (ttCurrentSub - 1 + len) % len;
+        if (ttImage) { ttImage.classList.add('tt-fade'); setTimeout(() => ttImage.classList.remove('tt-fade'), 350); }
+        ttRender();
+    });
+}
+ 
+if (ttSubNext) {
+    ttSubNext.addEventListener('click', () => {
+        const len = tournamentTypes[ttCurrentType].subtipos.length;
+        ttCurrentSub = (ttCurrentSub + 1) % len;
+        if (ttImage) { ttImage.classList.add('tt-fade'); setTimeout(() => ttImage.classList.remove('tt-fade'), 350); }
+        ttRender();
+    });
+}
+ 
+// ── Init ──────────────────────────────────────────────────────────────────────
+if (ttTitle) {
+    ttRender(false); // carga inicial sin animación de salida
+}
+ 
+// ── Título: aparece de inmediato (ya está en el viewport al cargar) ────────────
+const typesTitle = document.querySelector('.tournament-types-presentation');
+if (typesTitle) {
+    // Pequeño delay para que la transición CSS sea visible
+    requestAnimationFrame(() => {
+        setTimeout(() => typesTitle.classList.add('showTitle'), 80);
+    });
+}
 
 
 
