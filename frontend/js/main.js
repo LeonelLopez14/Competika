@@ -370,7 +370,7 @@ const ttSubPrev        = document.getElementById('tt-sub-prev');
 const ttSubNext        = document.getElementById('tt-sub-next');
 const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
 
-// ── Actualiza el contenido sin animación de salida ────────────────────────────
+// ── Actualiza el contenido ────────────────────────────
 function ttUpdateContent(sub) {
     if (ttTitle)        ttTitle.textContent       = sub.title;
     if (ttSubtitleEl)   ttSubtitleEl.textContent  = sub.subtitle;
@@ -381,7 +381,7 @@ function ttUpdateContent(sub) {
             .map(a => `<li class="attribute-item"><i class="ti ti-chevron-right"></i>${a}</li>`)
             .join('');
     }
-    // Deportes con animación pop
+
     if (ttSportsIcons) {
         ttSportsIcons.classList.remove('tt-sports-anim');
         void ttSportsIcons.offsetWidth; // reflow fuerza re-inicio de animación
@@ -392,7 +392,7 @@ function ttUpdateContent(sub) {
     }
 }
 
-// ── Render completo con animación texto ───────────────────────────────────────
+// ── Render completo ───────────────────────────────────────
 function ttRender(animate = true) {
     const tipo = tournamentTypes[ttCurrentType];
     const sub  = tipo.subtipos[ttCurrentSub];

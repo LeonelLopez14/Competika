@@ -11,6 +11,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="bg/tailwindcss">
+        @theme {
+        --sun-glare:  rgb(165, 250, 189);
+        --sun-glare-dark:        #43C59E;
+        --sun-glare-light:       #80ceb6;
+        --exuberant-orange:      #3B82F6;
+        --exuberant-orange-dark: #1D4ED8;
+        --exuberant-orange-light:#93C5FD;
+        --blue-violet:           #5f1fc5;
+        --blue-violet-dark:      #6a23dc;
+        --blue-violet-light:     #824cda;
+        --cloud-dancer:          #F0EEE9;
+        --darkest-hour:          #212121;
+        --font-display: "Finlandica Text", serif;
+        --font-body:    "DM Sans", sans-serif;
+        --font-mono:    "Fira Code", monospace;
+        --nav-h: 72px;    --color-clifford: #da373d;
+        }
+    </style>
     <title>FORMULARIO</title>
 </head>
 <body>
@@ -59,8 +79,78 @@
         </div>
     </header>
     <main id="content">
-        <section id="tournament-types">
-            
+        <section id="tournament-form">
+            <div class="tournament-selector-container">
+                <div class="top-container-selector">
+                    <i class="ti ti-trophy"></i><span>Nuevo torneo</span>
+                    <h1 class="selector-title">Elige el formato</h1>
+                    <p class="selector-paragraph">Selecciona el tipo de torneo que mejor se adapte a tu competencia.</p>
+                </div>
+                <div class="flex items-center p-4 text-white w-fit">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg--sun-glare flex items-center justify-center font-semibold">
+                    1
+                </div>
+                <span class="ml-2 font-medium">Formato</span>
+            </div>
+                <span class="mx-4 text-gray-400">›</span>
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-slate-700 text-gray-300 flex items-center justify-center font-semibold">
+                    2
+                </div>
+                <span class="ml-2 text-gray-400">Detalles</span>
+            </div>
+            </div>
+            <div class="card-container">
+                <div class="card-tournament-type">
+                    <i class="ti ti-trophy"></i>
+                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
+                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
+                    <i class="ti ti-check"></i>
+                </div>
+                <div class="card-tournament-type">
+                    <i class="ti ti-trophy"></i>
+                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
+                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
+                    <i class="ti ti-check"></i>
+                </div>
+                <div class="card-tournament-type">
+                    <i class="ti ti-trophy"></i>
+                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
+                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
+                    <i class="ti ti-check"></i>
+                </div>
+                <div class="card-tournament-type">
+                    <i class="ti ti-trophy"></i>
+                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
+                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
+                    <i class="ti ti-check"></i>
+                </div>
+                <div class="card-tournament-type">
+                    <i class="ti ti-trophy"></i>
+                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
+                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
+                    <i class="ti ti-check"></i>
+                </div>
+                <div class="card-tournament-type">
+                    <i class="ti ti-trophy"></i>
+                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
+                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
+                    <i class="ti ti-check"></i>
+                </div>
+            </div>
+            <button name="btn-continue" type="submit" class="btn-continue">Continuar ></button>
+        </div>
+        <div class="form-container">
+            <label for="form-name"><i class="ti ti-trophy"></i>Nombre del torneo</label>
+            <input type="text" name="form-name" id="form-name">
+            <label for="sport-selector"><i class="ti ti-ball-football"></i>Deporte</label>
+            <select name="sport-selector">
+                <option value="small">Small</option>
+                <option value="family">Family Sedan</option>
+                <option value="lux">Luxury</option>
+            </select>
+        </div>
         </section>
         <!-- ======== BANNER ======== -->
         <section id="banner">
