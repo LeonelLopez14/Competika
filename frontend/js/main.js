@@ -371,6 +371,23 @@ const ttSubNext        = document.getElementById('tt-sub-next');
 const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
 
 // ── Actualiza el contenido sin animación de salida ────────────────────────────
+const sportNames = {
+    'ti-ball-football':         'Fútbol',
+    'ti-ball-basketball':       'Basketball',
+    'ti-ball-volleyball':       'Volleyball',
+    'ti-ball-tennis':           'Tenis',
+    'ti-ball-american-football':'Futbol americano',
+    'ti-ball-baseball':         'Baseball',
+    'ti-chess':                 'Ajedrez',
+    'ti-cards':                 'Cartas',
+    'ti-device-gamepad-2':      'Videojuegos',
+    'ti-swimming':              'Natación',
+    'ti-run':                   'Running',
+    'ti-karate':                'Artes marciales',
+    'ti-bell-school':           'Boxeo',
+    'ti-gymnastics':            'Gimnasia',
+};
+
 function ttUpdateContent(sub) {
     if (ttTitle)        ttTitle.textContent       = sub.title;
     if (ttSubtitleEl)   ttSubtitleEl.textContent  = sub.subtitle;
@@ -386,7 +403,13 @@ function ttUpdateContent(sub) {
         ttSportsIcons.classList.remove('tt-sports-anim');
         void ttSportsIcons.offsetWidth; // reflow fuerza re-inicio de animación
         ttSportsIcons.innerHTML = sub.sports.slice(0, 5)
-            .map(icon => `<i class="icon-sports-supported ti ${icon}"></i>`)
+            .map(icon => {
+                const nombre = sportNames[icon] || icon;
+                return `<span class="sport-icon-wrap">
+                    <i class="icon-sports-supported ti ${icon}"></i>
+                    <span class="sport-tooltip">${nombre}</span>
+                </span>`;
+            })
             .join('');
         ttSportsIcons.classList.add('tt-sports-anim');
     }
