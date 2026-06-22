@@ -12,23 +12,22 @@
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style type="bg/tailwindcss">
+    <style type="text/tailwindcss">
         @theme {
-        --sun-glare:  rgb(165, 250, 189);
-        --sun-glare-dark:        #43C59E;
-        --sun-glare-light:       #80ceb6;
-        --exuberant-orange:      #3B82F6;
-        --exuberant-orange-dark: #1D4ED8;
-        --exuberant-orange-light:#93C5FD;
-        --blue-violet:           #5f1fc5;
-        --blue-violet-dark:      #6a23dc;
-        --blue-violet-light:     #824cda;
-        --cloud-dancer:          #F0EEE9;
-        --darkest-hour:          #212121;
-        --font-display: "Finlandica Text", serif;
-        --font-body:    "DM Sans", sans-serif;
-        --font-mono:    "Fira Code", monospace;
-        --nav-h: 72px;    --color-clifford: #da373d;
+            --color-sun-glare: rgb(165, 250, 189);
+            --color-sun-glare-dark: #43C59E;
+            --color-sun-glare-light: #80ceb6;
+            --color-exuberant-orange: #3B82F6;
+            --color-exuberant-orange-dark: #1D4ED8;
+            --color-exuberant-orange-light: #93C5FD;
+            --color-blue-violet: #5f1fc5;
+            --color-blue-violet-dark: #6a23dc;
+            --color-blue-violet-light: #824cda;
+            --color-cloud-dancer: #F0EEE9;
+            --color-darkest-hour: #212121;
+            --font-display: "Finlandica Text", serif;
+            --font-body: "DM Sans", sans-serif;
+            --font-mono: "Fira Code", monospace;
         }
     </style>
     <title>FORMULARIO</title>
@@ -79,78 +78,286 @@
         </div>
     </header>
     <main id="content">
-        <section id="tournament-form">
-            <div class="tournament-selector-container">
-                <div class="top-container-selector">
-                    <i class="ti ti-trophy"></i><span>Nuevo torneo</span>
-                    <h1 class="selector-title">Elige el formato</h1>
-                    <p class="selector-paragraph">Selecciona el tipo de torneo que mejor se adapte a tu competencia.</p>
+        <section id="tournament-form" class="relative z-[1] px-[5%] pb-50" style="padding-top: calc(var(--nav-h) + 48px);">
+            <form id="tf-form" novalidate class="mx-auto flex max-w-full flex-col items-center gap-10">
+              <div id="tf-wizard" class="tf-wizard flex w-full flex-col items-center gap-10">
+
+                <!-- ===== HEADER + STEP INDICATOR ===== -->
+                <div class="flex w-full flex-col items-center gap-4 text-center ">
+                    <span id="new-tournament" class="inline-flex justify-center items-center gap-2 rounded-full border border-blue-violet/25 bg-blue-violet/10 px-4 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.2em] text-blue-violet-dark">
+                        <i class="ti ti-trophy"></i> Nuevo torneo
+                    </span>
+                    <h1 id="tf-title" class="font-display text-4xl font-black uppercase tracking-tight text-darkest-hour sm:text-5xl">Elige el formato</h1>
+                    <p id="tf-subtitle" class="max-w-xl text-sm text-darkest-hour/55 sm:text-base">Selecciona el tipo de torneo que mejor se adapte a tu competencia.</p>
+
+                    <div class="mt-2 flex items-center gap-3 sm:gap-4">
+                        <div class="tf-pill tf-pill-active flex items-center gap-2" id="tf-step1-pill">
+                            <span class="tf-pill-num flex h-8 w-8 items-center justify-center rounded-full font-mono text-sm font-bold">1</span>
+                            <span class="tf-step-label font-body text-xs font-bold uppercase tracking-widest sm:text-sm">Formato</span>
+                        </div>
+                        <i class="ti ti-chevron-right text-darkest-hour/20"></i>
+                        <div class="tf-pill flex items-center gap-2" id="tf-step2-pill">
+                            <span class="tf-pill-num flex h-8 w-8 items-center justify-center rounded-full font-mono text-sm font-bold">2</span>
+                            <span class="tf-step-label font-body text-xs font-bold uppercase tracking-widest sm:text-sm">Detalles</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center p-4 text-white w-fit">
-            <div class="flex items-center">
-                <div class="w-8 h-8 rounded-full bg--sun-glare flex items-center justify-center font-semibold">
-                    1
+
+                <!-- ===== PASO 1 — FORMATO ===== -->
+                <div id="tf-step1" class="flex w-full flex-col items-center gap-8 justify-center">
+                    <div id="tf-format-grid" class="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+                    <button type="button" id="tf-continue-btn" disabled
+                        class="inline-flex justify-center items-center gap-2  rounded-xl bg-sun-glare px-9 py-4 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:shadow-none">
+                        Continuar <i class="ti ti-chevron-right"></i>
+                    </button>
                 </div>
-                <span class="ml-2 font-medium">Formato</span>
+
+                <!-- ===== PASO 2 — DETALLES ===== -->
+                <div id="tf-step2" class="hidden flex w-full flex-col gap-8">
+
+                    <!-- Variante de formato + guía visual de estructura -->
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
+                        <div id="variant-container" class="flex flex-col content-center gap-4 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
+                            <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                                <i class="ti ti-list-details text-blue-violet-dark"></i> Variante del formato
+                            </h3>
+                            <div id="tf-subtype-grid" class="grid grid-cols-1 gap-3 sm:grid-cols-2"></div>
+                        </div>
+
+                        <div class="flex flex-col gap-3 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
+                            <h3 class="flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wide text-darkest-hour">
+                                <i class="ti ti-sitemap text-blue-violet-dark"></i> Cómo se estructura
+                            </h3>
+                            <div class="flex flex-col gap-3">
+    <div id="tf-structure-preview"
+        class="flex min-h-65 w-full items-center justify-center text-blue-violet">
+    </div>
+
+    <div id="tf-subtype-detail"></div>
+</div>
+                    </div>
+
+                    <!-- Datos del torneo -->
+<div class="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="flex flex-col gap-6">
+
+        <!-- Datos -->
+        <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 sm:p-8">
+
+            <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                <i class="ti ti-clipboard-text text-blue-violet-dark"></i>
+                Datos del torneo
+            </h3>
+
+            <div class="grid grid-cols-1 gap-5 ">
+                <div class="input-group">
+                    <input type="text" id="tf-name" class="input-field" placeholder=" " required>
+                    <label id="tf-name-ph" for="tf-name" class="floating-label">
+                        Nombre del torneo
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="input-group">
+                        <input type="date" id="tf-start-date" class="input-field" placeholder=" " required>
+                        <label for="tf-start-date" class="floating-label">
+                            Fecha de inicio
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="number" id="tf-max-participants" class="input-field" placeholder=" " min="2">
+                        <label for="tf-max-participants" class="floating-label">
+                            Cantidad de participantes
+                        </label>
+                    </div>
+                </div>
             </div>
-                <span class="mx-4 text-gray-400">›</span>
-            <div class="flex items-center">
-                <div class="w-8 h-8 rounded-full bg-slate-700 text-gray-300 flex items-center justify-center font-semibold">
-                    2
-                </div>
-                <span class="ml-2 text-gray-400">Detalles</span>
-            </div>
-            </div>
-            <div class="card-container">
-                <div class="card-tournament-type">
-                    <i class="ti ti-trophy"></i>
-                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
-                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
-                    <i class="ti ti-check"></i>
-                </div>
-                <div class="card-tournament-type">
-                    <i class="ti ti-trophy"></i>
-                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
-                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
-                    <i class="ti ti-check"></i>
-                </div>
-                <div class="card-tournament-type">
-                    <i class="ti ti-trophy"></i>
-                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
-                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
-                    <i class="ti ti-check"></i>
-                </div>
-                <div class="card-tournament-type">
-                    <i class="ti ti-trophy"></i>
-                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
-                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
-                    <i class="ti ti-check"></i>
-                </div>
-                <div class="card-tournament-type">
-                    <i class="ti ti-trophy"></i>
-                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
-                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
-                    <i class="ti ti-check"></i>
-                </div>
-                <div class="card-tournament-type">
-                    <i class="ti ti-trophy"></i>
-                    <h3 class="card-type-name">Nombre del tipo de torneo</h3>
-                    <p class="card-type-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus, quasi.</p>
-                    <i class="ti ti-check"></i>
-                </div>
-            </div>
-            <button name="btn-continue" type="submit" class="btn-continue">Continuar ></button>
         </div>
-        <div class="form-container">
-            <label for="form-name"><i class="ti ti-trophy"></i>Nombre del torneo</label>
-            <input type="text" name="form-name" id="form-name">
-            <label for="sport-selector"><i class="ti ti-ball-football"></i>Deporte</label>
-            <select name="sport-selector">
-                <option value="small">Small</option>
-                <option value="family">Family Sedan</option>
-                <option value="lux">Luxury</option>
-            </select>
+
+        <!-- Costos -->
+        <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 sm:p-8">
+
+            <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                <i class="ti ti-cash text-blue-violet-dark"></i>
+                Costos del torneo
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <div class="input-group">
+                    <input type="number" id="tf-entry-fee" class="input-field" placeholder=" ">
+                    <label for="tf-entry-fee" class="floating-label">
+                        Costo inscripción
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="tf-currency" class="input-field" placeholder=" ">
+                    <label for="tf-currency" class="floating-label">
+                        Moneda
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="number" id="tf-field-cost" class="input-field" placeholder=" ">
+                    <label for="tf-field-cost" class="floating-label">
+                        Costo alquiler cancha
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="number" id="tf-referee-cost" class="input-field" placeholder=" ">
+                    <label for="tf-referee-cost" class="floating-label">
+                        Costo árbitro
+                    </label>
+                </div>
+
+            </div>
+
         </div>
+
+        <!-- Árbitro -->
+        <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 sm:p-8">
+
+            <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                <i class="ti ti-whistle text-blue-violet-dark"></i>
+                Árbitro principal
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+                <div class="input-group">
+                    <input type="text" id="tf-referee-name" class="input-field" placeholder=" ">
+                    <label for="tf-referee-name" class="floating-label">
+                        Nombre
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="tel" id="tf-referee-phone" class="input-field" placeholder=" ">
+                    <label for="tf-referee-phone" class="floating-label">
+                        Teléfono
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="email" id="tf-referee-email" class="input-field" placeholder=" ">
+                    <label for="tf-referee-email" class="floating-label">
+                        Correo
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div class="flex flex-col gap-6">
+
+        <!-- Premios -->
+        <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
+
+            <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                <i class="ti ti-medal text-blue-violet-dark"></i>
+                Premios
+            </h3>
+
+            <div class="input-group">
+                <textarea id="tf-prizes" class="input-field" style="height:auto;min-height:96px;padding-top:14px;resize:vertical;" rows="3" placeholder=" "></textarea>
+                <label for="tf-prizes" class="floating-label">
+                    Descripción de los premios
+                </label>
+            </div>
+        </div>
+
+        <!-- Organizador -->
+        <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
+
+            <div>
+                <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                    <i class="ti ti-user-circle text-blue-violet-dark"></i>
+                    Contacto del organizador
+                </h3>
+
+                <p class="mt-1 text-xs text-darkest-hour/45">
+                    Así los participantes podrán comunicarse ante cualquier duda.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-4">
+
+                <div class="input-group">
+                    <input type="text" id="tf-organizer-name" class="input-field" placeholder=" ">
+                    <label for="tf-organizer-name" class="floating-label">
+                        Nombre
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="tel" id="tf-organizer-phone" class="input-field" placeholder=" ">
+                    <label for="tf-organizer-phone" class="floating-label">
+                        Teléfono
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <input type="email" id="tf-organizer-email" class="input-field" placeholder=" ">
+                    <label for="tf-organizer-email" class="floating-label">
+                        Correo electrónico
+                    </label>
+                </div>
+
+            </div>
+
+        </div>
+                            <!-- Botones -->
+                    <div id="btns-container" class="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
+                        <button type="button" id="tf-back-btn"
+                            class="inline-flex items-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
+                            <i class="ti ti-chevron-left"></i> Atrás
+                        </button>
+                        <button type="submit" id="tf-submit-btn"
+                            class="inline-flex items-center w-40 h-10 gap-2 rounded-xl bg-sun-glare px-9 py-4 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                            <i class="ti ti-bolt"></i> Crear Torneo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+
+</div>
+
+
+
+                <!-- ===== CONFIRMACIÓN ===== -->
+                <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-8 py-16 text-center">
+                    <span class="tf-success-icon flex h-16 w-16 items-center justify-center rounded-full bg-sun-glare-dark text-3xl text-darkest-hour">
+                        <i class="ti ti-trophy"></i>
+                    </span>
+                    <h2 class="font-display text-2xl font-black uppercase text-darkest-hour">¡Torneo creado!</h2>
+                    <p class="text-sm text-darkest-hour/60">
+                        <span data-tf-success-name class="font-bold text-darkest-hour"></span>
+                        ya está listo. Pronto vas a poder gestionar participantes, calendario y resultados desde tu panel.
+                    </p>
+                    <div class="mt-2 flex flex-col gap-3 sm:flex-row">
+                        <a href="tournament_search.html"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                            <i class="ti ti-eye"></i> Ver torneos
+                        </a>
+                        <button type="button" id="tf-reset-btn"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
+                            <i class="ti ti-plus"></i> Crear otro torneo
+                        </button>
+                    </div>
+                </div>
+            </form>
         </section>
         <!-- ======== BANNER ======== -->
         <section id="banner">

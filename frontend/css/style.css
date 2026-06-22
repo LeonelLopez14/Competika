@@ -29,7 +29,11 @@
     --nav-h: 72px;
 }
 
-html { scroll-behavior: smooth; }
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    width: 100%;
+}
 
 body {
     font-family: var(--font-body);
@@ -70,9 +74,9 @@ body::after {
 /* ---------- VIDEO FONDO ---------- */
 #background-video {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     z-index: 0;        
     opacity: 0.13;
@@ -1755,4 +1759,152 @@ RESPONSIVE — tournament-types
 @media (max-width: 400px) {
     .info-h1 { font-size: 2.8rem; }
     .welcome-to-span { font-size: 1.8rem; }
+}
+
+/* =====================================================
+    TOURNAMENT FORM (tournament_form.html)
+    — Solo animaciones / transiciones / estados que Tailwind
+      (cargado vía CDN en ese HTML) no resuelve de forma limpia.
+      El layout, color y tipografía del formulario vive en Tailwind.
+   ===================================================== */
+
+/* ── Centrado "a prueba de CDN": las clases con corchetes
+   (max-w-[1160px], px-[5%]) dependen de que el compilador de
+   Tailwind por CDN las parsee bien en runtime; si eso falla,
+   esto garantiza el centrado igual usando CSS normal. ── */
+
+#new-tournament{
+    padding: 1%;
+}
+
+#tournament-form {
+    padding-left: 5%;
+    padding-right: 5%;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+#tf-form {
+    width: 100%;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+#tf-continue-btn{
+    margin-top: 2%;
+    margin-bottom: 5%;
+    width: 15rem;
+    height: 3rem;
+    font-size: 20px;
+}
+.tf-card {
+    padding: 5%;
+}
+
+#tf-step2 *{
+    padding: 1.5%;
+}
+
+#tf-name-ph {
+    translate: 2px;
+}
+
+#btns-container {
+    padding-top: 20%;
+}
+/* ── Entrada del wizard completo ── */
+.tf-wizard { opacity: 0; }
+ 
+.tf-wizard.tf-ready {
+
+    animation: tfWizardIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+ 
+@keyframes tfWizardIn {
+    from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
+    to   { opacity: 1; transform: translateY(0);     filter: blur(0); }
+}
+ 
+/* ── Transición entre Paso 1 / Paso 2 / confirmación ── */
+.tf-step-anim {
+    animation: tfStepIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+ 
+@keyframes tfStepIn {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+ 
+/* ── Indicador de pasos (1 Formato › 2 Detalles) ── */
+.tf-pill-num {
+    background: rgba(33, 33, 33, 0.08);
+    color: rgba(33, 33, 33, 0.35);
+    transition: background-color 0.35s ease, color 0.35s ease, transform 0.35s ease;
+}
+ 
+.tf-step-label {
+    color: rgba(33, 33, 33, 0.35);
+    transition: color 0.35s ease;
+}
+ 
+.tf-pill-active .tf-pill-num {
+    background: var(--sun-glare-dark);
+    color: var(--darkest-hour);
+    transform: scale(1.06);
+}
+ 
+.tf-pill-active .tf-step-label { color: var(--darkest-hour); }
+ 
+/* ── Entrada escalonada de tarjetas de formato y chips de subtipo ── */
+#tf-format-grid > label,
+#tf-subtype-grid > label {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: tfCardIn 0.5s ease forwards;
+}
+ 
+#tf-format-grid > label:nth-child(1) { animation-delay: 0.05s; }
+#tf-format-grid > label:nth-child(2) { animation-delay: 0.11s; }
+#tf-format-grid > label:nth-child(3) { animation-delay: 0.17s; }
+#tf-format-grid > label:nth-child(4) { animation-delay: 0.23s; }
+#tf-format-grid > label:nth-child(5) { animation-delay: 0.29s; }
+ 
+#tf-subtype-grid > label:nth-child(1) { animation-delay: 0.04s; }
+#tf-subtype-grid > label:nth-child(2) { animation-delay: 0.10s; }
+#tf-subtype-grid > label:nth-child(3) { animation-delay: 0.16s; }
+ 
+@keyframes tfCardIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+ 
+/* ── Diagrama de estructura: pequeño "pop" al cambiar de subtipo ── */
+.tf-diagram-pop {
+    animation: tfDiagramPop 0.45s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+}
+ 
+@keyframes tfDiagramPop {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+}
+ 
+/* ── Ícono de la pantalla de confirmación ── */
+.tf-success-icon {
+    animation: tfTrophyBounce 2.4s ease-in-out infinite;
+}
+ 
+@keyframes tfTrophyBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%       { transform: translateY(-8px) rotate(-4deg); }
+}
+ 
+@media (prefers-reduced-motion: reduce) {
+    .tf-wizard, .tf-step-anim, .tf-diagram-pop,
+    #tf-format-grid > label, #tf-subtype-grid > label,
+    .tf-success-icon {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+    }
 }
