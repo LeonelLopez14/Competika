@@ -546,19 +546,13 @@ if (subArrows.length > 0) {
 
 // =====================================================================
 // TOURNAMENT FORM — wizard de creación de torneo (tournament_form.html)
-// -----------------------------------------------------------------------
-// Usa el array `tournamentTypes` (definido más arriba, compartido con
-// tournament_details.html) como única fuente de verdad. Para agregar,
-// quitar o renombrar un formato de torneo alcanza con editar ese array:
-// este bloque genera las tarjetas del Paso 1, los chips de subtipo del
-// Paso 2 y el diagrama de estructura automáticamente a partir de él.
 // =====================================================================
  
 const tfForm = document.getElementById('tf-form');
  
 if (tfForm) {
  
-    // ── Diagramas de estructura (uno por cada "diagram" de subtipo) ──────
+    // ── Diagramas de estructura  ──────
     const tfDiagrams = {
         roundrobin: `
             <svg viewBox="0 0 240 140" class="h-full w-full">
@@ -735,7 +729,7 @@ if (tfForm) {
  
     let tfSelectedTypeId = null;
  
-    // ── Paso 1: tarjetas de formato (data-driven desde tournamentTypes) ───
+    // ── Paso 1: tarjetas de formato  ───
     function tfRenderFormatCards() {
         if (!tfFormatGrid) return;
         tfFormatGrid.innerHTML = tournamentTypes.map(type => `
