@@ -409,22 +409,44 @@ const ttSubNext        = document.getElementById('tt-sub-next');
 const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
 
 // ── Actualiza el contenido ────────────────────────────
+
+const sportNames = {
+    'ti-ball-football':          'Fútbol',
+    'ti-ball-basketball':        'Basketball',
+    'ti-ball-volleyball':        'Volleyball',
+    'ti-ball-tennis':            'Tenis',
+    'ti-ball-american-football': 'Fútbol americano',
+    'ti-ball-baseball':          'Baseball',
+    'ti-chess':                  'Ajedrez',
+    'ti-cards':                  'Cartas',
+    'ti-device-gamepad-2':       'Videojuegos',
+    'ti-swimming':               'Natación',
+    'ti-run':                    'Running',
+    'ti-karate':                 'Artes marciales',
+    'ti-bell-school':            'Boxeo',
+    'ti-gymnastics':             'Gimnasia',
+};
+
 function ttUpdateContent(sub) {
     if (ttTitle)        ttTitle.textContent       = sub.title;
     if (ttSubtitleEl)   ttSubtitleEl.textContent  = sub.subtitle;
     if (ttDescriptionEl) ttDescriptionEl.textContent = sub.description;
-    // Atributos — recrear nodos para re-disparar la animación CSS
     if (ttAttrList) {
         ttAttrList.innerHTML = sub.attributes
             .map(a => `<li class="attribute-item"><i class="ti ti-chevron-right"></i>${a}</li>`)
             .join('');
     }
-
     if (ttSportsIcons) {
         ttSportsIcons.classList.remove('tt-sports-anim');
-        void ttSportsIcons.offsetWidth; // reflow fuerza re-inicio de animación
+        void ttSportsIcons.offsetWidth;
         ttSportsIcons.innerHTML = sub.sports.slice(0, 5)
-            .map(icon => `<i class="icon-sports-supported ti ${icon}"></i>`)
+            .map(icon => {
+                const nombre = sportNames[icon] || icon;
+                return `<span class="sport-icon-wrap">
+                    <i class="icon-sports-supported ti ${icon}"></i>
+                    <span class="sport-tooltip">${nombre}</span>
+                </span>`;
+            })
             .join('');
         ttSportsIcons.classList.add('tt-sports-anim');
     }
@@ -862,3 +884,299 @@ if (tfForm) {
     tfRenderFormatCards();
     requestAnimationFrame(() => { tfWizard?.classList.add('tf-ready'); });
 }
+
+/* =====================================================
+   TOURNAMENTS SEARCH 
+===================================================== */
+
+// Estado actual de los filtros
+let selectedSport  = cardData[0].title;
+let selectedStatus = "all";
+let searchText     = "";
+
+// Torneos de prueba
+const tournaments = [
+    {
+        nombre: "Copa Apertura",
+        deporte: "Fútbol",
+        ciudad: "Montevideo",
+        organizador: "Liga Uruguaya",
+        estado: "open",
+        nivel: "Pro",
+        formato: "Liga",
+        participantes: 10,
+        maxParticipantes: 16,
+        premio: "$80.000",
+        inscripcion: "$1200"
+    },
+    {
+        nombre: "Copa Apertura",
+        deporte: "Fútbol",
+        ciudad: "Montevideo",
+        organizador: "Liga Uruguaya",
+        estado: "open",
+        nivel: "Pro",
+        formato: "Liga",
+        participantes: 5,
+        maxParticipantes: 16,
+        premio: "$80.000",
+        inscripcion: "$1200"
+    },
+    {
+        nombre: "Copa Apertura",
+        deporte: "Fútbol",
+        ciudad: "Montevideo",
+        organizador: "Liga Uruguaya",
+        estado: "open",
+        nivel: "Pro",
+        formato: "Liga",
+        participantes: 1,
+        maxParticipantes: 16,
+        premio: "$80.000",
+        inscripcion: "$1200"
+    },
+    {
+        nombre: "Copa del Este",
+        deporte: "Fútbol",
+        ciudad: "Maldonado",
+        organizador: "Campus FC",
+        estado: "closing",
+        nivel: "Semi-Pro",
+        formato: "Eliminación",
+        participantes: 14,
+        maxParticipantes: 16,
+        premio: "$50.000",
+        inscripcion: "$1000"
+    },
+    {
+        nombre: "Basket Cup",
+        deporte: "Basketball",
+        ciudad: "Montevideo",
+        organizador: "FUBB",
+        estado: "open",
+        nivel: "Pro",
+        formato: "Liga",
+        participantes: 8,
+        maxParticipantes: 12,
+        premio: "$120.000",
+        inscripcion: "$1500"
+    },
+    {
+        nombre: "Volleyball Summer",
+        deporte: "Volleyball",
+        ciudad: "Canelones",
+        organizador: "Liga Costa",
+        estado: "closing",
+        nivel: "Amateur",
+        formato: "Grupos",
+        participantes: 14,
+        maxParticipantes: 16,
+        premio: "$18.000",
+        inscripcion: "$700"
+    },
+    {
+        nombre: "Copa Playa Norte",
+        deporte: "Volleyball",
+        ciudad: "Rocha",
+        organizador: "Club Atlántico",
+        estado: "full",
+        nivel: "Amateur",
+        formato: "Eliminación",
+        participantes: 16,
+        maxParticipantes: 16,
+        premio: "$12.000",
+        inscripcion: "$500"
+    }
+];
+
+/* --------------------------------------------------
+   1. DIBUJAR LAS CARDS DE DEPORTES
+-------------------------------------------------- */
+function renderSports() {
+    const grilla = document.getElementById("deportes-grilla");
+    grilla.innerHTML = "";
+
+    cardData.forEach(sport => {
+        const cantidad = tournaments.filter(t => t.deporte === sport.title).length;
+
+        const card = document.createElement("div");
+        card.className = "deporte-card" + (sport.title === selectedSport ? " active" : "");
+
+        card.style.setProperty("--ts-sport-color",  sport.color);
+        card.style.setProperty("--ts-sport-bg",     sport.bg);
+        card.style.setProperty("--ts-sport-shadow", sport.shadow);
+
+        card.innerHTML = `
+            <span class="deporte-badge">${cantidad}</span>
+            <div class="deporte-icono-box">
+                <i class="ti ${sport.icon}"></i>
+            </div>
+            <span class="deporte-etiqueta">${sport.title}</span>
+        `;
+
+        card.addEventListener("click", () => {
+            selectedSport = sport.title;
+            renderSports();
+            filterAndRender();
+            const elemento = document.getElementById("deporte-nombre");
+            const offset = elemento.getBoundingClientRect().top + window.scrollY - 200;
+            window.scrollTo({ top: offset, behavior: "smooth" });
+        });
+
+        grilla.appendChild(card);
+    });
+}
+
+/* --------------------------------------------------
+   2. DIBUJAR LAS CARDS DE TORNEOS
+-------------------------------------------------- */
+function renderTournaments(lista) {
+    const grilla     = document.getElementById("torneos-grilla");
+    const sinResult  = document.getElementById("sin-resultados");
+    grilla.innerHTML = "";
+
+    const sport = cardData.find(s => s.title === selectedSport);
+
+    // Actualizar encabezado siempre, haya o no torneos
+    document.getElementById("deporte-nombre").textContent  = sport.title;
+    document.getElementById("deporte-cantidad").textContent = `${lista.length} torneo${lista.length !== 1 ? "s" : ""} disponible${lista.length !== 1 ? "s" : ""}`;
+    document.getElementById("deporte-icono").className     = `ti ${sport.icon}`;
+    document.getElementById("deporte-icono-wrap").style.background = sport.bg;
+    document.getElementById("deporte-icono-wrap").style.color      = sport.color;
+
+    if (lista.length === 0) {
+        sinResult.classList.remove("hidden");
+        return;
+    }
+    sinResult.classList.add("hidden");
+
+    lista.forEach(t => {
+        const pct    = Math.round((t.participantes / t.maxParticipantes) * 100);
+        const isFull = t.estado === "full" || pct >= 100;
+
+        const barColor = isFull ? "#6b7280" : pct >= 85 ? "#f59e0b" : sport.color;
+
+        const estadoLabel = { open: "Abierto", closing: "Cierra pronto", full: "Completo" };
+        const estadoClase = { open: "estado-abierto", closing: "estado-cierra", full: "estado-completo" };
+
+        const nivelClase = {
+            "Amateur":  "nivel-amateur",
+            "Semi-Pro": "nivel-semipro",
+            "Pro":      "nivel-pro"
+        }[t.nivel] || "";
+
+        const card = document.createElement("div");
+        card.className = "torneo-card";
+
+        card.innerHTML = `
+            <div class="torneo-encabezado">
+                <div class="torneo-nombre-fila">
+                    <div class="torneo-deporte-icono">
+                        <i class="ti ${sport.icon}"></i>
+                    </div>
+                    <span class="torneo-nombre">${t.nombre}</span>
+                </div>
+                <span class="estado-badge ${estadoClase[t.estado]}">
+                    ${estadoLabel[t.estado]}
+                </span>
+            </div>
+
+            <div class="torneo-pills">
+                <span class="pill ${nivelClase}">${t.nivel}</span>
+                <span class="pill formato-pill">${t.formato}</span>
+            </div>
+
+            <div class="torneo-info">
+                <div class="torneo-info-fila">
+                    <i class="ti ti-map-pin"></i> ${t.ciudad}
+                </div>
+                <div class="torneo-info-fila">
+                    <i class="ti ti-user"></i> ${t.organizador}
+                </div>
+                <div class="torneo-info-fila torneo-premio">
+                    <i class="ti ti-trophy"></i> ${t.premio} en premios
+                </div>
+            </div>
+
+            <div class="torneo-participantes">
+                <div class="participantes-fila">
+                    <span class="participantes-label">Participantes</span>
+                    <span class="participantes-numero">
+                        ${t.participantes} / ${t.maxParticipantes}
+                    </span>
+                </div>
+                <div class="barra-fondo">
+                    <div class="barra-relleno" style="width:0%;" data-pct="${pct}"></div>
+                </div>
+            </div>
+
+            <div class="torneo-pie">
+                <div class="torneo-inscripcion">
+                    <i class="ti ti-ticket"></i> Inscripción: ${t.inscripcion}
+                </div>
+                ${isFull
+                    ? `<button class="btn-completo" disabled><i class="ti ti-lock"></i> Completo</button>
+                    <button class="btn-seguir"><i class="ti ti-eye"></i> Seguir</button>`
+                    : `<button class="btn-inscribirse"><i class="ti ti-door-enter"></i> Inscribirme</button>`
+                }
+            </div>
+        `;
+
+        grilla.appendChild(card);
+
+        card.querySelectorAll(".barra-relleno").forEach(barra => {
+            barra.offsetWidth;
+            const pct = parseInt(barra.dataset.pct);
+            barra.style.width = pct + "%";
+            if (pct >= 85) barra.classList.add("llena");
+            else if (pct >= 50) barra.classList.add("media");
+        });
+});
+
+
+    // Actualizar encabezado
+    document.getElementById("deporte-nombre").textContent  = sport.title;
+    document.getElementById("deporte-cantidad").textContent = `${lista.length} torneo${lista.length !== 1 ? "s" : ""} disponible${lista.length !== 1 ? "s" : ""}`;
+    document.getElementById("deporte-icono").className     = `ti ${sport.icon}`;
+    document.getElementById("deporte-icono-wrap").style.background = sport.bg;
+    document.getElementById("deporte-icono-wrap").style.color      = sport.color;
+}
+
+/* --------------------------------------------------
+   3. FILTRAR Y LLAMAR A renderTournaments
+-------------------------------------------------- */
+function filterAndRender() {
+    const query = searchText.toLowerCase();
+
+    const filtrados = tournaments.filter(t => {
+        if (t.deporte !== selectedSport) return false;
+        if (selectedStatus !== "all" && t.estado !== selectedStatus) return false;
+        if (query && !`${t.nombre} ${t.ciudad} ${t.organizador}`.toLowerCase().includes(query)) return false;
+        return true;
+    });
+
+    renderTournaments(filtrados);
+}
+
+/* --------------------------------------------------
+   4. EVENTOS
+-------------------------------------------------- */
+document.getElementById("buscador").addEventListener("input", e => {
+    searchText = e.target.value;
+    filterAndRender();
+});
+
+document.querySelectorAll(".btn-estado").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".btn-estado").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedStatus = btn.dataset.status;
+        filterAndRender();
+    });
+});
+
+/* --------------------------------------------------
+   5. ARRANQUE
+-------------------------------------------------- */
+renderSports();
+filterAndRender();
