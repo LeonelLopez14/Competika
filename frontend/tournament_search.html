@@ -7,18 +7,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
-    <title>BUSCADOR</title>
+    <link rel="stylesheet" href="css/search.css">
+    <title>Buscar Torneos — Competika</title>
 </head>
 <body>
-
-    <!-- VIDEO FONDO -->
-    <video autoplay muted loop playsinline id="background-video">
-        <source src="assets/video/Fondo pagg.mp4" type="video/mp4">
-    </video>
 
     <!-- NAVBAR -->
     <header id="menu">
@@ -26,7 +21,6 @@
             <a href="index.html" class="navbar-logo">
                 <img src="assets/img/competika.png" alt="Competika logo" class="logo">
             </a>
-
             <ul class="navbar-list" id="navbar-list">
                 <li class="nav-links"><a href="index.html">Inicio</a></li>
                 <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
@@ -34,18 +28,13 @@
                 <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
                 <li class="nav-links"><a href="register.html">Registrarse</a></li>
             </ul>
-
             <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
                 <span class="ham-line"></span>
                 <span class="ham-line"></span>
                 <span class="ham-line"></span>
             </button>
         </nav>
-
-        <!-- Backdrop oscuro -->
         <div class="mobile-backdrop" id="mobile-backdrop"></div>
-
-        <!-- Drawer lateral -->
         <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
             <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
             <p class="mobile-menu-logo">COMPETIKA</p>
@@ -58,11 +47,74 @@
             </ul>
         </div>
     </header>
+ 
     <main id="content">
-        <section id="tournament-types">
-            
-        </section>
-        <!-- ======== BANNER ======== -->
+
+    <!-- INTRO -->
+    <section id="buscar-intro">
+        <p id="buscar-subtitulo">Encontrá tu próxima competencia</p>
+        <h1 id="buscar-titulo">BUSCAR TORNEOS</h1>
+        <p id="buscar-descripcion">Inscribite o seguí los deportes que más te gustan.</p>
+    </section>
+
+    <!-- GRILLA DE DEPORTES -->
+    <section id="deportes-seccion">
+        <div id="deportes-grilla">
+            <!-- JS lo llena -->
+        </div>
+    </section>
+
+    <!-- LINEA DIVISORA -->
+    <div id="divisor"></div>
+
+    <!-- TORNEOS -->
+    <section id="torneos-seccion">
+
+        <!-- Encabezado del deporte seleccionado -->
+        <div id="deporte-encabezado">
+            <span id="deporte-icono-wrap">
+                <i id="deporte-icono"></i>
+            </span>
+            <div>
+                <h2 id="deporte-nombre"></h2>
+                <p id="deporte-cantidad"></p>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div id="filtros">
+            <div id="buscador-wrap">
+                <i class="ti ti-search" id="buscador-icono"></i>
+                <input
+                    type="text"
+                    id="buscador"
+                    placeholder="Buscá torneo, ciudad, organizador…"
+                    autocomplete="off"
+                >
+            </div>
+            <div id="filtros-estado">
+                <i class="ti ti-filter" id="filtro-icono"></i>
+                <button class="btn-estado active" data-status="all">Todos</button>
+                <button class="btn-estado" data-status="open">Abierto</button>
+                <button class="btn-estado" data-status="closing">Cierra pronto</button>
+                <button class="btn-estado" data-status="full">Completo</button>
+            </div>
+        </div>
+
+        <!-- Tarjetas de torneos -->
+        <div id="torneos-grilla">
+            <!-- JS lo llena -->
+        </div>
+
+        <!-- Sin resultados -->
+        <div id="sin-resultados" class="hidden">
+            <i class="ti ti-search" id="sin-resultados-icono"></i>
+            <p>No se encontraron torneos con esos filtros.</p>
+        </div>
+
+    </section>
+ 
+        <!-- ── BANNER ────────────────────────── -->
         <section id="banner">
             <div class="banner-bg">
                 <div class="banner-noise"></div>
@@ -92,8 +144,8 @@
             </div>
         </section>
     </main>
-
-    <!-- ======== FOOTER ======== -->
+ 
+    <!-- ── FOOTER ──────────────────────────────── -->
     <footer id="bottom">
         <div class="footer-inner">
             <div class="footer-col footer-col--brand">
@@ -112,7 +164,6 @@
                     </span>
                 </div>
             </div>
-
             <div class="footer-col footer-col--links">
                 <h4 class="footer-heading">Plataforma</h4>
                 <ul class="footer-links">
@@ -123,7 +174,6 @@
                     <li><a href="register.html">Registrarse</a></li>
                 </ul>
             </div>
-
             <div class="footer-col footer-col--social">
                 <h4 class="footer-heading">Comunidad</h4>
                 <div class="footer-social">
@@ -133,20 +183,18 @@
                     <a href="#" class="footer-social-link" aria-label="Discord"><i class="ti ti-brand-discord"></i></a>
                 </div>
                 <ul class="footer-links footer-links--legal">
-                    <li><a href="about.html">Sobre nosotros</a></li>
-                    <li><a href="contact.html">Contacto</a></li>
-                    <li><a href="privacy.html">Política de privacidad</a></li>
+                    <li><a href="#">Sobre nosotros</a></li>
+                    <li><a href="#">Contacto</a></li>
+                    <li><a href="#">Política de privacidad</a></li>
                     <li><a href="#">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
-
         <div class="footer-bottom">
             <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
             <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
         </div>
     </footer>
-
     <script src="js/main.js"></script>
 </body>
 </html>
