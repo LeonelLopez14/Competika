@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="assets/img/logologito.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-sun-glare: rgb(165, 250, 189);
+            --color-sun-glare-dark: #43C59E;
+            --color-sun-glare-light: #80ceb6;
+            --color-exuberant-orange: #3B82F6;
+            --color-exuberant-orange-dark: #1D4ED8;
+            --color-exuberant-orange-light: #93C5FD;
+            --color-blue-violet: #5f1fc5;
+            --color-blue-violet-dark: #6a23dc;
+            --color-blue-violet-light: #824cda;
+            --color-cloud-dancer: #F0EEE9;
+            --color-darkest-hour: #212121;
+            --font-display: "Finlandica Text", serif;
+            --font-body: "DM Sans", sans-serif;
+            --font-mono: "Fira Code", monospace;
+        }
+    </style>
+    <title>DASHBOARD</title>
+</head>
+<body>
+
+    <!-- VIDEO FONDO -->
+    <video autoplay muted loop playsinline id="background-video">
+        <source src="assets/video/Fondo pagg.mp4" type="video/mp4">
+    </video>
+
+    <!-- NAVBAR -->
+    <header id="menu">
+        <nav class="navbar">
+            <a href="index.html" class="navbar-logo">
+                <img src="assets/img/competika.png" alt="Competika logo" class="logo">
+            </a>
+            <ul class="navbar-list" id="navbar-list">
+                <li class="nav-links"><a href="index.html">Inicio</a></li>
+                <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
+                <li class="nav-links"><a href="tournament_details.html">Características</a></li>
+                <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
+                <li class="nav-links"><a href="register.html">Registrarse</a></li>
+            </ul>
+            <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+            </button>
+        </nav>
+        <div class="mobile-backdrop" id="mobile-backdrop"></div>
+        <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
+            <p class="mobile-menu-logo">COMPETIKA</p>
+            <ul class="mobile-menu-list">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="tournament_search.html">Torneos</a></li>
+                <li><a href="tournament_details.html">Características</a></li>
+                <li><a href="login.html">Iniciar sesión</a></li>
+                <li><a href="register.html">Registrarse</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- ===== DASHBOARD LAYOUT ===== -->
+    <div id="td-dashboard">
+
+        <!-- Sidebar toggle (mobile) -->
+        <button id="td-sidebar-toggle" aria-label="Abrir menú del torneo">
+            <i class="ti ti-layout-sidebar"></i>
+        </button>
+        <div id="td-sidebar-backdrop"></div>
+
+        <!-- ── SIDEBAR ── -->
+        <aside id="td-sidebar">
+            <div class="td-brand">
+                <img src="assets/img/logologito.png" alt="Competika" class="td-brand-logo">
+                <span class="td-brand-name">COMPETIKA</span>
+            </div>
+
+            <div class="td-tournament-info" id="td-sidebar-info">
+                <!-- populated by JS -->
+            </div>
+
+            <nav class="td-nav">
+                <ul id="td-nav-list">
+                    <li class="td-nav-item active" data-section="overview">
+                        <i class="ti ti-layout-dashboard"></i><span>Overview</span>
+                    </li>
+                    <li class="td-nav-item" data-section="participantes">
+                        <i class="ti ti-users"></i><span>Participantes</span>
+                    </li>
+                    <li class="td-nav-item" data-section="resultados">
+                        <i class="ti ti-chart-bar"></i><span>Resultados</span>
+                    </li>
+                    <li class="td-nav-item" data-section="configuracion">
+                        <i class="ti ti-settings"></i><span>Configuración</span>
+                    </li>
+                    <li class="td-nav-item" data-section="calendario">
+                        <i class="ti ti-calendar"></i><span>Calendario</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <button class="td-share-sidebar" id="td-share-sidebar">
+                <i class="ti ti-share"></i>
+                <span>Compartir Torneo</span>
+            </button>
+        </aside>
+
+        <!-- ── MAIN CONTENT ── -->
+        <main id="td-main">
+            <div class="td-content-header" id="td-content-header">
+                <div>
+                    <p class="td-breadcrumb" id="td-breadcrumb"></p>
+                    <h1 class="td-page-title" id="td-page-title"></h1>
+                </div>
+                <button class="td-share-top" id="td-share-top">
+                    <i class="ti ti-share"></i> Compartir
+                </button>
+            </div>
+            <div id="td-section-content">
+                <!-- populated by JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast de confirmación -->
+    <div id="td-toast" class="td-toast" aria-live="polite"></div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
