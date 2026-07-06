@@ -2586,6 +2586,141 @@ RESPONSIVE — tournament-types
     .td-stats-row--sm { grid-template-columns: 1fr; }
     .td-cal-teams { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
+ 
+/* ── Selector de torneos ── */
+.td-selector-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+ 
+.td-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+}
+ 
+.td-selector-card {
+    background: rgba(240,238,233,0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(95,31,197,0.1);
+    border-radius: 18px;
+    padding: 22px 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.td-selector-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(95,31,197,0.12);
+    border-color: rgba(95,31,197,0.25);
+}
+ 
+.td-sc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+.td-sc-sport {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--blue-violet-dark);
+    margin-bottom: 4px;
+}
+.td-sc-name {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 800;
+    color: var(--darkest-hour);
+    line-height: 1.2;
+}
+.td-sc-status {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 20px;
+}
+ 
+.td-sc-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.td-sc-meta span {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 600;
+    color: rgba(33,33,33,0.5);
+}
+.td-sc-meta i { color: var(--blue-violet-dark); font-size: 14px; }
+ 
+.td-sc-footer {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+}
+.td-sc-enter { flex: 1; justify-content: center; }
+.td-sc-delete {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(220,38,38,0.07);
+    border: 1.5px solid rgba(220,38,38,0.2);
+    color: #dc2626;
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+}
+.td-sc-delete:hover { background: rgba(220,38,38,0.15); transform: scale(1.08); }
+ 
+/* ── Empty state ── */
+.td-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 80px 24px;
+    text-align: center;
+}
+.td-empty-state--sm { padding: 40px 20px; }
+ 
+.td-empty-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    background: rgba(95,31,197,0.07);
+    font-size: 2.5rem;
+    color: var(--blue-violet-dark);
+}
+.td-empty-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem; font-weight: 800;
+    color: var(--darkest-hour);
+}
+.td-empty-sub {
+    font-size: 14px;
+    color: rgba(33,33,33,0.45);
+    max-width: 380px;
+    line-height: 1.6;
+}
+ 
+/* ── Nav item "selector" (Mis Torneos) ── */
+.td-nav-item[data-section="selector"] {
+    margin-top: auto;
+    border-top: 1px solid rgba(95,31,197,0.08);
+    padding-top: 14px;
+    margin-left: -10px;
+    margin-right: -10px;
+    padding-left: 24px;
+    border-radius: 0;
+}
+.td-nav-item[data-section="selector"]:hover {
+    background: rgba(95,31,197,0.06);
+    border-radius: 0;
+}
 
 /* =====================================================
    TOURNAMENT SEARCH
