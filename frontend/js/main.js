@@ -568,13 +568,19 @@ if (subArrows.length > 0) {
 
 // =====================================================================
 // TOURNAMENT FORM — wizard de creación de torneo (tournament_form.html)
+// -----------------------------------------------------------------------
+// Usa el array `tournamentTypes` (definido más arriba, compartido con
+// tournament_details.html) como única fuente de verdad. Para agregar,
+// quitar o renombrar un formato de torneo alcanza con editar ese array:
+// este bloque genera las tarjetas del Paso 1, los chips de subtipo del
+// Paso 2 y el diagrama de estructura automáticamente a partir de él.
 // =====================================================================
  
 const tfForm = document.getElementById('tf-form');
  
 if (tfForm) {
  
-    // ── Diagramas de estructura  ──────
+    // ── Diagramas de estructura (uno por cada "diagram" de subtipo) ──────
     const tfDiagrams = {
         roundrobin: `
             <svg viewBox="0 0 240 140" class="h-full w-full">
@@ -751,11 +757,11 @@ if (tfForm) {
  
     let tfSelectedTypeId = null;
  
-    // ── Paso 1: tarjetas de formato  ───
+    // ── Paso 1: tarjetas de formato (data-driven desde tournamentTypes) ───
     function tfRenderFormatCards() {
         if (!tfFormatGrid) return;
         tfFormatGrid.innerHTML = tournamentTypes.map(type => `
-            <label class="tf-card group relative flex cursor-pointer flex-col gap-3 justify-center items-center rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-violet/40 hover:shadow-[0_18px_40px_rgba(95,31,197,0.12)] has-[:checked]:border-sun-glare-dark has-[:checked]:bg-sun-glare/10 has-[:checked]:shadow-[0_18px_40px_rgba(67,197,158,0.18)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-violet-dark has-[:focus-visible]:ring-offset-2">
+            <label class="tf-card group relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-violet/40 hover:shadow-[0_18px_40px_rgba(95,31,197,0.12)] has-[:checked]:border-sun-glare-dark has-[:checked]:bg-sun-glare/10 has-[:checked]:shadow-[0_18px_40px_rgba(67,197,158,0.18)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-violet-dark has-[:focus-visible]:ring-offset-2">
                 <input type="radio" name="tf-format" id="tf-format-${type.id}" value="${type.id}" class="peer sr-only" required>
                 ${type.badge ? `<span class="absolute right-5 top-5 rounded-full bg-blue-violet-dark px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-cloud-dancer">${type.badge}</span>` : ''}
                 <span class="flex h-10 w-12 items-center justify-center rounded-xl bg-blue-violet/10 text-2xl text-blue-violet-dark transition-colors duration-300 peer-checked:bg-sun-glare-dark peer-checked:text-darkest-hour">
@@ -855,15 +861,79 @@ if (tfForm) {
         tfStartDate.min = new Date().toISOString().split('T')[0];
     }
  
-    // ── Envío del formulario (sin backend por ahora: estado de éxito) ──────
+    // ── Envío del formulario ───────────────────────────────────────────────
     tfForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (!tfForm.reportValidity()) return;
  
+        // Validación mínima: solo que haya nombre de torneo
+        const name = document.getElementById('tf-name')?.value.trim();
+        if (!name) {
+            document.getElementById('tf-name')?.focus();
+            return;
+        }
+ 
+        const subChecked = document.querySelector('input[name="tf-subtype"]:checked');
+        const typeObj    = tournamentTypes.find(t => t.id === tfSelectedTypeId);
+        const subObj     = typeObj?.subtipos.find(s => s.id === subChecked?.value);
+ 
+        const val = id => document.getElementById(id)?.value.trim() || '';
+ 
+        const tournament = {
+            id:           Date.now().toString(),
+            name,
+            formatTypeId: tfSelectedTypeId  || '',
+            formatSubId:  subChecked?.value || '',
+            formatLabel:  subObj?.title || typeObj?.title || '',
+            maxTeams:     parseInt(val('tf-max-participants')) || 0,
+            startDate:    val('tf-start-date'),
+            status:       'pending',
+            costs: {
+                entryFee:    parseFloat(val('tf-entry-fee'))    || 0,
+                currency:    val('tf-currency'),
+                fieldCost:   parseFloat(val('tf-field-cost'))   || 0,
+                refereeCost: parseFloat(val('tf-referee-cost')) || 0,
+            },
+            referee: {
+                name:  val('tf-referee-name'),
+                phone: val('tf-referee-phone'),
+                email: val('tf-referee-email'),
+            },
+            prizesText: val('tf-prizes'),
+            prizes:     [],
+            organizer: {
+                name:  val('tf-organizer-name'),
+                phone: val('tf-organizer-phone'),
+                email: val('tf-organizer-email'),
+            },
+            teams:     [],
+            matches:   [],
+            createdAt: new Date().toISOString(),
+        };
+ 
+        // Guardar en localStorage
+        try {
+            const saved = JSON.parse(localStorage.getItem('competika_tournaments') || '[]');
+            saved.push(tournament);
+            localStorage.setItem('competika_tournaments', JSON.stringify(saved));
+        } catch (err) {
+            console.error('Error guardando torneo:', err);
+        }
+ 
+        // Actualizar el panel de éxito via JS (sin tocar el HTML)
+        // — nombre del torneo en el texto
+        const successNameEl = tfSuccess?.querySelector('[data-tf-success-name]');
+        if (successNameEl) successNameEl.textContent = name;
+ 
+        // — cambiar el link "Ver torneos" para que apunte al dashboard con el ID
+        const dashLink = tfSuccess?.querySelector('a');
+        if (dashLink) {
+            dashLink.href = `tournament_dashboard.html?t=${tournament.id}`;
+            dashLink.innerHTML = `<i class="ti ti-layout-dashboard"></i> Ir al Dashboard`;
+        }
+ 
+        // Ocultar wizard y mostrar panel de éxito
+        if (tfWizard) tfWizard.classList.add('hidden');
         if (tfSuccess) {
-            const nameEl = tfSuccess.querySelector('[data-tf-success-name]');
-            if (nameEl) nameEl.textContent = tfNameInput?.value || 'tu torneo';
-            tfWizard?.classList.add('hidden');
             tfSuccess.classList.remove('hidden', 'tf-step-anim');
             void tfSuccess.offsetWidth;
             tfSuccess.classList.add('tf-step-anim');
@@ -871,13 +941,16 @@ if (tfForm) {
         }
     });
  
+    // ── Crear otro torneo (reset) ──────────────────────────────────────────
     document.getElementById('tf-reset-btn')?.addEventListener('click', () => {
         tfForm.reset();
         tfSelectedTypeId = null;
         if (tfContinueBtn) tfContinueBtn.disabled = true;
-        tfSuccess?.classList.add('hidden');
-        tfWizard?.classList.remove('hidden');
+        if (tfSuccess) tfSuccess.classList.add('hidden');
+        if (tfWizard)  tfWizard.classList.remove('hidden');
+        tfRenderFormatCards();
         tfShowStep(1);
+        tfWizard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
  
     // ── Init ─────────────────────────────────────────────────────────────
