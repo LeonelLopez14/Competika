@@ -1,7 +1,5 @@
 /* =====================================================
    COMPETIKA — navbar-user.css
-   Campana de notificaciones + avatar de usuario en el navbar.
-   Compartido por index.html, profile.html y profile_configuration.html.
    ===================================================== */
 
 .navbar-user {
@@ -134,7 +132,7 @@
     color: rgba(33,33,33,0.4);
 }
 
-/* ── Avatar (pastilla: foto+nombre enlazan a perfil / flecha abre menú) ── */
+/* ── Avatar ── */
 .nav-avatar-wrap {
     position: relative;
     display: flex;
@@ -221,8 +219,8 @@
     border-bottom: 1px solid rgba(33,33,33,0.08);
     margin-bottom: 6px;
 }
-.nud-name { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: var(--darkest-hour); }
-.nud-email { font-size: 12px; color: rgba(33,33,33,0.45); }
+.nud-name { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: var(--darkest-hour); overflow-wrap: break-word; }
+.nud-email { font-size: 12px; color: rgba(33,33,33,0.45); overflow-wrap: break-word; }
 
 .nud-item {
     display: flex;
@@ -255,7 +253,6 @@
     .nav-bell { width: 36px; height: 36px; font-size: 16px; }
     .navbar-user { gap: 8px; }
 
-    /* Los desplegables se anclan al viewport para que nunca se corten en pantallas angostas */
     .nav-notif-dropdown,
     .nav-user-dropdown {
         position: fixed;

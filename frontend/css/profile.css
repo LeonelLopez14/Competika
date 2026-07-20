@@ -1,7 +1,5 @@
 /* =====================================================
    COMPETIKA — profile.css
-   Estilos para profile.html y profile_configuration.html
-   Reutiliza las variables y tokens definidos en style.css
    ===================================================== */
 
 /* =====================================================
@@ -55,6 +53,8 @@
     border: 1px solid rgba(33,33,33,0.08);
     border-radius: 18px;
     padding: 26px;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .pf-card-header {
@@ -88,7 +88,9 @@
 /* =====================================================
    SIDEBAR IZQUIERDA — Perfil
    ===================================================== */
-.profile-sidebar { display: flex; flex-direction: column; gap: 22px; }
+.profile-sidebar { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+
+.profile-content-main { min-width: 0; }
 
 .pf-identity {
     display: flex;
@@ -123,12 +125,19 @@
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--darkest-hour);
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .pf-email {
     font-size: 13.5px;
     color: rgba(33,33,33,0.5);
     margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
 }
 
 .pf-edit-btn {
@@ -154,6 +163,9 @@
     line-height: 1.7;
     color: rgba(33,33,33,0.65);
     margin-bottom: 22px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
 }
 
 .pf-stats {
@@ -164,14 +176,17 @@
     padding-top: 18px;
     border-top: 1px solid rgba(33,33,33,0.08);
 }
-.pf-stat { display: flex; flex-direction: column; align-items: center; }
+.pf-stat { display: flex; flex-direction: column; align-items: center; min-width: 0; }
 .pf-stat-num {
     font-family: var(--font-display);
     font-size: 1.4rem;
     font-weight: 800;
     color: var(--darkest-hour);
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
 }
-.pf-stat-label { font-size: 11px; color: rgba(33,33,33,0.45); text-transform: uppercase; letter-spacing: 0.04em; }
+.pf-stat-label { font-size: 11px; color: rgba(33,33,33,0.45); text-transform: uppercase; letter-spacing: 0.04em; width: 100%; text-align: center; box-sizing: border-box; overflow-wrap: break-word; }
 
 /* ── Roles ── */
 .pf-roles-list { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -209,6 +224,8 @@
     padding: 14px 8px;
     border-radius: 14px;
     background: rgba(33,33,33,0.035);
+    min-width: 0;
+    box-sizing: border-box;
     border: 1px solid rgba(33,33,33,0.06);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -220,8 +237,8 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 19px;
 }
-.pf-badge-title { font-size: 11.5px; font-weight: 800; color: var(--darkest-hour); line-height: 1.25; }
-.pf-badge-sub { font-size: 10px; color: rgba(33,33,33,0.4); }
+.pf-badge-title { font-size: 11.5px; font-weight: 800; color: var(--darkest-hour); line-height: 1.25; width: 100%; box-sizing: border-box; overflow-wrap: break-word; }
+.pf-badge-sub { font-size: 10px; color: rgba(33,33,33,0.4); width: 100%; box-sizing: border-box; overflow-wrap: break-word; }
 
 /* ── Deportes favoritos ── */
 .pf-sports-list { display: flex; flex-direction: column; gap: 16px; }
@@ -630,7 +647,7 @@
     .pf-achievements-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .pf-badge { padding: 12px 6px; }
 
-    /* Tarjeta de torneo: apilada y prolija en mobile */
+    /* Tarjeta de torneo */
     .pf-tournament-item { flex-wrap: wrap; gap: 12px; }
     .pf-t-icon { width: 40px; height: 40px; font-size: 18px; }
     .pf-t-body { flex-basis: calc(100% - 52px); }
@@ -852,7 +869,7 @@
 .settings-switch input:checked + .settings-switch-track::before { transform: translateX(18px); }
 .settings-switch input:disabled + .settings-switch-track { opacity: 0.5; cursor: not-allowed; }
 
-/* Rol Juez: no es un toggle libre, requiere solicitud aparte */
+/* Rol Juez */
 .settings-role-toggle--pending {
     flex-direction: column;
     align-items: stretch;
