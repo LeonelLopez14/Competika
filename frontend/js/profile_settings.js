@@ -75,7 +75,7 @@ function initSettingsNav() {
     });
 }
 
-/* ── Avatar: preview + guardado en base64 ── */
+/* ── Avatar: preview ── */
 function initAvatarUpload() {
     const input   = document.getElementById('settings-avatar-input');
     const preview = document.getElementById('settings-avatar-preview');
@@ -178,7 +178,7 @@ function initPasswordForm() {
             return;
         }
 
-        // Nota: sin backend no se valida "current" contra una contraseña real ni se persiste.
+        // Nota: sin backend no se valida contra una password ni persiste
         form.reset();
         showSettingsToast('Contraseña actualizada correctamente.');
     });

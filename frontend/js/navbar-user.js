@@ -1,7 +1,5 @@
 /* =====================================================
    COMPETIKA — navbar-user.js
-   Campana de notificaciones + menú de usuario del navbar.
-   Compartido por index.html, profile.html y profile_configuration.html.
    ===================================================== */
 (function () {
 
@@ -46,7 +44,7 @@
         }
     });
 
-    /* ── Notificaciones de ejemplo (en un backend real vendrían de la API) ── */
+    /* ── Notificaciones de ejemplo ── */
     const notifications = [
         { icon: 'ti-mail-opened', title: 'Fuiste invitado a jugar en <strong>Liga Municipal Baloncesto</strong>.', time: 'Hace 2 h', unread: true },
         { icon: 'ti-alarm-snooze', title: 'Tu partido vs <strong>Atlético Sur</strong> es mañana a las 09:00 h.', time: 'Hace 5 h', unread: true },

@@ -33,7 +33,7 @@ function pfApplyStoredUser() {
 }
 
 
-/* ── Datos de ejemplo (en un backend real vendrían de la API) ── */
+/* ── Datos de ejemplo ── */
 const pfTournaments = [
     {
         icon: 'ti-ball-football', iconBg: 'rgba(59,130,246,0.12)', iconColor: '#1d4ed8',
@@ -111,19 +111,19 @@ const pfStats = [
    type: partido | semifinal | final                              */
 const pfCalendarEvents = {
     5:  { type: 'partido',   torneo: 'Copa Regional Fútbol', rival: 'Estudiantes',   hora: '10:00 h', lugar: 'Estadio Sur',            costo: 'Gratis' },
-    12: { type: 'partido',   torneo: 'Liga Municipal Baloncesto', rival: 'Halcones', hora: '18:00 h', lugar: 'Pabellón Central',       costo: '€5' },
-    15: { type: 'semifinal', torneo: 'Torneo Tenis Verano', rival: 'Marcos L.',      hora: '09:30 h', lugar: 'Club de Tenis',          costo: '€10' },
-    19: { type: 'partido',   torneo: 'Copa Regional Fútbol', rival: 'Atlético Sur',  hora: '09:00 h', lugar: 'Estadio Municipal Norte', costo: '€15' },
-    22: { type: 'semifinal', torneo: 'Liga Municipal Baloncesto', rival: 'Águilas',  hora: '19:00 h', lugar: 'Pabellón Norte',         costo: '€5' },
-    25: { type: 'final',     torneo: 'Torneo Tenis Verano', rival: 'Lucía R.',       hora: '10:00 h', lugar: 'Club de Tenis',          costo: '€10' },
-    28: { type: 'partido',   torneo: 'Torneo Pádel Pro',    rival: 'Por definir',    hora: '16:00 h', lugar: 'Club Pádel Este',        costo: '€20' }
+    12: { type: 'partido',   torneo: 'Liga Municipal Baloncesto', rival: 'Halcones', hora: '18:00 h', lugar: 'Pabellón Central',       costo: '$200' },
+    15: { type: 'semifinal', torneo: 'Torneo Tenis Verano', rival: 'Marcos L.',      hora: '09:30 h', lugar: 'Club de Tenis',          costo: '$200' },
+    19: { type: 'partido',   torneo: 'Copa Regional Fútbol', rival: 'Atlético Sur',  hora: '09:00 h', lugar: 'Estadio Municipal Norte', costo: '$200' },
+    22: { type: 'semifinal', torneo: 'Liga Municipal Baloncesto', rival: 'Águilas',  hora: '19:00 h', lugar: 'Pabellón Norte',         costo: '$200' },
+    25: { type: 'final',     torneo: 'Torneo Tenis Verano', rival: 'Lucía R.',       hora: '10:00 h', lugar: 'Club de Tenis',          costo: '$200' },
+    28: { type: 'partido',   torneo: 'Torneo Pádel Pro',    rival: 'Por definir',    hora: '16:00 h', lugar: 'Club Pádel Este',        costo: '$200' }
 };
 
 const pfMonthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const pfDowNames = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
 
 let pfCalYear = 2026;
-let pfCalMonth = 6; // Julio (0-indexed)
+let pfCalMonth = 6; // Julio
 
 /* ── Render: Torneos activos ── */
 function pfRenderTournaments() {
