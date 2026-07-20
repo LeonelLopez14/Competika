@@ -961,6 +961,7 @@ if (tfForm) {
 /* =====================================================
    TOURNAMENTS SEARCH 
 ===================================================== */
+if (document.getElementById("buscador")) {
 
 // Estado actual de los filtros
 let selectedSport  = cardData[0].title;
@@ -1253,6 +1254,8 @@ document.querySelectorAll(".btn-estado").forEach(btn => {
 -------------------------------------------------- */
 renderSports();
 filterAndRender();
+
+} // fin if (document.getElementById("buscador"))
 
 // ====================================================================
 // TOURNAMENT DASHBOARD  (tournament_dashboard.html)

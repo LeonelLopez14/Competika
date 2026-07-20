@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="assets/img/logologito.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navbar-user.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <title>CONFIGURACIÓN DE CUENTA</title>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <header id="menu">
+        <nav class="navbar">
+            <a href="index.html" class="navbar-logo">
+                <img src="assets/img/competika.png" alt="Competika logo" class="logo">
+            </a>
+
+            <ul class="navbar-list" id="navbar-list">
+                <li class="nav-links"><a href="index.html">Inicio</a></li>
+                <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
+                <li class="nav-links"><a href="tournament_details.html">Características</a></li>
+            </ul>
+
+            <div class="navbar-user">
+                <div class="nav-notif-wrap nav-dropdown-wrap" id="notif-wrap">
+                    <button class="nav-bell" id="notif-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
+                        <i class="ti ti-bell"></i>
+                        <span class="nav-bell-badge" id="notif-badge">3</span>
+                    </button>
+                    <div class="nav-notif-dropdown">
+                        <div class="nnd-header">
+                            <span>Notificaciones</span>
+                            <button class="nnd-mark-all" id="notif-mark-all">Marcar todas como leídas</button>
+                        </div>
+                        <div class="nnd-list" id="notif-list"></div>
+                    </div>
+                </div>
+
+                <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
+                    <a href="profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
+                        <span class="nav-avatar-name">Alex R.</span>
+                    </a>
+                    <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                        <i class="ti ti-chevron-down"></i>
+                    </button>
+                    <div class="nav-user-dropdown">
+                        <div class="nud-header">
+                            <span class="nud-name">Alex Rodríguez</span>
+                            <span class="nud-email">alex.rodriguez@competika.com</span>
+                        </div>
+                        <a href="profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
+                        <a href="profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
+                        <a href="index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
+                    </div>
+                </div>
+            </div>
+
+            <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+                <span class="ham-line"></span>
+            </button>
+        </nav>
+
+        <div class="mobile-backdrop" id="mobile-backdrop"></div>
+
+        <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
+            <p class="mobile-menu-logo">COMPETIKA</p>
+            <ul class="mobile-menu-list">
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="tournament_search.html">Torneos</a></li>
+                <li><a href="tournament_details.html">Características</a></li>
+                <li><a href="profile.html">Mi Perfil</a></li>
+                <li><a href="profile_configuration.html">Configuración</a></li>
+                <li><a href="index.html">Cerrar sesión</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="content">
+        <section id="settings-content">
+
+            <span class="profile-eyebrow">Mi cuenta</span>
+            <h1 class="profile-heading">Configuración</h1>
+
+            <div class="settings-layout">
+
+                <!-- ═══════════ NAV LATERAL ═══════════ -->
+                <nav class="settings-nav">
+                    <button class="settings-nav-btn active" data-target="settings-panel-profile">
+                        <i class="ti ti-user"></i>Editar perfil
+                    </button>
+                    <button class="settings-nav-btn" data-target="settings-panel-email">
+                        <i class="ti ti-mail"></i>Correo electrónico
+                    </button>
+                    <button class="settings-nav-btn" data-target="settings-panel-password">
+                        <i class="ti ti-lock"></i>Contraseña
+                    </button>
+                    <button class="settings-nav-btn settings-nav-btn--danger" data-target="settings-panel-danger">
+                        <i class="ti ti-trash"></i>Eliminar cuenta
+                    </button>
+                </nav>
+
+                <!-- ═══════════ PANELES ═══════════ -->
+                <div class="settings-panels">
+
+                    <!-- ── Editar perfil ── -->
+                    <div class="settings-panel active" id="settings-panel-profile">
+                        <div class="settings-card">
+                            <h2 class="settings-card-title">Editar perfil</h2>
+                            <p class="settings-card-sub">Esta información es visible para otros usuarios de la plataforma.</p>
+
+                            <form id="settings-profile-form" novalidate>
+                                <div class="settings-avatar-row">
+                                    <img id="settings-avatar-preview" class="settings-avatar-preview" alt="Foto de perfil"
+                                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23824cda'/%3E%3Ccircle cx='100' cy='78' r='36' fill='%23F0EEE9'/%3E%3Cpath d='M34 184c8-48 52-68 66-68s58 20 66 68' fill='%23F0EEE9'/%3E%3C/svg%3E">
+                                    <div class="settings-avatar-actions">
+                                        <button type="button" class="settings-avatar-btn" id="settings-avatar-btn"><i class="ti ti-camera"></i>Cambiar foto</button>
+                                        <span class="settings-avatar-hint">JPG o PNG. Máximo 5MB.</span>
+                                    </div>
+                                    <input type="file" id="settings-avatar-input" accept="image/png, image/jpeg" hidden>
+                                </div>
+
+                                <div class="settings-form-grid">
+                                    <div class="input-group">
+                                        <input type="text" id="settings-fullname" class="input-field" placeholder=" " value="Alex Rodríguez">
+                                        <label for="settings-fullname" class="floating-label">Nombre completo</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="settings-username" class="input-field" placeholder=" " value="alex.rodriguez">
+                                        <label for="settings-username" class="floating-label">Nombre de usuario</label>
+                                    </div>
+                                    <div class="input-group input-group--full">
+                                        <textarea id="settings-bio" class="settings-textarea" maxlength="200">Apasionado del deporte competitivo. Organizo torneos locales de fútbol y baloncesto desde 2019. Siempre buscando nuevos retos.</textarea>
+                                    </div>
+                                </div>
+
+                                <h3 class="settings-card-title" style="font-size:15px;margin-bottom:14px;">Roles activos</h3>
+                                <div class="settings-roles-grid">
+                                    <div class="settings-role-toggle">
+                                        <span class="settings-role-toggle-label"><i class="ti ti-eye"></i>Visualizador</span>
+                                        <label class="settings-switch">
+                                            <input type="checkbox" checked disabled>
+                                            <span class="settings-switch-track"></span>
+                                        </label>
+                                    </div>
+                                    <div class="settings-role-toggle">
+                                        <span class="settings-role-toggle-label"><i class="ti ti-tournament"></i>Organizador</span>
+                                        <label class="settings-switch">
+                                            <input type="checkbox" id="settings-role-organizador" checked>
+                                            <span class="settings-switch-track"></span>
+                                        </label>
+                                    </div>
+                                    <div class="settings-role-toggle">
+                                        <span class="settings-role-toggle-label"><i class="ti ti-user"></i>Participante</span>
+                                        <label class="settings-switch">
+                                            <input type="checkbox" id="settings-role-participante" checked>
+                                            <span class="settings-switch-track"></span>
+                                        </label>
+                                    </div>
+                                    <div class="settings-role-toggle settings-role-toggle--pending">
+                                        <div class="settings-role-pending-top">
+                                            <span class="settings-role-toggle-label"><i class="ti ti-gavel"></i>Juez</span>
+                                            <span class="settings-role-pending-badge">No solicitado</span>
+                                        </div>
+                                        <p class="settings-role-pending-text">El rol de Juez no se activa directamente: requiere completar un formulario de solicitud aparte. Esta sección estará disponible próximamente.</p>
+                                        <button type="button" class="settings-role-request-btn" disabled><i class="ti ti-file-description"></i>Solicitar rol de Juez</button>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="settings-save-btn"><i class="ti ti-device-floppy"></i>Guardar cambios</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ── Correo electrónico ── -->
+                    <div class="settings-panel" id="settings-panel-email">
+                        <div class="settings-card">
+                            <h2 class="settings-card-title">Correo electrónico</h2>
+                            <p class="settings-card-sub">Usamos tu correo para notificarte sobre tus torneos y para el inicio de sesión.</p>
+
+                            <div class="settings-current-value">
+                                <i class="ti ti-mail"></i>
+                                Correo actual: <strong id="settings-current-email-value">alex.rodriguez@competika.com</strong>
+                            </div>
+
+                            <form id="settings-email-form" novalidate>
+                                <div class="settings-form-grid">
+                                    <div class="input-group input-group--full">
+                                        <input type="email" id="settings-new-email" class="input-field" placeholder=" " required>
+                                        <label for="settings-new-email" class="floating-label">Nuevo correo electrónico</label>
+                                    </div>
+                                    <div class="input-group input-group--full">
+                                        <input type="password" id="settings-email-password" class="input-field" placeholder=" " required>
+                                        <label for="settings-email-password" class="floating-label">Confirmá tu contraseña actual</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="settings-save-btn"><i class="ti ti-mail-check"></i>Actualizar correo</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ── Contraseña ── -->
+                    <div class="settings-panel" id="settings-panel-password">
+                        <div class="settings-card">
+                            <h2 class="settings-card-title">Contraseña</h2>
+                            <p class="settings-card-sub">Elegí una contraseña segura que no uses en otros sitios.</p>
+
+                            <form id="settings-password-form" novalidate>
+                                <div class="settings-form-grid">
+                                    <div class="input-group input-group--full">
+                                        <input type="password" id="settings-current-password" class="input-field" placeholder=" " required>
+                                        <label for="settings-current-password" class="floating-label">Contraseña actual</label>
+                                        <button type="button" class="eye-icon settings-toggle-pass" data-for="settings-current-password"><i class="ti ti-eye"></i></button>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="password" id="settings-new-password" class="input-field" placeholder=" " required>
+                                        <label for="settings-new-password" class="floating-label">Nueva contraseña</label>
+                                        <button type="button" class="eye-icon settings-toggle-pass" data-for="settings-new-password"><i class="ti ti-eye"></i></button>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="password" id="settings-confirm-password" class="input-field" placeholder=" " required>
+                                        <label for="settings-confirm-password" class="floating-label">Confirmar nueva contraseña</label>
+                                        <button type="button" class="eye-icon settings-toggle-pass" data-for="settings-confirm-password"><i class="ti ti-eye"></i></button>
+                                    </div>
+                                </div>
+                                <p class="settings-hint">Usá al menos 8 caracteres, combinando letras y números.</p>
+                                <button type="submit" class="settings-save-btn"><i class="ti ti-shield-lock"></i>Cambiar contraseña</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ── Zona de peligro ── -->
+                    <div class="settings-panel" id="settings-panel-danger">
+                        <div class="settings-card settings-danger-card">
+                            <h2 class="settings-card-title">Eliminar cuenta</h2>
+                            <p class="settings-card-sub">Esta acción es permanente y no se puede deshacer.</p>
+
+                            <div class="settings-danger-box">
+                                <i class="ti ti-alert-triangle"></i>
+                                <p>Al eliminar tu cuenta perderás <strong>todos tus torneos, historial de partidos, logros y estadísticas</strong> de forma permanente. Si organizás torneos activos, se cancelarán para todos los participantes.</p>
+                            </div>
+
+                            <label class="settings-checkbox-row">
+                                <input type="checkbox" id="settings-delete-confirm-check">
+                                Entiendo que esta acción es irreversible y quiero eliminar mi cuenta de forma permanente.
+                            </label>
+
+                            <div class="input-group" style="margin-bottom:22px;">
+                                <input type="text" id="settings-delete-confirm-text" class="input-field" placeholder=" ">
+                                <label for="settings-delete-confirm-text" class="floating-label">Escribí ELIMINAR para confirmar</label>
+                            </div>
+
+                            <button type="button" class="settings-delete-btn" id="settings-delete-btn" disabled><i class="ti ti-trash-x"></i>Eliminar mi cuenta</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ======== FOOTER ======== -->
+    <footer id="bottom">
+        <div class="footer-inner">
+            <div class="footer-col footer-col--brand">
+                <img src="assets/img/logologito.png" alt="Competika" class="footer-logo">
+                <p class="footer-brand-name">COMPETIKA</p>
+                <p class="footer-tagline">La estructura detrás de la competencia.</p>
+                <div class="footer-contact">
+                    <a href="mailto:hola@competika.com" class="footer-contact-link">
+                        <i class="ti ti-mail"></i> hola@competika.com
+                    </a>
+                    <a href="tel:+59899000000" class="footer-contact-link">
+                        <i class="ti ti-phone"></i> +598 99 000 000
+                    </a>
+                    <span class="footer-contact-link">
+                        <i class="ti ti-map-pin"></i> Montevideo, Uruguay
+                    </span>
+                </div>
+            </div>
+
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-heading">Plataforma</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="tournament_search.html">Buscar torneos</a></li>
+                    <li><a href="tournament_details.html">Características</a></li>
+                    <li><a href="profile.html">Mi Perfil</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col footer-col--social">
+                <h4 class="footer-heading">Comunidad</h4>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link" aria-label="Instagram"><i class="ti ti-brand-instagram"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="X / Twitter"><i class="ti ti-brand-x"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="TikTok"><i class="ti ti-brand-tiktok"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="Discord"><i class="ti ti-brand-discord"></i></a>
+                </div>
+                <ul class="footer-links footer-links--legal">
+                    <li><a href="about.html">Sobre nosotros</a></li>
+                    <li><a href="contact.html">Contacto</a></li>
+                    <li><a href="privacy.html">Política de privacidad</a></li>
+                    <li><a href="#">Términos de uso</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
+            <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
+        </div>
+    </footer>
+
+    <div class="settings-toast" id="settings-toast"></div>
+
+    <script src="js/main.js"></script>
+    <script src="js/navbar-user.js"></script>
+    <script src="js/profile_settings.js"></script>
+</body>
+</html>
