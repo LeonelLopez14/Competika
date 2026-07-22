@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/navbar-user.css">
     <title>PÁGINA NO ENCONTRADA</title>
 </head>
 <body>
@@ -26,25 +27,63 @@
             <a href="index.html" class="navbar-logo">
                 <img src="assets/img/competika.png" alt="Competika logo" class="logo">
             </a>
-
-            <ul class="navbar-list" id="navbar-list">
-                <li class="nav-links"><a href="index.html">Inicio</a></li>
-                <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
-                <li class="nav-links"><a href="tournament_details.html">Características</a></li>
-                <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
-                <li class="nav-links"><a href="register.html">Registrarse</a></li>
-            </ul>
-
-            <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
-                <span class="ham-line"></span>
-                <span class="ham-line"></span>
-                <span class="ham-line"></span>
-            </button>
+ 
+            <div class="navbar-right">
+                <ul class="navbar-list" id="navbar-list">
+                    <li class="nav-links"><a href="index.html">Inicio</a></li>
+                    <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="tournament_details.html">Características</a></li>
+                    <li class="nav-links"><a href="tournament_dashboard.html">Dashboard</a></li>
+                    <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
+                    <li class="nav-links"><a href="register.html">Registrarse</a></li>
+                </ul>
+ 
+                <div class="navbar-user">
+                    <div class="nav-notif-wrap nav-dropdown-wrap" id="notif-wrap">
+                        <button class="nav-bell" id="notif-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
+                            <i class="ti ti-bell"></i>
+                            <span class="nav-bell-badge" id="notif-badge">3</span>
+                        </button>
+                        <div class="nav-notif-dropdown">
+                            <div class="nnd-header">
+                                <span>Notificaciones</span>
+                                <button class="nnd-mark-all" id="notif-mark-all">Marcar todas como leídas</button>
+                            </div>
+                            <div class="nnd-list" id="notif-list"></div>
+                        </div>
+                    </div>
+ 
+                    <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
+                        <a href="profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
+                            <span class="nav-avatar-name">Alex R.</span>
+                        </a>
+                        <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                            <i class="ti ti-chevron-down"></i>
+                        </button>
+                        <div class="nav-user-dropdown">
+                            <div class="nud-header">
+                                <span class="nud-name">Alex Rodríguez</span>
+                                <span class="nud-email">alex.rodriguez@competika.com</span>
+                            </div>
+                            <a href="profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
+                            <a href="profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
+                            <a href="index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
+                        </div>
+                    </div>
+                </div>
+ 
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                    <span class="ham-line"></span>
+                    <span class="ham-line"></span>
+                    <span class="ham-line"></span>
+                </button>
+            </div>
         </nav>
-
+ 
         <!-- Backdrop oscuro -->
         <div class="mobile-backdrop" id="mobile-backdrop"></div>
-
+ 
         <!-- Drawer lateral -->
         <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
             <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
@@ -53,8 +92,11 @@
                 <li><a href="index.html">Inicio</a></li>
                 <li><a href="tournament_search.html">Torneos</a></li>
                 <li><a href="tournament_details.html">Características</a></li>
+                <li><a href="tournament_dashboard.html">Dashboard</a></li>
                 <li><a href="login.html">Iniciar sesión</a></li>
                 <li><a href="register.html">Registrarse</a></li>
+                <li><a href="profile.html">Mi Perfil</a></li>
+                <li><a href="profile_configuration.html">Configuración</a></li>
             </ul>
         </div>
     </header>
@@ -148,5 +190,6 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script src="js/navbar-user.js"></script>
 </body>
 </html>
