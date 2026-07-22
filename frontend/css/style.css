@@ -110,6 +110,13 @@ body::after {
     box-shadow: 0 2px 20px rgba(0,0,0,0.10);
 }
 
+/* Agrupa nav-links + navbar-user + hamburger como un solo bloque pegado a la derecha */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
 .navbar-logo { display: flex; align-items: center; }
 .logo { width: 85px; height: 90px; object-fit: contain; }
 

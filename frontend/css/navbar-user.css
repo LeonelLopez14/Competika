@@ -1,12 +1,12 @@
 /* =====================================================
    COMPETIKA — navbar-user.css
+   Campana de notificaciones + avatar de usuario en el navbar.
    ===================================================== */
 
 .navbar-user {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-left: 12px;
 }
 
 /* ── Campana de notificaciones ── */
@@ -132,7 +132,7 @@
     color: rgba(33,33,33,0.4);
 }
 
-/* ── Avatar ── */
+/* ── Avatar (pastilla: foto+nombre enlazan a perfil / flecha abre menú) ── */
 .nav-avatar-wrap {
     position: relative;
     display: flex;

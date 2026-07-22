@@ -1,6 +1,5 @@
 /* =====================================================
    COMPETIKA — profile.js
-   Lógica de la sección "Mi Perfil"
    ===================================================== */
 
 const PF_USER_KEY = 'competika_user';
