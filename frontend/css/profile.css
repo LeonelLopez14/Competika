@@ -19,14 +19,19 @@
     text-transform: uppercase;
     color: var(--blue-violet-dark);
     margin-bottom: 6px;
+    display: block;
+    width: fit-content;
+    margin: 0 auto 6px;
 }
 
 .profile-heading {
     font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-size: clamp(2rem, 5vw, 3.2rem);
     font-weight: 800;
     color: var(--darkest-hour);
     margin-bottom: 28px;
+    width: fit-content;
+    margin: 0 auto 28px;
 }
 
 .profile-page {
