@@ -35,11 +35,6 @@
 </head>
 <body>
 
-    <!-- VIDEO FONDO -->
-    <video autoplay muted loop playsinline id="background-video">
-        <source src="assets/video/Fondo pagg.mp4" type="video/mp4">
-    </video>
-
     <!-- NAVBAR -->
     <header id="menu">
         <nav class="navbar">
@@ -376,29 +371,29 @@
 
 </div>
 
+            </div><!-- /#tf-wizard -->
 
-
-                <!-- ===== CONFIRMACIÓN ===== -->
-                <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-8 py-16 text-center">
-                    <span class="tf-success-icon flex h-16 w-16 items-center justify-center rounded-full bg-sun-glare-dark text-3xl text-darkest-hour">
-                        <i class="ti ti-trophy"></i>
-                    </span>
-                    <h2 class="font-display text-2xl font-black uppercase text-darkest-hour">¡Torneo creado!</h2>
-                    <p class="text-sm text-darkest-hour/60">
-                        <span data-tf-success-name class="font-bold text-darkest-hour"></span>
-                        ya está listo. Pronto vas a poder gestionar participantes, calendario y resultados desde tu panel.
-                    </p>
-                    <div class="mt-2 flex flex-col gap-3 sm:flex-row">
-                        <a href="tournament_search.html"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
-                            <i class="ti ti-eye"></i> Ver torneos
-                        </a>
-                        <button type="button" id="tf-reset-btn"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
-                            <i class="ti ti-plus"></i> Crear otro torneo
-                        </button>
-                    </div>
+            <!-- ===== CONFIRMACIÓN ===== -->
+            <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-5 py-10 text-center sm:px-8 sm:py-16">
+                <span class="tf-success-icon flex h-14 w-14 items-center justify-center rounded-full bg-sun-glare-dark text-2xl text-darkest-hour sm:h-16 sm:w-16 sm:text-3xl">
+                    <i class="ti ti-trophy"></i>
+                </span>
+                <h2 class="font-display text-xl font-black uppercase text-darkest-hour sm:text-2xl">¡Torneo creado!</h2>
+                <p class="text-sm text-darkest-hour/60">
+                    <span data-tf-success-name class="font-bold text-darkest-hour"></span>
+                    ya está listo. Pronto vas a poder gestionar participantes, calendario y resultados desde tu panel.
+                </p>
+                <div class="mt-2 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                    <a id="tf-success-dashboard-link" href="tournament_dashboard.html"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 border-2 border-sun-glare-dark font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                        <i class="ti ti-layout-dashboard"></i> Ir al Dashboard
+                    </a>
+                    <button type="button" id="tf-reset-btn"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
+                        <i class="ti ti-plus"></i> Crear otro torneo
+                    </button>
                 </div>
+            </div>
             </form>
         </section>
         <!-- ======== BANNER ======== -->
@@ -460,6 +455,9 @@
                     <li><a href="tournament_details.html">Características</a></li>
                     <li><a href="login.html">Iniciar sesión</a></li>
                     <li><a href="register.html">Registrarse</a></li>
+                    <li><a href="tournament_dashboard.html">Dashboard</a></li>
+                    <li><a href="profile.html">Perfil</a></li>
+                    <li><a href="tournament_form.html">Formulario</a></li>
                 </ul>
             </div>
 

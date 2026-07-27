@@ -919,17 +919,13 @@ if (tfForm) {
             console.error('Error guardando torneo:', err);
         }
  
-        // Actualizar el panel de éxito via JS (sin tocar el HTML)
         // — nombre del torneo en el texto
         const successNameEl = tfSuccess?.querySelector('[data-tf-success-name]');
         if (successNameEl) successNameEl.textContent = name;
  
-        // — cambiar el link "Ver torneos" para que apunte al dashboard con el ID
-        const dashLink = tfSuccess?.querySelector('a');
-        if (dashLink) {
-            dashLink.href = `tournament_dashboard.html?t=${tournament.id}`;
-            dashLink.innerHTML = `<i class="ti ti-layout-dashboard"></i> Ir al Dashboard`;
-        }
+        // — apuntar el botón "Ir al Dashboard" al torneo recién creado
+        const dashLink = document.getElementById('tf-success-dashboard-link');
+        if (dashLink) dashLink.href = `tournament_dashboard.html?t=${tournament.id}`;
  
         // Ocultar wizard y mostrar panel de éxito
         if (tfWizard) tfWizard.classList.add('hidden');

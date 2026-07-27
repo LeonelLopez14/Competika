@@ -37,25 +37,25 @@ const pfTournaments = [
     {
         icon: 'ti-ball-football', iconBg: 'rgba(59,130,246,0.12)', iconColor: '#1d4ed8',
         name: 'Copa Regional Fútbol 2026', status: 'curso',
-        dateRange: 'Jul 5 – Ago 10, 2026', teams: '16 equipos', prize: '€500',
+        dateRange: 'Jul 5 – Ago 10, 2026', teams: '16 equipos', prize: '$20000',
         role: 'participante', location: 'Estadio'
     },
     {
         icon: 'ti-ball-basketball', iconBg: 'rgba(245,158,11,0.14)', iconColor: '#b45309',
         name: 'Liga Municipal Baloncesto', status: 'curso',
-        dateRange: 'Jun 20 – Jul 30, 2026', teams: '8 equipos', prize: '€300',
+        dateRange: 'Jun 20 – Jul 30, 2026', teams: '8 equipos', prize: '$20000',
         role: 'organizador', location: 'Pabellón'
     },
     {
         icon: 'ti-ball-tennis', iconBg: 'rgba(67,197,158,0.16)', iconColor: '#1a9a72',
         name: 'Torneo Tenis Verano', status: 'curso',
-        dateRange: 'Jul 15 – Jul 28, 2026', teams: '32 equipos', prize: '€200',
+        dateRange: 'Jul 15 – Jul 28, 2026', teams: '32 equipos', prize: '$40000',
         role: 'participante', location: 'Club'
     },
     {
         icon: 'ti-ball-tennis', iconBg: 'rgba(224,81,122,0.14)', iconColor: '#b3315a',
         name: 'Torneo Pádel Pro', status: 'proximo',
-        dateRange: 'Jul 28 – Ago 5, 2026', teams: '24 equipos', prize: '€400',
+        dateRange: 'Jul 28 – Ago 5, 2026', teams: '24 equipos', prize: '$40000',
         role: 'participante', location: 'Club'
     }
 ];
