@@ -1,12 +1,13 @@
 /* =====================================================
-   COMPETIKA — navbar-user.css
+   COMPETIKA — navbar-user.css (MOBILE FIRST)
    Campana de notificaciones + avatar de usuario en el navbar.
    ===================================================== */
 
 .navbar-user {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
+    margin-left: 6px;
 }
 
 /* ── Campana de notificaciones ── */
@@ -14,13 +15,13 @@
 
 .nav-bell {
     position: relative;
-    width: 42px; height: 42px;
+    width: 36px; height: 36px;
     border-radius: 50%;
     border: 1px solid rgba(33,33,33,0.1);
     background: rgba(255,255,255,0.7);
     color: var(--darkest-hour);
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
     transition: background 0.2s, border-color 0.2s, transform 0.15s;
     flex-shrink: 0;
@@ -43,24 +44,36 @@
     border: 2px solid var(--cloud-dancer);
 }
 
-.nav-notif-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: -8px;
-    width: 320px;
-    max-width: calc(100vw - 32px);
+/* Dropdowns: en mobile van fixed, pegados a los bordes */
+.nav-notif-dropdown,
+.nav-user-dropdown {
+    position: fixed;
+    top: calc(var(--nav-h) + 10px);
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
     background: var(--cloud-dancer);
     border: 1px solid rgba(33,33,33,0.1);
     border-radius: 14px;
     box-shadow: 0 18px 46px rgba(33,33,33,0.16);
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
     z-index: 500;
-    overflow: hidden;
 }
-.nav-notif-wrap.open .nav-notif-dropdown {
+
+.nav-notif-dropdown {
+    overflow: hidden;
+    transform: translateY(-8px) scale(0.99);
+}
+.nav-user-dropdown {
+    padding: 8px;
+    transform: translateY(-8px) scale(0.98);
+}
+
+.nav-notif-wrap.open .nav-notif-dropdown,
+.nav-avatar-wrap.open .nav-user-dropdown {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: all;
@@ -147,8 +160,8 @@
 .nav-avatar-link {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 10px 4px 4px;
+    gap: 5px;
+    padding: 3px 6px 3px 3px;
     border-radius: 50px 0 0 50px;
     text-decoration: none;
     transition: background 0.2s;
@@ -156,26 +169,28 @@
 .nav-avatar-link:hover { background: var(--cloud-dancer); }
 
 .nav-avatar-img {
-    width: 34px; height: 34px;
+    width: 28px; height: 28px;
     border-radius: 50%;
     object-fit: cover;
     background: var(--blue-violet-light);
     flex-shrink: 0;
 }
 
+/* En mobile el nombre no se muestra (solo foto + flecha) */
 .nav-avatar-name {
     font-family: var(--font-body);
     font-size: 13px;
     font-weight: 700;
     color: var(--darkest-hour);
     white-space: nowrap;
+    display: none;
 }
 
 .nav-avatar-caret {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
+    width: 24px;
     align-self: stretch;
     border: none;
     background: transparent;
@@ -188,28 +203,6 @@
 .nav-avatar-caret:hover { background: var(--cloud-dancer); color: var(--darkest-hour); }
 .nav-avatar-caret i { font-size: 13px; transition: transform 0.25s ease; }
 .nav-avatar-wrap.open .nav-avatar-caret i { transform: rotate(180deg); }
-
-.nav-user-dropdown {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    width: 240px;
-    background: var(--cloud-dancer);
-    border: 1px solid rgba(33,33,33,0.1);
-    border-radius: 14px;
-    box-shadow: 0 18px 46px rgba(33,33,33,0.16);
-    padding: 8px;
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 500;
-}
-.nav-avatar-wrap.open .nav-user-dropdown {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: all;
-}
 
 .nud-header {
     display: flex;
@@ -245,33 +238,53 @@
 .nud-item--danger i { color: #d1435b; }
 .nud-item--danger:hover { background: rgba(209,67,91,0.08); }
 
-@media (max-width: 900px) {
-    .nav-avatar-name { display: none; }
-}
-
-@media (max-width: 640px) {
-    .nav-bell { width: 36px; height: 36px; font-size: 16px; }
-    .navbar-user { gap: 8px; }
-
-    .nav-notif-dropdown,
-    .nav-user-dropdown {
-        position: fixed;
-        top: calc(var(--nav-h) + 10px);
-        left: 12px;
-        right: 12px;
-        width: auto;
-        max-width: none;
-    }
-    .nav-notif-dropdown { transform: translateY(-8px) scale(0.99); }
-    .nav-notif-wrap.open .nav-notif-dropdown { transform: translateY(0) scale(1); }
-}
 
 @media (max-width: 480px) {
     .navbar { padding: 0 14px; }
     .logo { width: 58px; height: 62px; }
-    .navbar-user { gap: 6px; margin-left: 6px; }
-    .nav-avatar-link { padding: 3px 6px 3px 3px; gap: 5px; }
-    .nav-avatar-img { width: 28px; height: 28px; }
-    .nav-avatar-caret { width: 24px; }
     .hamburger { margin-left: 4px; }
+}
+
+
+/* =====================================================
+   ≥ 481px — vuelve el espaciado y tamaños "normales"
+   ===================================================== */
+@media (min-width: 481px) {
+    .navbar-user { gap: 8px; margin-left: 0; }
+
+    .nav-avatar-link { gap: 8px; padding: 4px 10px 4px 4px; }
+    .nav-avatar-img { width: 34px; height: 34px; }
+    .nav-avatar-caret { width: 32px; }
+}
+
+
+@media (min-width: 641px) {
+    .nav-bell { width: 42px; height: 42px; font-size: 18px; }
+    .navbar-user { gap: 12px; }
+
+    .nav-notif-dropdown,
+    .nav-user-dropdown {
+        position: absolute;
+        top: calc(100% + 12px);
+        left: auto;
+        width: auto;
+    }
+    .nav-notif-dropdown {
+        right: -8px;
+        width: 320px;
+        max-width: calc(100vw - 32px);
+        transform: translateY(-8px) scale(0.98);
+    }
+    .nav-user-dropdown {
+        right: 0;
+        width: 240px;
+    }
+}
+
+
+/* =====================================================
+   ≥ 901px — se muestra el nombre junto al avatar
+   ===================================================== */
+@media (min-width: 901px) {
+    .nav-avatar-name { display: inline; }
 }

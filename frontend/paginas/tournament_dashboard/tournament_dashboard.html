@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/img/logologito.png" type="image/x-icon">
+    <link rel="shortcut icon" href="../../assets/img/logologito.png" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/navbar-user.css">
+    <link rel="stylesheet" href="../../css/normalize.css">
+    <link rel="stylesheet" href="tournament_dashboard.css">
+    <link rel="stylesheet" href="../../css/navbar-user.css">
+    <link rel="stylesheet" href="../../css/style..css">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
         @theme {
@@ -34,24 +35,20 @@
     <title>DASHBOARD</title>
 </head>
 <body>
-
-    <!-- NAVBAR -->
     <header id="menu">
         <nav class="navbar">
-            <a href="index.html" class="navbar-logo">
-                <img src="assets/img/competika.png" alt="Competika logo" class="logo">
+            <a href="../../index.html" class="navbar-logo">
+                <img src="../../assets/img/competika.png" alt="Competika logo" class="logo">
             </a>
- 
             <div class="navbar-right">
                 <ul class="navbar-list" id="navbar-list">
-                    <li class="nav-links"><a href="index.html">Inicio</a></li>
-                    <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
-                    <li class="nav-links"><a href="tournament_details.html">Características</a></li>
+                    <li class="nav-links"><a href="../../index.html">Inicio</a></li>
+                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="../tournament_details/tournament_details.html">Características</a></li>
                     <li class="nav-links"><a href="tournament_dashboard.html">Dashboard</a></li>
-                    <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
-                    <li class="nav-links"><a href="register.html">Registrarse</a></li>
+                    <li class="nav-links"><a href="../login/login.html">Iniciar sesión</a></li>
+                    <li class="nav-links"><a href="../register/register.html">Registrarse</a></li>
                 </ul>
- 
                 <div class="navbar-user">
                     <div class="nav-notif-wrap nav-dropdown-wrap" id="notif-wrap">
                         <button class="nav-bell" id="notif-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
@@ -66,9 +63,8 @@
                             <div class="nnd-list" id="notif-list"></div>
                         </div>
                     </div>
- 
                     <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
-                        <a href="profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
+                        <a href="../profile/profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
                             <span class="nav-avatar-name">Alex R.</span>
                         </a>
@@ -80,13 +76,12 @@
                                 <span class="nud-name">Alex Rodríguez</span>
                                 <span class="nud-email">alex.rodriguez@competika.com</span>
                             </div>
-                            <a href="profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
-                            <a href="profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
-                            <a href="index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
+                            <a href="../profile/profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
+                            <a href="../profile/profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
+                            <a href="../../index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
                         </div>
                     </div>
                 </div>
- 
                 <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
                     <span class="ham-line"></span>
                     <span class="ham-line"></span>
@@ -94,47 +89,33 @@
                 </button>
             </div>
         </nav>
- 
-        <!-- Backdrop oscuro -->
         <div class="mobile-backdrop" id="mobile-backdrop"></div>
- 
-        <!-- Drawer lateral -->
         <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
             <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
             <p class="mobile-menu-logo">COMPETIKA</p>
             <ul class="mobile-menu-list">
-                <li><a href="index.html">Inicio</a></li>
-                <li><a href="tournament_search.html">Torneos</a></li>
-                <li><a href="tournament_details.html">Características</a></li>
+                <li><a href="../../index.html">Inicio</a></li>
+                <li><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                <li><a href="../tournament_details/tournament_details.html">Características</a></li>
                 <li><a href="tournament_dashboard.html">Dashboard</a></li>
-                <li><a href="login.html">Iniciar sesión</a></li>
-                <li><a href="register.html">Registrarse</a></li>
-                <li><a href="profile.html">Mi Perfil</a></li>
-                <li><a href="profile_configuration.html">Configuración</a></li>
+                <li><a href="../login/login.html">Iniciar sesión</a></li>
+                <li><a href="../register/register.html">Registrarse</a></li>
+                <li><a href="../profile/profile.html">Mi Perfil</a></li>
+                <li><a href="../profile/profile_configuration.html">Configuración</a></li>
             </ul>
         </div>
     </header>
-
-    <!-- ===== DASHBOARD LAYOUT ===== -->
     <div id="td-dashboard">
-
-        <!-- Sidebar toggle (mobile) -->
         <button id="td-sidebar-toggle" aria-label="Abrir menú del torneo">
             <i class="ti ti-layout-sidebar"></i>
         </button>
         <div id="td-sidebar-backdrop"></div>
-
-        <!-- ── SIDEBAR ── -->
         <aside id="td-sidebar">
             <div class="td-brand">
-                <img src="assets/img/logologito.png" alt="Competika" class="td-brand-logo">
+                <img src="../../assets/img/logologito.png" alt="Competika" class="td-brand-logo">
                 <span class="td-brand-name">COMPETIKA</span>
             </div>
-
-            <div class="td-tournament-info" id="td-sidebar-info">
-                <!-- populated by JS -->
-            </div>
-
+            <div class="td-tournament-info" id="td-sidebar-info"></div>
             <nav class="td-nav">
                 <ul id="td-nav-list">
                     <li class="td-nav-item" data-section="overview">
@@ -157,14 +138,11 @@
                     </li>
                 </ul>
             </nav>
-
             <button class="td-share-sidebar" id="td-share-sidebar">
                 <i class="ti ti-share"></i>
                 <span>Compartir Torneo</span>
             </button>
         </aside>
-
-        <!-- ── MAIN CONTENT ── -->
         <main id="td-main">
             <div class="td-content-header" id="td-content-header">
                 <div>
@@ -175,16 +153,11 @@
                     <i class="ti ti-share"></i> Compartir
                 </button>
             </div>
-            <div id="td-section-content">
-                <!-- populated by JS -->
-            </div>
+            <div id="td-section-content"></div>
         </main>
     </div>
-
-    <!-- Toast de confirmación -->
     <div id="td-toast" class="td-toast" aria-live="polite"></div>
-
-    <script src="js/main.js"></script>
-    <script src="js/navbar-user.js"></script>
+    <script src="../../js/main.js"></script>
+    <script src="../../js/navbar-user.js"></script>
 </body>
 </html>
