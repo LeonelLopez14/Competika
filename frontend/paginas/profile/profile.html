@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../../assets/img/logologito.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="../../css/normalize.css">
+    <link rel="stylesheet" href="profile.css">
+    <link rel="stylesheet" href="../../css/navbar-user.css">
+    <link rel="stylesheet" href="../../css/style..css">
+    <title>MI PERFIL</title>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <header id="menu">
+        <nav class="navbar">
+            <a href="../../index.html" class="navbar-logo">
+                <img src="../../assets/img/competika.png" alt="Competika logo" class="logo">
+            </a>
+
+            <div class="navbar-right">
+                <ul class="navbar-list" id="navbar-list">
+                    <li class="nav-links"><a href="../../index.html">Inicio</a></li>
+                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="../tournament_details/tournament_details.html">Características</a></li>
+                    <li class="nav-links"><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                    <li class="nav-links"><a href="../login/login.html">Iniciar sesión</a></li>
+                    <li class="nav-links"><a href="../register/register.html">Registrarse</a></li>
+                </ul>
+
+                <div class="navbar-user">
+                    <div class="nav-notif-wrap nav-dropdown-wrap" id="notif-wrap">
+                        <button class="nav-bell" id="notif-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
+                            <i class="ti ti-bell"></i>
+                            <span class="nav-bell-badge" id="notif-badge">3</span>
+                        </button>
+                        <div class="nav-notif-dropdown">
+                            <div class="nnd-header">
+                                <span>Notificaciones</span>
+                                <button class="nnd-mark-all" id="notif-mark-all">Marcar todas como leídas</button>
+                            </div>
+                            <div class="nnd-list" id="notif-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
+                        <a href="profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
+                            <span class="nav-avatar-name">Alex R.</span>
+                        </a>
+                        <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                            <i class="ti ti-chevron-down"></i>
+                        </button>
+                        <div class="nav-user-dropdown">
+                            <div class="nud-header">
+                                <span class="nud-name">Alex Rodríguez</span>
+                                <span class="nud-email">alex.rodriguez@competika.com</span>
+                            </div>
+                            <a href="profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
+                            <a href="../profile_configuration/profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
+                            <a href="../../index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                    <span class="ham-line"></span>
+                    <span class="ham-line"></span>
+                    <span class="ham-line"></span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Backdrop oscuro -->
+        <div class="mobile-backdrop" id="mobile-backdrop"></div>
+
+        <!-- Drawer lateral -->
+        <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
+            <p class="mobile-menu-logo">COMPETIKA</p>
+            <ul class="mobile-menu-list">
+                <li><a href="../../index.html">Inicio</a></li>
+                <li><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                <li><a href="../tournament_details/tournament_details.html">Características</a></li>
+                <li><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                <li><a href="../login/login.html">Iniciar sesión</a></li>
+                <li><a href="../register/register.html">Registrarse</a></li>
+                <li><a href="profile.html">Mi Perfil</a></li>
+                <li><a href="../profile_configuration/profile_configuration.html">Configuración</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="content">
+        <section id="profile-content">
+
+            <span class="profile-eyebrow">Mi cuenta</span>
+            <h1 class="profile-heading">Perfil</h1>
+
+            <div class="profile-page">
+
+                <!-- ═══════════ SIDEBAR IZQUIERDA ═══════════ -->
+                <aside class="profile-sidebar">
+
+                    <!-- Identidad -->
+                    <div class="pf-card pf-identity">
+                        <div class="pf-avatar-wrap">
+                            <img class="pf-avatar" alt="Foto de perfil de Alex Rodríguez"
+                                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23824cda'/%3E%3Ccircle cx='100' cy='78' r='36' fill='%23F0EEE9'/%3E%3Cpath d='M34 184c8-48 52-68 66-68s58 20 66 68' fill='%23F0EEE9'/%3E%3C/svg%3E">
+                            <span class="pf-avatar-status" title="En línea"></span>
+                        </div>
+                        <h2 class="pf-name">Alex Rodríguez</h2>
+                        <p class="pf-email">alex.rodriguez@competika.com</p>
+                        <a href="../profile_configuration/profile_configuration.html" class="pf-edit-btn"><i class="ti ti-pencil"></i>Editar perfil</a>
+                        <p class="pf-bio">Apasionado del deporte competitivo. Organizo torneos locales de fútbol y baloncesto desde 2019. Siempre buscando nuevos retos.</p>
+                        <div class="pf-stats">
+                            <div class="pf-stat"><span class="pf-stat-num">100</span><span class="pf-stat-label">Partidos</span></div>
+                            <div class="pf-stat"><span class="pf-stat-num">28</span><span class="pf-stat-label">Torneos</span></div>
+                            <div class="pf-stat"><span class="pf-stat-num">67%</span><span class="pf-stat-label">Victorias</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Roles -->
+                    <div class="pf-card">
+                        <div class="pf-card-header"><span class="pf-card-title"><i class="ti ti-shield-check"></i>Roles</span></div>
+                        <div class="pf-roles-list">
+                            <span class="pf-role pf-role--visualizador"><i class="ti ti-eye"></i>Visualizador</span>
+                            <span class="pf-role pf-role--organizador"><i class="ti ti-tournament"></i>Organizador</span>
+                            <span class="pf-role pf-role--participante"><i class="ti ti-user"></i>Participante</span>
+                            <span class="pf-role pf-role--juez"><i class="ti ti-gavel"></i>Juez</span>
+                        </div>
+                    </div>
+
+                    <!-- Logros e insignias -->
+                    <div class="pf-card">
+                        <div class="pf-card-header">
+                            <span class="pf-card-title"><i class="ti ti-award"></i>Logros e Insignias</span>
+                            <span class="pf-card-link">6 total</span>
+                        </div>
+                        <div class="pf-achievements-grid" id="pf-achievements-grid"></div>
+                    </div>
+
+                    <!-- Deportes favoritos -->
+                    <div class="pf-card">
+                        <div class="pf-card-header"><span class="pf-card-title"><i class="ti ti-heart"></i>Deportes Favoritos</span></div>
+                        <div class="pf-sports-list" id="pf-sports-list"></div>
+                    </div>
+
+                </aside>
+
+                <!-- ═══════════ CONTENIDO PRINCIPAL ═══════════ -->
+                <div class="profile-content-main">
+
+                    <div class="profile-toprow">
+
+                        <!-- Torneos activos -->
+                        <section class="pf-card">
+                            <div class="pf-card-header">
+                                <span class="pf-card-title"><i class="ti ti-list-details"></i>Mis Torneos Activos</span>
+                                <a href="../tournament_search/tournament_search.html" class="pf-card-link">Ver todos</a>
+                            </div>
+                            <div id="pf-tournaments-list"></div>
+                        </section>
+
+                        <!-- Calendario -->
+                        <aside class="pf-card pf-calendar" id="pf-calendar-box">
+                            <div class="pf-cal-header">
+                                <span class="pf-cal-title" id="pf-cal-title"></span>
+                                <div class="pf-cal-nav">
+                                    <button class="pf-cal-nav-btn" id="pf-cal-prev" aria-label="Mes anterior"><i class="ti ti-chevron-left"></i></button>
+                                    <button class="pf-cal-nav-btn" id="pf-cal-next" aria-label="Mes siguiente"><i class="ti ti-chevron-right"></i></button>
+                                </div>
+                            </div>
+                            <div class="pf-cal-grid" id="pf-cal-grid"></div>
+                            <div class="pf-cal-legend">
+                                <span><i class="pf-cal-dot pf-cal-dot--partido"></i>Partido</span>
+                                <span><i class="pf-cal-dot pf-cal-dot--semifinal"></i>Semifinal</span>
+                                <span><i class="pf-cal-dot pf-cal-dot--final"></i>Final</span>
+                            </div>
+                            <div class="pf-cal-summary">
+                                <strong>Este mes</strong>
+                                <span id="pf-cal-summary-count"></span>
+                            </div>
+
+                            <div class="pf-day-popover" id="pf-day-popover"></div>
+                        </aside>
+                    </div>
+
+                    <!-- Tabs -->
+                    <section class="pf-card">
+                        <div class="pf-tabs">
+                            <button class="pf-tab-btn active" data-target="pf-tab-torneos">Historial Torneos</button>
+                            <button class="pf-tab-btn" data-target="pf-tab-partidos">Historial Partidos</button>
+                            <button class="pf-tab-btn" data-target="pf-tab-stats">Estadísticas</button>
+                        </div>
+
+                        <div class="pf-tab-panel active" id="pf-tab-torneos">
+                            <div class="pf-table-wrap">
+                                <table class="pf-table">
+                                    <thead>
+                                        <tr><th>Torneo</th><th>Deporte</th><th>Rol</th><th>Fechas</th><th>Resultado</th></tr>
+                                    </thead>
+                                    <tbody id="pf-tournament-history-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="pf-tab-panel" id="pf-tab-partidos">
+                            <div class="pf-honor-intro">
+                                <span><i class="ti ti-heart-handshake"></i>Reconocé el juego limpio: dale honor a tus rivales después de cada partido.</span>
+                                <span class="pf-honor-total">Honores otorgados: <strong id="pf-honor-given-count">0</strong></span>
+                            </div>
+                            <div class="pf-table-wrap">
+                                <table class="pf-table">
+                                    <thead>
+                                        <tr><th>Fecha</th><th>Torneo</th><th>Rival</th><th>Resultado</th><th>Marcador</th><th>Honor</th></tr>
+                                    </thead>
+                                    <tbody id="pf-match-history-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="pf-tab-panel" id="pf-tab-stats">
+                            <div class="pf-stats-grid" id="pf-stats-grid"></div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ======== FOOTER ======== -->
+    <footer id="bottom">
+        <div class="footer-inner">
+            <div class="footer-col footer-col--brand">
+                <img src="../../assets/img/logologito.png" alt="Competika" class="footer-logo">
+                <p class="footer-brand-name">COMPETIKA</p>
+                <p class="footer-tagline">La estructura detrás de la competencia.</p>
+                <div class="footer-contact">
+                    <a href="mailto:hola@competika.com" class="footer-contact-link">
+                        <i class="ti ti-mail"></i> hola@competika.com
+                    </a>
+                    <a href="tel:+59899000000" class="footer-contact-link">
+                        <i class="ti ti-phone"></i> +598 99 000 000
+                    </a>
+                    <span class="footer-contact-link">
+                        <i class="ti ti-map-pin"></i> Montevideo, Uruguay
+                    </span>
+                </div>
+            </div>
+
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-heading">Plataforma</h4>
+                <ul class="footer-links">
+                    <li><a href="../../index.html">Inicio</a></li>
+                    <li><a href="../tournament_search/tournament_search.html">Buscar torneos</a></li>
+                    <li><a href="../tournament_details/tournament_details.html">Características</a></li>
+                    <li><a href="profile.html">Mi Perfil</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col footer-col--social">
+                <h4 class="footer-heading">Comunidad</h4>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link" aria-label="Instagram"><i class="ti ti-brand-instagram"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="X / Twitter"><i class="ti ti-brand-x"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="TikTok"><i class="ti ti-brand-tiktok"></i></a>
+                    <a href="#" class="footer-social-link" aria-label="Discord"><i class="ti ti-brand-discord"></i></a>
+                </div>
+                <ul class="footer-links footer-links--legal">
+                    <li><a href="../about/about.html">Sobre nosotros</a></li>
+                    <li><a href="../contact/contact.html">Contacto</a></li>
+                    <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
+                    <li><a href="#">Términos de uso</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
+            <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
+        </div>
+    </footer>
+
+    <script src="../../js/main.js"></script>
+    <script src="../../js/navbar-user.js"></script>
+    <script src="../../js/profile.js"></script>
+</body>
+</html>

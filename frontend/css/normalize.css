@@ -1,5 +1,8 @@
 /*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
-
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
 /* Document
    ========================================================================== */
 
