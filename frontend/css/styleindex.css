@@ -222,9 +222,9 @@
 /* ── USER CARDS ── */
 .card-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 45px;
-    padding: 50px 8% 100px;
+    padding: 20px 15% 100px;
 }
 
 .card {
@@ -232,6 +232,7 @@
     border-radius: 16px;
     padding: 52px 36px 48px;
     min-height: 620px;
+    min-width: 0px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -260,10 +261,12 @@
 
 .card-h2 {
     font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3.5vw, 2rem);
+    font-size: 1.3rem;
     font-weight: 800;
     letter-spacing: 3px;
     color: var(--cloud-dancer);
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .card-paragraph {
@@ -468,3 +471,23 @@
     background: var(--darkest-hour);
 }
 
+@media (min-width: 950px) {
+    .card-container {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+        padding: 50px 5% 100px;
+        min-height: 200px;
+    }
+    .card-h2 {
+        font-size:1.3rem;
+    }
+}
+@media (min-width: 1020px) {
+    .card-h2 {
+        font-size: 1.8rem;
+    }
+    .card-container {
+        gap: 40px;
+        padding: 60px 10% 100px;
+    }
+}

@@ -1,0 +1,1 @@
+SHOW GRANTS FOR 'competika_app'@'localhost';

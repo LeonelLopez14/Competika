@@ -287,7 +287,7 @@ body::after {
 .banner-bg {
     background: var(--darkest-hour);
     position: relative;
-    padding-top: 5%;
+    padding-top: 2%;
 }
 
 .banner-noise {
@@ -303,13 +303,16 @@ body::after {
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
-    padding: 120px 5%;
+    padding: 80px 5%;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    justify-content: center;
     align-items: center;
-    gap: 60px;
+    justify-items: center;
+    gap: 40px;
     z-index: 2;
 }
+
 
 .banner-text { display: flex; flex-direction: column; gap: 20px; }
 
@@ -343,6 +346,7 @@ body::after {
     color: rgba(240,238,233,0.6);
     line-height: 1.7;
     max-width: 420px;
+    
 }
 
 .banner-actions {
@@ -381,8 +385,8 @@ body::after {
 
 .banner-deco {
     position: absolute;
-    right: -60px; top: 50%;
-    transform: translateY(-50%);
+    right: 100px; top: 50%;
+    transform: translateY(-30%);
     width: 480px; height: 480px;
     pointer-events: none; z-index: 1;
 }
@@ -488,6 +492,7 @@ body::after {
 .footer-made { display: flex; align-items: center; gap: 4px; }
 .footer-heart { color: var(--exuberant-orange); }
 
+
 /* =====================================================
     DESKTOP (≥ 1180px) — se muestra el menú de links,
     se oculta el hamburger y el mobile-menu
@@ -497,4 +502,14 @@ body::after {
     .hamburger { display: none; }
     .mobile-menu { display: none; }
     .mobile-backdrop { display: none; }
+    .banner-container {
+        grid-template-columns: 1fr 1fr; 
+        padding: 120px 5%;
+        gap: 60px;
+        justify-content: stretch;
+    }
+    .banner-deco {
+        right: -60px; top: 50%;
+        transform: translateY(-50%);
+    }
 }
