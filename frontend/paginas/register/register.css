@@ -1,0 +1,278 @@
+/* =====================================================
+   REGISTRO - MOBILE FIRST
+   ===================================================== */
+
+#content {
+    padding-top: 2rem; /* ajustá según la altura real de  navbar */
+}
+.signup-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 26.25rem;
+    padding: 1.25rem;
+    box-sizing: border-box;
+
+    background:var(--cloud-dancer);
+    border: 0.0625rem solid #8a45e6;
+    border-radius: 0.5rem;
+}
+
+/* Encabezado */
+.form-header {
+    text-align: center;
+    margin-bottom: 1.375rem;
+}
+
+.form-description {
+    margin: 0 0 0.375rem;
+    font-size: 0.8125rem;
+    color: #555;
+}
+
+.form-title {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #222;
+}
+
+/* Selector de perfil */
+.select-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.375rem;
+    margin-bottom: 1rem;
+}
+
+.select-group label {
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.profile {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0 0.625rem;
+    box-sizing: border-box;
+
+    border: 0.0625rem solid #c0c0c0;
+    border-radius: 0.375rem;
+    background: white;
+
+    font-size: 1rem; /* evita zoom automático en iOS */
+}
+
+/* Campos con floating label */
+.input-group {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.input-field {
+    width: 100%;
+    height: 2.875rem;
+    padding: 0.875rem 0.75rem 0;
+    box-sizing: border-box;
+
+    border: 0.0625rem solid #c0c0c0;
+    border-radius: 0.375rem;
+    background: white;
+
+    font-size: 1rem;
+    outline: none;
+}
+
+.input-field:focus {
+    border-color: #8a45e6;
+}
+
+.floating-label {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+
+    font-size: 1rem;
+    color: #777;
+    pointer-events: none;
+    transition: 0.15s ease all;
+}
+
+/* Cuando hay foco o el campo tiene contenido, la label sube */
+.input-field:focus ~ .floating-label,
+.input-field:not(:placeholder-shown) ~ .floating-label {
+    top: 0.75rem;
+    font-size: 0.6875rem;
+    color: #8a45e6;
+}
+
+/* Recordarme + link */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.checkbox-field {
+    width: auto;
+    height: auto;
+    margin: 0;
+}
+
+.checkbox-label {
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.form-link {
+    font-size: 0.8125rem;
+    color: #6f20e8;
+    text-decoration: underline;
+}
+
+.form-link:hover {
+    color: #5112b5;
+}
+
+/* Botón principal */
+.form-btn--submit {
+    width: 100%;
+    height: 2.875rem;
+    margin-top: 0.25rem;
+
+    border: none;
+    border-radius: 0.375rem;
+
+    background: #8246d8;
+    color: white;
+
+    font-size: 1rem;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.form-btn--submit:hover {
+    background: #7138c4;
+}
+
+/* Divisor */
+.form-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #999;
+    font-size: 0.8125rem;
+    margin: 1.125rem 0;
+}
+
+.form-divider::before,
+.form-divider::after {
+    content: "";
+    flex: 1;
+    height: 0.0625rem;
+    background: #ddd;
+}
+
+.form-divider p {
+    margin: 0 0.625rem;
+}
+
+/* Sociales + link inferior */
+.form-bottom {
+    text-align: center;
+}
+
+.form-socials {
+    display: flex;
+    justify-content: center;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+}
+
+.form-btn--social {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0.0625rem solid #c0c0c0;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    font-size: 1.125rem;
+}
+
+.form-btn--social:hover {
+    border-color: #8a45e6;
+}
+
+
+/* =====================================================
+   TABLET
+   ===================================================== */
+
+@media (min-width: 37.5rem) {
+
+    .signup-container {
+        padding: 1.875rem;
+    }
+
+    .form-container {
+        padding: 2.125rem;
+    }
+
+    .form-title {
+        font-size: 1.75rem;
+    }
+}
+
+
+/* =====================================================
+   DESKTOP
+   ===================================================== */
+
+@media (min-width: 56.25rem) {
+
+    .signup-container {
+        padding: 2.5rem;
+    }
+
+    .form-container {
+        max-width: 28.125rem;
+        padding: 2.5rem;
+    }
+
+    .select-group {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .select-group label {
+        width: 6.875rem;
+    }
+
+    .profile {
+        flex: 1;
+    }
+
+    .form-title {
+        font-size: 2rem;
+    }
+}

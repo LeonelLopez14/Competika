@@ -3,34 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/img/logologito.png" type="image/x-icon">
+    <link rel="shortcut icon" href="../../assets/img/logologito.png" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/navbar-user.css">
-    <title>CARACTERÍSTICAS</title>
+    <link rel="stylesheet" href="../../css/normalize.css">
+    <link rel="stylesheet" href="404.css">
+    <link rel="stylesheet" href="../../css/navbar-user.css">
+    <title>PÁGINA NO ENCONTRADA</title>
 </head>
 <body>
+
+    <!-- VIDEO FONDO -->
+    <video autoplay muted loop playsinline id="background-video">
+        <source src="assets/video/Fondo pagg.mp4" type="video/mp4">
+    </video>
 
     <!-- NAVBAR -->
     <header id="menu">
         <nav class="navbar">
-            <a href="index.html" class="navbar-logo">
-                <img src="assets/img/competika.png" alt="Competika logo" class="logo">
+            <a href="../../index.html" class="navbar-logo">
+                <img src="../../assets/img/competika.png" alt="Competika logo" class="logo">
             </a>
  
             <div class="navbar-right">
                 <ul class="navbar-list" id="navbar-list">
-                    <li class="nav-links"><a href="index.html">Inicio</a></li>
-                    <li class="nav-links"><a href="tournament_search.html">Torneos</a></li>
-                    <li class="nav-links"><a href="tournament_details.html">Características</a></li>
-                    <li class="nav-links"><a href="tournament_dashboard.html">Dashboard</a></li>
-                    <li class="nav-links"><a href="login.html">Iniciar sesión</a></li>
-                    <li class="nav-links"><a href="register.html">Registrarse</a></li>
+                    <li class="nav-links"><a href="../../index.html">Inicio</a></li>
+                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="../tournament_form/tournament_form.html">Características</a></li>
+                    <li class="nav-links"><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                    <li class="nav-links"><a href="../login/login.html">Iniciar sesión</a></li>
+                    <li class="nav-links"><a href="../register/register.html">Registrarse</a></li>
                 </ul>
  
                 <div class="navbar-user">
@@ -49,7 +54,7 @@
                     </div>
  
                     <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
-                        <a href="profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
+                        <a href="../profile/profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
                             <span class="nav-avatar-name">Alex R.</span>
                         </a>
@@ -61,9 +66,9 @@
                                 <span class="nud-name">Alex Rodríguez</span>
                                 <span class="nud-email">alex.rodriguez@competika.com</span>
                             </div>
-                            <a href="profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
-                            <a href="profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
-                            <a href="index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
+                            <a href="../profile/profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
+                            <a href="../profile_configuration/profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
+                            <a href="../../index.html" class="nud-item nud-item--danger"><i class="ti ti-logout"></i>Cerrar sesión</a>
                         </div>
                     </div>
                 </div>
@@ -84,86 +89,20 @@
             <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
             <p class="mobile-menu-logo">COMPETIKA</p>
             <ul class="mobile-menu-list">
-                <li><a href="index.html">Inicio</a></li>
-                <li><a href="tournament_search.html">Torneos</a></li>
-                <li><a href="tournament_details.html">Características</a></li>
-                <li><a href="tournament_dashboard.html">Dashboard</a></li>
-                <li><a href="login.html">Iniciar sesión</a></li>
-                <li><a href="register.html">Registrarse</a></li>
-                <li><a href="profile.html">Mi Perfil</a></li>
-                <li><a href="profile_configuration.html">Configuración</a></li>
+                <li><a href="../../index.html">Inicio</a></li>
+                <li><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                <li><a href="../tournament_details/tournament_details.html">Características</a></li>
+                <li><a href="../../tournament_dashboard.html">Dashboard</a></li>
+                <li><a href="../login/login.html">Iniciar sesión</a></li>
+                <li><a href="../register/register.html">Registrarse</a></li>
+                <li><a href="../profile/profile.html">Mi Perfil</a></li>
+                <li><a href="../profile_configuration/profile_configuration.html">Configuración</a></li>
             </ul>
         </div>
     </header>
     <main id="content">
-        <!-- ======== TOURNAMENT TYPES ======== -->
         <section id="tournament-types">
-            <h1 class="tournament-types-presentation">Características de los Torneos</h1>
-            <div class="tournament-types-container">
-                <!-- IMAGEN + NAVEGACIÓN SUBTIPOS + NAV PRINCIPAL -->
-                <div class="tt-image-col">
-                    <div class="tt-image-wrapper">
-                        <img id="tt-image" src="assets/img/grey.jpg" alt="Tipos de torneos" class="tournament-types-image">
-                        <!-- Flechas subtipos sobre la imagen -->
-                        <button class="tt-sub-arrow tt-sub-arrow--prev" id="tt-sub-prev" aria-label="Subtipo anterior">
-                            <i class="ti ti-chevron-left"></i>
-                        </button>
-                        <button class="tt-sub-arrow tt-sub-arrow--next" id="tt-sub-next" aria-label="Subtipo siguiente">
-                            <i class="ti ti-chevron-right"></i>
-                        </button>
-                        <!-- Indicador de subtipo -->
-                        <div class="tt-sub-indicator" id="tt-sub-indicator"></div>
-                    </div>
-                    <!-- Navegación principal -->
-                    <div class="tournament-types-navigation rotated">
-                        <ul id="tt-nav-ul">
-                            <li class="navigation-list active" data-type="0">
-                                <span class="navigation-icon"><i class="ti ti-list-details"></i></span>
-                            </li>
-                            <li class="navigation-list" data-type="1">
-                                <span class="navigation-icon"><i class="ti ti-x"></i></span>
-                            </li>
-                            <li class="navigation-list" data-type="2">
-                                <span class="navigation-icon"><i class="ti ti-exposure-plus-1"></i></span>
-                            </li>
-                            <li class="navigation-list" data-type="3">
-                                <span class="navigation-icon"><i class="ti ti-arrows-shuffle"></i></span>
-                            </li>
-                            <li class="navigation-list" data-type="4">
-                                <span class="navigation-icon"><i class="ti ti-trophy"></i></span>
-                            </li>
-                            <div class="indicator"></div>
-                        </ul>
-                    </div>
-                </div>
-                <!-- INFO CENTRAL -->
-                <div class="info-types-container" id="tt-info">
-                    <h2 class="tournament-types-title" id="tt-title">NOMBRE DEL TORNEO</h2>
-                    <h3 class="tournament-types-subtitle" id="tt-subtitle">Tipo de torneo</h3>
-                    <p class="tournament-types-description" id="tt-description">
-                        Eliminación directa, también conocido como torneo de eliminación simple, es un formato de competición en el que los participantes se enfrentan en rondas sucesivas, y el perdedor de cada enfrentamiento queda eliminado del torneo, mientras que el ganador avanza a la siguiente ronda.
-                    </p>
-                    <span class="tournament-types-attributes">
-                        <ul class="tournament-types-attributes-list" id="tt-attributes">
-                            <li class="attribute-item"><i class="ti ti-chevron-right"></i>Rondas sucesivas de eliminación</li>
-                            <li class="attribute-item"><i class="ti ti-chevron-right"></i>Perdedor queda eliminado</li>
-                            <li class="attribute-item"><i class="ti ti-chevron-right"></i>Ganador avanza a la siguiente ronda</li>
-                            <li class="attribute-item"><i class="ti ti-chevron-right"></i>Emoción en cada partido</li>
-                        </ul>
-                    </span>
-                </div>
-                <!-- DEPORTES SUGERIDOS -->
-                <div class="sports-supported" id="tt-sports">
-                    <h3 class="sports-supported-title">Deportes sugeridos</h3>
-                    <div class="sports-icons-list" id="tt-sports-icons">
-                        <i class="icon-sports-supported ti ti-ball-volleyball"></i>
-                        <i class="icon-sports-supported ti ti-ball-american-football"></i>
-                        <i class="icon-sports-supported ti ti-ball-basketball"></i>
-                        <i class="icon-sports-supported ti ti-ball-tennis"></i>
-                        <i class="icon-sports-supported ti ti-chess"></i>
-                    </div>
-                </div>
-            </div>
+            
         </section>
         <!-- ======== BANNER ======== -->
         <section id="banner">
@@ -176,13 +115,13 @@
                         <p class="banner-paragraph">Descubrí nuevos torneos, demostrá tus habilidades y destacate en tu deporte favorito.</p>
                     </div>
                     <div class="banner-actions">
-                        <a href="tournament_form.html" class="btn-banner btn-banner--primary">
+                        <a href="../tournament_form/tournament_form.html" class="btn-banner btn-banner--primary">
                             <i class="ti ti-tournament"></i><span>Creá un torneo</span>
                         </a>
-                        <a href="tournament_search.html" class="btn-banner btn-banner--secondary">
+                        <a href="../tournament_search/tournament_search.html" class="btn-banner btn-banner--secondary">
                             <i class="ti ti-door-enter"></i><span>Unite a un torneo</span>
                         </a>
-                        <a href="tournament_search.html" class="btn-banner btn-banner--ghost">
+                        <a href="../tournament_search/tournament_search.html" class="btn-banner btn-banner--ghost">
                             <i class="ti ti-eye"></i><span>Seguí un torneo</span>
                         </a>
                     </div>
@@ -195,11 +134,12 @@
             </div>
         </section>
     </main>
+
     <!-- ======== FOOTER ======== -->
     <footer id="bottom">
         <div class="footer-inner">
             <div class="footer-col footer-col--brand">
-                <img src="assets/img/logologito.png" alt="Competika" class="footer-logo">
+                <img src="../../assets/img/logologito.png" alt="Competika" class="footer-logo">
                 <p class="footer-brand-name">COMPETIKA</p>
                 <p class="footer-tagline">La estructura detrás de la competencia.</p>
                 <div class="footer-contact">
@@ -214,19 +154,21 @@
                     </span>
                 </div>
             </div>
+
             <div class="footer-col footer-col--links">
                 <h4 class="footer-heading">Plataforma</h4>
                 <ul class="footer-links">
-                    <li><a href="index.html">Inicio</a></li>
-                    <li><a href="tournament_search.html">Buscar torneos</a></li>
+                    <li><a href="../../index.html">Inicio</a></li>
+                    <li><a href="../tournament_search/tournament_search.html">Buscar torneos</a></li>
                     <li><a href="tournament_details.html">Características</a></li>
-                    <li><a href="login.html">Iniciar sesión</a></li>
-                    <li><a href="register.html">Registrarse</a></li>
+                    <li><a href="../login/login.html">Iniciar sesión</a></li>
+                    <li><a href="../register/register.html">Registrarse</a></li>
                     <li><a href="tournament_dashboard.html">Dashboard</a></li>
                     <li><a href="profile.html">Perfil</a></li>
                     <li><a href="tournament_form.html">Formulario</a></li>
                 </ul>
             </div>
+
             <div class="footer-col footer-col--social">
                 <h4 class="footer-heading">Comunidad</h4>
                 <div class="footer-social">
@@ -236,19 +178,20 @@
                     <a href="#" class="footer-social-link" aria-label="Discord"><i class="ti ti-brand-discord"></i></a>
                 </div>
                 <ul class="footer-links footer-links--legal">
-                    <li><a href="about.html">Sobre nosotros</a></li>
-                    <li><a href="contact.html">Contacto</a></li>
-                    <li><a href="privacy.html">Política de privacidad</a></li>
+                    <li><a href="../about/about.html">Sobre nosotros</a></li>
+                    <li><a href="../contact/contact.html">Contacto</a></li>
+                    <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
                     <li><a href="#">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
+
         <div class="footer-bottom">
             <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
             <p class="footer-made">Hecho con <span class="footer-heart">♥</span> en Uruguay</p>
         </div>
     </footer>
-    <script src="js/main.js"></script>
-    <script src="js/navbar-user.js"></script>
+    <script src="../../js/main.js"></script>
+    <script src="../../js/navbar-user.js"></script>
 </body>
 </html>
