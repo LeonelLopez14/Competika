@@ -110,8 +110,8 @@
                 <div class="form-header">
                     <p class="form-description">Ingrese sus datos.</p>
                     <h1 class="form-title">Bienvenido de nuevo</h1>
-                </div>
-                <form class="form-box">
+                <div id="error-message" class="form-error" style="display: none;"></div>
+                <form class="form-box" action="../../../controller/login.php" method="POST">
                     <div class="input-group">
                         <input type="email" id="email" name="email" class="input-field" placeholder="" required>
                         <label for="email" class="floating-label">Correo electrónico</label>
@@ -240,5 +240,6 @@
 
     <script src="../../js/main.js"></script>
     <script src="../../js/navbar-user.js"></script>
+    <script src="../../js/login.js"></script>
 </body>
 </html>
