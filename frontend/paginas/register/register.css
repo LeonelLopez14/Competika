@@ -10,7 +10,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.25rem;
+    padding: 3rem;
 }
 
 .form-container {
@@ -222,23 +222,33 @@
     border-color: #8a45e6;
 }
 
+#error-message {
+    background: #ffe5e5;
+    color: #c0392b;
+    border: 1px solid #e74c3c;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    text-align: center;
+}
 
 /* =====================================================
    TABLET
    ===================================================== */
 
 @media (min-width: 37.5rem) {
-
     .signup-container {
         padding: 1.875rem;
     }
-
     .form-container {
         padding: 2.125rem;
     }
-
     .form-title {
         font-size: 1.75rem;
+    }
+    #content {
+        padding-top: 5rem; /* tablet */
     }
 }
 
@@ -248,31 +258,28 @@
    ===================================================== */
 
 @media (min-width: 56.25rem) {
-
     .signup-container {
         padding: 2.5rem;
     }
-
     .form-container {
         max-width: 28.125rem;
         padding: 2.5rem;
     }
-
     .select-group {
         flex-direction: row;
         align-items: center;
         gap: 0.75rem;
     }
-
     .select-group label {
         width: 6.875rem;
     }
-
     .profile {
         flex: 1;
     }
-
     .form-title {
         font-size: 2rem;
+    }
+    #content {
+        padding-top: 6rem; /* desktop */
     }
 }

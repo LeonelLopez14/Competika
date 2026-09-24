@@ -111,22 +111,39 @@
                         <p class="form-description">La competencia comienza con un click.</p>
                         <h1 class="form-title">¡El juego te espera!</h1>
                     </div>
-                    <form class="form-box">
+                    <div id="error-message" class="form-error" style="display: none;"></div>
+                    <form class="form-box" action="../../../controller/registrar.php" method="POST">
+                        <div class="input-group">
+                            <input type="text" id="ci" name="ci" class="input-field" placeholder="" required>
+                            <label for="ci" class="floating-label">Cédula</label>
+                        </div>
                         <div class="input-group select-group">
                             <label for="profile">Elegí tu perfil:</label>
-                            <select class="profile">
-                                <option value="org">Organizador</option>
-                                <option value="par">Participante</option>
-                                <option value="obs">Observador</option>
+                            <select class="profile" name="rol_usuario" id="profile">
+                                <option value="organizador">Organizador</option>
+                                <option value="participante">Participante</option>
+                                <option value="observador">Observador</option>
                             </select>
                         </div>
                         <div class="input-group">
-                            <input type="name" id="name" name="name" class="input-field" placeholder="" required>
+                            <input type="text" id="name" name="name" class="input-field" placeholder="" required>
                             <label for="name" class="floating-label">Nombre</label>
                         </div>
                         <div class="input-group">
                             <input type="surname" id="surname" name="surname" class="input-field" placeholder="" required>
                             <label for="surname" class="floating-label">Apellido</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="telefono" name="telefono" class="input-field" placeholder="">
+                            <label for="telefono" class="floating-label">Teléfono</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="direccion" name="direccion" class="input-field" placeholder="">
+                            <label for="direccion" class="floating-label">Dirección</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="date" id="fecha_nac" name="fecha_nac" class="input-field" placeholder="">
+                            <label for="fecha_nac" class="floating-label">Fecha de nacimiento</label>
                         </div>
                         <div class="input-group">
                             <input type="email" id="email" name="email" class="input-field" placeholder="" required>
@@ -260,5 +277,6 @@
 
     <script src="../../js/main.js"></script>
     <script src="../../js/navbar-user.js"></script>
+    <script src="../../js/register.js"></script>
 </body>
 </html>
