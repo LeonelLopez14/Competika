@@ -2,6 +2,7 @@
    COMPETIKA — navbar-user.js
    ===================================================== */
 (function () {
+    const scriptSrc = document.currentScript ? document.currentScript.src : '';
 
     function setupDropdown(wrapId, btnId) {
         const wrap = document.getElementById(wrapId);
@@ -91,10 +92,47 @@
     /* ── Reflejar datos guardados (nombre / correo / foto) en el navbar ── */
     try {
         const user = JSON.parse(localStorage.getItem('competika_user') || 'null');
-        if (user) {
-            if (user.fullname) document.querySelectorAll('.nud-name').forEach(el => el.textContent = user.fullname);
-            if (user.email) document.querySelectorAll('.nud-email').forEach(el => el.textContent = user.email);
-            if (user.avatar) document.querySelectorAll('.nav-avatar-img').forEach(img => img.src = user.avatar);
-        }
+        if (user && user.avatar) document.querySelectorAll('.nav-avatar-img').forEach(img => img.src = user.avatar);
     } catch (e) { /* localStorage no disponible o dato corrupto: se ignora */ }
+
+    const siteRoot = scriptSrc.replace(/\/frontend\/js\/navbar-user\.js.*$/, '');
+    const navUser = document.querySelector('.navbar-user');
+    const guestItems = Array.from(document.querySelectorAll('.navbar-list a[href$="login/login.html"], .navbar-list a[href$="register/register.html"], .mobile-menu-list a[href$="login/login.html"], .mobile-menu-list a[href$="register/register.html"]')).map(a => a.closest('li'));
+    const memberItems = Array.from(document.querySelectorAll('.mobile-menu-list a[href$="profile/profile.html"], .mobile-menu-list a[href$="profile_configuration/profile_configuration.html"]')).map(a => a.closest('li'));
+
+    [navUser, ...guestItems, ...memberItems].forEach(el => { if (el) el.style.visibility = 'hidden'; });
+
+    function setText(selector, value) {
+        document.querySelectorAll(selector).forEach(el => { el.textContent = value; });
+    }
+
+    function renderSession(s) {
+        const logged = !!(s && s.logged);
+        guestItems.forEach(li => { if (li) { li.style.display = logged ? 'none' : ''; li.style.visibility = ''; } });
+        memberItems.forEach(li => { if (li) { li.style.display = logged ? '' : 'none'; li.style.visibility = ''; } });
+        if (navUser) {
+            navUser.style.display = logged ? '' : 'none';
+            navUser.style.visibility = '';
+        }
+        if (!logged) {
+            if (/\/frontend\/paginas\/(profile|profile_configuration)\//.test(location.pathname)) {
+                location.replace(siteRoot + '/frontend/paginas/login/login.html');
+            }
+            return;
+        }
+        const initial = s.apellido ? ' ' + s.apellido.charAt(0).toUpperCase() + '.' : '';
+        setText('.nud-name, .pf-name', (s.nombre + ' ' + s.apellido).trim());
+        setText('.nud-email, .pf-email', s.email);
+        setText('.nav-avatar-name', s.nombre + initial);
+        document.querySelectorAll('.nud-item--danger').forEach(a => { a.href = siteRoot + '/controller/logout.php'; });
+        const orgPill = document.querySelector('.pf-role--organizador');
+        const partPill = document.querySelector('.pf-role--participante');
+        if (orgPill) orgPill.style.display = s.rol === 'organizador' ? '' : 'none';
+        if (partPill) partPill.style.display = s.rol === 'participante' ? '' : 'none';
+    }
+
+    fetch(siteRoot + '/api/session.php', { credentials: 'same-origin', cache: 'no-store' })
+        .then(r => r.json())
+        .catch(() => ({ logged: false }))
+        .then(renderSession);
 })();

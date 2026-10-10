@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/../repository/usuario_repository.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -51,6 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $repo->crearObservador($ci);
                 break;
         }
+        session_regenerate_id(true);
+        $_SESSION['usuario_ci'] = $ci;
+        $_SESSION['usuario_nombre'] = $nombre;
+        $_SESSION['usuario_apellido'] = $apellido;
+        $_SESSION['usuario_email'] = $email;
+        $_SESSION['usuario_rol'] = $rol;
         header('Location: ../frontend/index.html');
         exit;
     } else {
