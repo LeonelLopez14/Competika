@@ -1,0 +1,25 @@
+Options -Indexes -MultiViews
+ServerSignature Off
+DirectoryIndex frontend/index.html index.php index.html
+
+<FilesMatch "\.(sql|md|log|ini|bak|swp|lock)$|^\.">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^(config|model|repository|database|apache|\.git)(/|$) - [F,NC,L]
+
+    RewriteRule ^$ /frontend/index.html [R=302,L]
+
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^((?:api|controller)/[A-Za-z0-9_]+)/?$ $1.php [L,QSA]
+</IfModule>

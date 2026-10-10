@@ -24,9 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    session_regenerate_id(true);
     // Login correcto: guardamos datos básicos en sesión
     $_SESSION['usuario_ci'] = $usuarioData['ci'];
     $_SESSION['usuario_nombre'] = $usuarioData['nombre'];
+    $_SESSION['usuario_apellido'] = $usuarioData['apellido'];
+    $_SESSION['usuario_email'] = $usuarioData['email'];
     $_SESSION['usuario_rol'] = $usuarioData['rol_usuario'];
 
     header('Location: ../frontend/index.html');
