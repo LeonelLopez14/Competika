@@ -17,3 +17,15 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start();
 }
+
+/** En un POST, corta si la petición viene de otro sitio (protección CSRF). */
+function rechazarOrigenAjeno(): void {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' || !isset($_SERVER['HTTP_ORIGIN'])) return;
+    $o = parse_url($_SERVER['HTTP_ORIGIN']);
+    $host = isset($o['host']) ? $o['host'] . (isset($o['port']) ? ':' . $o['port'] : '') : '';
+    if ($host === '' || strcasecmp($host, $_SERVER['HTTP_HOST'] ?? '') !== 0) {
+        http_response_code(403);
+        exit('Origen no permitido.');
+    }
+}
+

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../repository/usuario_repository.php';
+rechazarOrigenAjeno();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -24,8 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Login correcto: se descarta todo lo de la sesión anterior (otra cuenta
+    // o modo invitado) y se emite un id de sesión nuevo.
+    $_SESSION = [];
     session_regenerate_id(true);
-    // Login correcto: guardamos datos básicos en sesión
     $_SESSION['usuario_ci'] = $usuarioData['ci'];
     $_SESSION['usuario_nombre'] = $usuarioData['nombre'];
     $_SESSION['usuario_apellido'] = $usuarioData['apellido'];

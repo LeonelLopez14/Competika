@@ -618,6 +618,10 @@
 .pf-result-pill { font-weight: 700; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; }
 .pf-result-pill--win  { color: #1a9a72; }
 .pf-result-pill--loss { color: #d1435b; }
+.pf-result-pill--draw { color: #6b7280; }
+.pf-empty { font-size: 13px; color: rgba(33,33,33,0.5); padding: 14px 4px; line-height: 1.5; }
+.pf-empty a { color: var(--blue-violet-dark); font-weight: 600; }
+.pf-table .pf-empty { text-align: center; }
 
 .pf-tournament-result-badge {
     font-size: 11.5px;

@@ -915,7 +915,102 @@ function tsFromApi(t) {
         maxParticipantes: t.maxTeams,
         premio: t.prizesText || 'Sin premios definidos',
         inscripcion: t.entryFee > 0 ? `$${t.entryFee}` : 'Gratis',
+        esMio: !!t.isOwner,
+        inscripto: !!t.joined,
     };
+}
+
+/* ── Inscripción: ventana de confirmación (en lugar de prompt/alert) ── */
+let tsModal = null;
+let tsModalTorneo = null;
+
+function tsCrearModal() {
+    if (tsModal) return tsModal;
+    tsModal = document.createElement("div");
+    tsModal.className = "ts-modal";
+    tsModal.hidden = true;
+    tsModal.setAttribute("role", "dialog");
+    tsModal.setAttribute("aria-modal", "true");
+    tsModal.setAttribute("aria-labelledby", "ts-join-title");
+    tsModal.innerHTML = `
+        <div class="ts-modal-card">
+            <button type="button" class="ts-modal-close" data-close aria-label="Cerrar"><i class="ti ti-x"></i></button>
+            <div data-step="form">
+                <span class="ts-modal-eyebrow"><i class="ti ti-door-enter"></i> Inscripción</span>
+                <h2 class="ts-modal-title" id="ts-join-title"></h2>
+                <p class="ts-modal-meta" id="ts-join-meta"></p>
+                <div class="input-group">
+                    <input type="text" id="ts-join-team" class="input-field" placeholder=" " maxlength="100" autocomplete="off">
+                    <label for="ts-join-team" class="floating-label">Nombre de tu equipo (opcional)</label>
+                </div>
+                <p class="ts-modal-hint">Si lo dejás vacío, te inscribimos con tu nombre.</p>
+                <p class="ts-modal-error" id="ts-join-error" hidden></p>
+                <div class="ts-modal-actions">
+                    <button type="button" class="btn-seguir" data-close>Cancelar</button>
+                    <button type="button" class="btn-inscribirse" id="ts-join-confirm"><i class="ti ti-check"></i> Confirmar</button>
+                </div>
+            </div>
+            <div data-step="ok" hidden>
+                <span class="ts-modal-ok-icon"><i class="ti ti-trophy"></i></span>
+                <h2 class="ts-modal-title">¡Ya estás inscripto!</h2>
+                <p class="ts-modal-meta" id="ts-join-ok-text"></p>
+                <div class="ts-modal-actions">
+                    <a class="btn-seguir" href="../profile/profile.html">Ver mi perfil</a>
+                    <button type="button" class="btn-inscribirse" data-close>Listo</button>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(tsModal);
+    tsModal.addEventListener("click", e => { if (e.target === tsModal || e.target.closest("[data-close]")) tsCerrarModal(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !tsModal.hidden) tsCerrarModal(); });
+    tsModal.querySelector("#ts-join-team").addEventListener("keydown", e => { if (e.key === "Enter") tsConfirmar(); });
+    tsModal.querySelector("#ts-join-confirm").addEventListener("click", tsConfirmar);
+    return tsModal;
+}
+
+function tsCerrarModal() {
+    if (!tsModal) return;
+    tsModal.hidden = true;
+    document.body.style.overflow = "";
+}
+
+async function tsAbrirInscripcion(t) {
+    // Invitados y visitantes sin cuenta: primero tienen que iniciar sesión
+    const sesion = typeof competikaSession === "function" ? await competikaSession() : null;
+    if (!sesion) {
+        location.href = "../login/login.html?error=" + encodeURIComponent("Iniciá sesión o creá una cuenta para unirte a un torneo.");
+        return;
+    }
+    tsModalTorneo = t;
+    const m = tsCrearModal();
+    m.querySelector('[data-step="form"]').hidden = false;
+    m.querySelector('[data-step="ok"]').hidden = true;
+    m.querySelector("#ts-join-title").textContent = t.nombre;
+    m.querySelector("#ts-join-meta").textContent = `${t.formato} · ${t.ciudad} · Inscripción: ${t.inscripcion}`;
+    m.querySelector("#ts-join-team").value = "";
+    m.querySelector("#ts-join-error").hidden = true;
+    m.hidden = false;
+    document.body.style.overflow = "hidden";
+    setTimeout(() => m.querySelector("#ts-join-team").focus(), 50);
+}
+
+async function tsConfirmar() {
+    if (!tsModalTorneo) return;
+    const btn = tsModal.querySelector("#ts-join-confirm");
+    const err = tsModal.querySelector("#ts-join-error");
+    btn.disabled = true;
+    const r = await competikaInscribirse(Number(tsModalTorneo.id), tsModal.querySelector("#ts-join-team").value.trim());
+    btn.disabled = false;
+    if (r._status === 401) return;                          // ya redirigió al login
+    if (!r.success) {
+        err.textContent = r.error || "No se pudo completar la inscripción.";
+        err.hidden = false;
+        return;
+    }
+    tsModal.querySelector('[data-step="form"]').hidden = true;
+    tsModal.querySelector('[data-step="ok"]').hidden = false;
+    tsModal.querySelector("#ts-join-ok-text").textContent = `Te sumaste a ${tsModalTorneo.nombre}. El torneo aparece ahora en tu perfil.`;
+    tsCargarTorneos();
 }
 
 /* --------------------------------------------------
@@ -1043,7 +1138,11 @@ function renderTournaments(lista) {
                 <div class="torneo-inscripcion">
                     <i class="ti ti-ticket"></i> Inscripción: ${tsEsc(t.inscripcion)}
                 </div>
-                ${isFull
+                ${t.esMio
+                    ? `<a class="btn-inscribirse" href="../tournament_dashboard/tournament_dashboard.html?t=${encodeURIComponent(t.id)}"><i class="ti ti-settings"></i> Gestionar</a>`
+                    : t.inscripto
+                    ? `<button class="btn-completo" disabled><i class="ti ti-circle-check"></i> Inscripto</button>`
+                    : isFull
                     ? `<button class="btn-completo" disabled><i class="ti ti-lock"></i> ${t.cerrado ? 'Cerrado' : 'Completo'}</button>
                     <button class="btn-seguir"><i class="ti ti-eye"></i> Seguir</button>`
                     : `<button class="btn-inscribirse" data-id="${t.id}"><i class="ti ti-door-enter"></i> Inscribirme</button>`
@@ -1053,17 +1152,7 @@ function renderTournaments(lista) {
 
         grilla.appendChild(card);
 
-        card.querySelector(".btn-inscribirse")?.addEventListener("click", async (ev) => {
-            const btn = ev.currentTarget;
-            const teamName = prompt("Nombre de tu equipo (dejalo vacío para usar tu nombre):", "");
-            if (teamName === null) return;                       // canceló
-            btn.disabled = true;
-            const r = await competikaInscribirse(Number(btn.dataset.id), teamName.trim());
-            btn.disabled = false;
-            if (r._status === 401) return;                       // ya redirigió al login
-            alert(r.success ? "¡Inscripción realizada!" : (r.error || "No se pudo completar la inscripción."));
-            if (r.success) tsCargarTorneos();
-        });
+        card.querySelector("button.btn-inscribirse")?.addEventListener("click", () => tsAbrirInscripcion(t));
 
         card.querySelectorAll(".barra-relleno").forEach(barra => {
             barra.offsetWidth;

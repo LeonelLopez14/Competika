@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../repository/usuario_repository.php';
+rechazarOrigenAjeno();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ci = trim($_POST['ci'] ?? '');
@@ -20,6 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         header('Location: ../frontend/paginas/register/register.html?error=' . urlencode('Email inválido.'));
+        exit;
+    }
+    if (!in_array($rol, ['organizador', 'participante', 'observador'], true)) {
+        header('Location: ../frontend/paginas/register/register.html?error=' . urlencode('Elegí un perfil válido.'));
+        exit;
+    }
+    if (strlen($password) < 8 || !preg_match('/[A-Za-z]/', $password) || !preg_match('/\d/', $password)) {
+        header('Location: ../frontend/paginas/register/register.html?error=' . urlencode('La contraseña debe tener al menos 8 caracteres, con letras y números.'));
         exit;
     }
     if ($password !== $confirmPassword) {
@@ -52,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $repo->crearObservador($ci);
                 break;
         }
+        $_SESSION = [];
         session_regenerate_id(true);
         $_SESSION['usuario_ci'] = $ci;
         $_SESSION['usuario_nombre'] = $nombre;

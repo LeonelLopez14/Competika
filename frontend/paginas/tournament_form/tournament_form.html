@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="tournament_form.css">
     <link rel="stylesheet" href="../../css/navbar-user.css">
     <link rel="stylesheet" href="../../css/style..css">
+    <link rel="stylesheet" href="../../css/forms.css">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <style type="text/tailwindcss">
@@ -38,7 +39,7 @@
 
 <body>
     <video autoplay muted loop playsinline id="background-video">
-        <source src="../../assets/video/Fondo pagg.mp4" type="video/mp4">
+        <source src="../../assets/video/Fondo de la pagina.mp4" type="video/mp4">
     </video>
     <header id="menu">
         <nav class="navbar">
@@ -317,34 +318,35 @@
                                     <i class="ti ti-chevron-left"></i>
                                     Atrás
                                 </button>
-                                <button type="submit" id="tf-submit-btn" class="inline-flex items-center w-40 h-10 gap-2 rounded-xl bg-sun-glare px-9 py-4 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                                <button type="submit" id="tf-submit-btn" class="inline-flex items-center whitespace-nowrap gap-2 rounded-xl bg-sun-glare px-9 py-4 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
                                     <i class="ti ti-bolt"></i>
                                     Crear Torneo
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-8 py-16 text-center">
-                        <span class="tf-success-icon flex h-16 w-16 items-center justify-center rounded-full bg-sun-glare-dark text-3xl text-darkest-hour">
-                            <i class="ti ti-trophy"></i>
-                        </span>
-                        <h2 class="font-display text-2xl font-black uppercase text-darkest-hour">
-                            ¡Torneo creado!
-                        </h2>
-                        <p class="text-sm text-darkest-hour/60">
-                            <span data-tf-success-name class="font-bold text-darkest-hour"></span>
-                            ya está listo. Pronto vas a poder gestionar participantes, calendario y resultados desde tu panel.
-                        </p>
-                        <div class="mt-2 flex flex-col gap-3 sm:flex-row">
-                            <a href="../tournament_search/tournament_search.html" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
-                                <i class="ti ti-eye"></i>
-                                Ver torneos
-                            </a>
-                            <button type="button" id="tf-reset-btn" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
-                                <i class="ti ti-plus"></i>
-                                Crear otro torneo
-                            </button>
-                        </div>
+                </div>
+
+                <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-8 py-16 text-center">
+                    <span class="tf-success-icon flex h-16 w-16 items-center justify-center rounded-full bg-sun-glare-dark text-3xl text-darkest-hour">
+                        <i class="ti ti-trophy"></i>
+                    </span>
+                    <h2 class="font-display text-2xl font-black uppercase text-darkest-hour">
+                        ¡Torneo creado!
+                    </h2>
+                    <p class="text-sm text-darkest-hour/60">
+                        <span data-tf-success-name class="font-bold text-darkest-hour"></span>
+                        ya está listo. Gestioná participantes, calendario y resultados desde tu panel.
+                    </p>
+                    <div class="mt-2 flex flex-col gap-3 sm:flex-row">
+                        <a href="../tournament_search/tournament_search.html" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                            <i class="ti ti-eye"></i>
+                            Ver torneos
+                        </a>
+                        <button type="button" id="tf-reset-btn" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
+                            <i class="ti ti-plus"></i>
+                            Crear otro torneo
+                        </button>
                     </div>
                 </div>
             </form>

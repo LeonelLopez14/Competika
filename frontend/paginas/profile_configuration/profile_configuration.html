@@ -12,8 +12,9 @@
     <link rel="stylesheet" href="../../css/normalize.css">
     <link rel="stylesheet" href="profile_configuration.css">
     <link rel="stylesheet" href="../../css/navbar-user.css">
-    <link rel="stylesheet" href="../../css/profile.css">
+    <link rel="stylesheet" href="../profile/profile.css">
     <link rel="stylesheet" href="../../css/style..css">
+    <link rel="stylesheet" href="../../css/forms.css">
     <title>CONFIGURACIÓN DE CUENTA</title>
 </head>
 <body>
@@ -53,15 +54,15 @@
                     <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
                         <a href="../profile/profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
-                            <span class="nav-avatar-name">Alex R.</span>
+                            <span class="nav-avatar-name"></span>
                         </a>
                         <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
                             <i class="ti ti-chevron-down"></i>
                         </button>
                         <div class="nav-user-dropdown">
                             <div class="nud-header">
-                                <span class="nud-name">Alex Rodríguez</span>
-                                <span class="nud-email">alex.rodriguez@competika.com</span>
+                                <span class="nud-name"></span>
+                                <span class="nud-email"></span>
                             </div>
                             <a href="../profile/profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
                             <a href="../profile_configuration/profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
@@ -135,6 +136,7 @@
                                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23824cda'/%3E%3Ccircle cx='100' cy='78' r='36' fill='%23F0EEE9'/%3E%3Cpath d='M34 184c8-48 52-68 66-68s58 20 66 68' fill='%23F0EEE9'/%3E%3C/svg%3E">
                                     <div class="settings-avatar-actions">
                                         <button type="button" class="settings-avatar-btn" id="settings-avatar-btn"><i class="ti ti-camera"></i>Cambiar foto</button>
+                                        <button type="button" class="settings-avatar-btn" id="settings-avatar-remove" hidden><i class="ti ti-trash"></i>Quitar foto</button>
                                         <span class="settings-avatar-hint">JPG o PNG. Máximo 5MB.</span>
                                     </div>
                                     <input type="file" id="settings-avatar-input" accept="image/png, image/jpeg" hidden>
@@ -142,15 +144,23 @@
 
                                 <div class="settings-form-grid">
                                     <div class="input-group">
-                                        <input type="text" id="settings-fullname" class="input-field" placeholder=" " value="Alex Rodríguez">
-                                        <label for="settings-fullname" class="floating-label">Nombre completo</label>
+                                        <input type="text" id="settings-nombre" class="input-field" placeholder=" " maxlength="100" required>
+                                        <label for="settings-nombre" class="floating-label">Nombre</label>
                                     </div>
                                     <div class="input-group">
-                                        <input type="text" id="settings-username" class="input-field" placeholder=" " value="alex.rodriguez">
+                                        <input type="text" id="settings-apellido" class="input-field" placeholder=" " maxlength="100" required>
+                                        <label for="settings-apellido" class="floating-label">Apellido</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="settings-username" class="input-field" placeholder=" " maxlength="30" autocomplete="username">
                                         <label for="settings-username" class="floating-label">Nombre de usuario</label>
                                     </div>
+                                    <div class="input-group">
+                                        <input type="tel" id="settings-telefono" class="input-field" placeholder=" " maxlength="20">
+                                        <label for="settings-telefono" class="floating-label">Teléfono</label>
+                                    </div>
                                     <div class="input-group input-group--full">
-                                        <textarea id="settings-bio" class="settings-textarea" maxlength="200">Apasionado del deporte competitivo. Organizo torneos locales de fútbol y baloncesto desde 2019. Siempre buscando nuevos retos.</textarea>
+                                        <textarea id="settings-bio" class="settings-textarea" maxlength="200" placeholder="Contá algo sobre vos (máx. 200 caracteres)"></textarea>
                                     </div>
                                 </div>
 
@@ -200,7 +210,7 @@
 
                             <div class="settings-current-value">
                                 <i class="ti ti-mail"></i>
-                                Correo actual: <strong id="settings-current-email-value">alex.rodriguez@competika.com</strong>
+                                Correo actual: <strong id="settings-current-email-value">—</strong>
                             </div>
 
                             <form id="settings-email-form" novalidate>
@@ -264,6 +274,11 @@
                                 <input type="checkbox" id="settings-delete-confirm-check">
                                 Entiendo que esta acción es irreversible y quiero eliminar mi cuenta de forma permanente.
                             </label>
+
+                            <div class="input-group" style="margin-bottom:16px;">
+                                <input type="password" id="settings-delete-password" class="input-field" placeholder=" " autocomplete="current-password">
+                                <label for="settings-delete-password" class="floating-label">Tu contraseña actual</label>
+                            </div>
 
                             <div class="input-group" style="margin-bottom:22px;">
                                 <input type="text" id="settings-delete-confirm-text" class="input-field" placeholder=" ">

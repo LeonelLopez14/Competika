@@ -8,3 +8,5 @@ apache
 docker-compose.yml
 test_conexion.php
 *.md
+uploads/avatars/*
+!uploads/avatars/.gitkeep

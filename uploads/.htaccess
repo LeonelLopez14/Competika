@@ -1,0 +1,9 @@
+# Carpeta de archivos subidos por usuarios: aquí solo hay imágenes.
+# Nada se lista ni se ejecuta, aunque alguien lograra subir otro tipo de archivo.
+Options -Indexes -ExecCGI
+<FilesMatch "(?i)\.(php\d?|phtml|phar|pht|pl|py|cgi|sh|html?|svg|js)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

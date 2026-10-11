@@ -15,6 +15,19 @@ header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 header('Cache-Control: no-store');
 
+// Protección CSRF adicional a SameSite=Lax: toda petición que modifica datos
+// tiene que venir de este mismo sitio. Los navegadores mandan la cabecera
+// Origin en los POST; si viene de otro sitio (o es "null"), se rechaza.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET' && isset($_SERVER['HTTP_ORIGIN'])) {
+    $o = parse_url($_SERVER['HTTP_ORIGIN']);
+    $originHost = isset($o['host']) ? $o['host'] . (isset($o['port']) ? ':' . $o['port'] : '') : '';
+    if ($originHost === '' || strcasecmp($originHost, $_SERVER['HTTP_HOST'] ?? '') !== 0) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Origen no permitido.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
+
 function respond($data, int $code = 200): void {
     http_response_code($code);
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
@@ -55,4 +68,22 @@ function requireLogin(): string {
     $ci = currentCi();
     if ($ci === null) respond(['success' => false, 'error' => 'Necesitás iniciar sesión.'], 401);
     return $ci;
+}
+
+/** Roles del usuario según las tablas de especialización del esquema. */
+function userRoles(PDO $pdo, string $ci): array {
+    $roles = [];
+    foreach (['admin', 'organizador', 'participante', 'juez', 'observador'] as $tabla) {
+        $s = $pdo->prepare("SELECT 1 FROM $tabla WHERE usuario_ci_fk = ? LIMIT 1");
+        $s->execute([$ci]);
+        $roles[$tabla] = (bool)$s->fetchColumn();
+    }
+    return $roles;
+}
+
+/** Ruta pública de la foto de perfil (relativa a la raíz del sitio) o null. */
+function fotoUrl(?string $archivo): ?string {
+    return ($archivo !== null && preg_match('/^[a-f0-9]{32}\.(jpg|png)$/', $archivo))
+        ? 'uploads/avatars/' . $archivo
+        : null;
 }

@@ -52,15 +52,15 @@
                     <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
                         <a href="profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
-                            <span class="nav-avatar-name">Alex r.</span>
+                            <span class="nav-avatar-name"></span>
                         </a>
                         <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
                             <i class="ti ti-chevron-down"></i>
                         </button>
                         <div class="nav-user-dropdown">
                             <div class="nud-header">
-                                <span class="nud-name">Alex Rodríguez</span>
-                                <span class="nud-email">alex.rodriguez@competika.com</span>
+                                <span class="nud-name"></span>
+                                <span class="nud-email"></span>
                             </div>
                             <a href="profile.html" class="nud-item"><i class="ti ti-user"></i>Mi Perfil</a>
                             <a href="../profile_configuration/profile_configuration.html" class="nud-item"><i class="ti ti-settings"></i>Configuración</a>
@@ -111,18 +111,18 @@
                     <!-- Identidad -->
                     <div class="pf-card pf-identity">
                         <div class="pf-avatar-wrap">
-                            <img class="pf-avatar" alt="Foto de perfil de Alex Rodríguez"
+                            <img class="pf-avatar" alt="Foto de perfil"
                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23824cda'/%3E%3Ccircle cx='100' cy='78' r='36' fill='%23F0EEE9'/%3E%3Cpath d='M34 184c8-48 52-68 66-68s58 20 66 68' fill='%23F0EEE9'/%3E%3C/svg%3E">
                             <span class="pf-avatar-status" title="En línea"></span>
                         </div>
-                        <h2 class="pf-name">Alex Rodríguez</h2>
-                        <p class="pf-email">alex.rodriguez@competika.com</p>
+                        <h2 class="pf-name"></h2>
+                        <p class="pf-email"></p>
                         <a href="../profile_configuration/profile_configuration.html" class="pf-edit-btn"><i class="ti ti-pencil"></i>Editar perfil</a>
-                        <p class="pf-bio">Apasionado del deporte competitivo. Organizo torneos locales de fútbol y baloncesto desde 2019. Siempre buscando nuevos retos.</p>
+                        <p class="pf-bio"></p>
                         <div class="pf-stats">
-                            <div class="pf-stat"><span class="pf-stat-num">100</span><span class="pf-stat-label">Partidos</span></div>
-                            <div class="pf-stat"><span class="pf-stat-num">28</span><span class="pf-stat-label">Torneos</span></div>
-                            <div class="pf-stat"><span class="pf-stat-num">67%</span><span class="pf-stat-label">Victorias</span></div>
+                            <div class="pf-stat"><span class="pf-stat-num" id="pf-stat-partidos">—</span><span class="pf-stat-label">Partidos</span></div>
+                            <div class="pf-stat"><span class="pf-stat-num" id="pf-stat-torneos">—</span><span class="pf-stat-label">Torneos</span></div>
+                            <div class="pf-stat"><span class="pf-stat-num" id="pf-stat-victorias">—</span><span class="pf-stat-label">Victorias</span></div>
                         </div>
                     </div>
 
@@ -141,7 +141,7 @@
                     <div class="pf-card">
                         <div class="pf-card-header">
                             <span class="pf-card-title"><i class="ti ti-award"></i>Logros e Insignias</span>
-                            <span class="pf-card-link">6 total</span>
+                            <span class="pf-card-link" id="pf-achievements-count"></span>
                         </div>
                         <div class="pf-achievements-grid" id="pf-achievements-grid"></div>
                     </div>

@@ -17,8 +17,9 @@
  * Cómo se usa el esquema:
  *  - Equipos de un torneo  = filas de tabla_posiciones con equipo_id_fk (es el único
  *    vínculo torneo–equipo del esquema). Esa fila también guarda las estadísticas.
- *  - Equipos de un partido = enfrentamiento_equipo. Como no tiene orden, el "equipo A"
- *    del resultado (puntaje_a) es SIEMPRE el de menor equipo_id; la API lo traduce.
+ *  - Equipos de un partido = enfrentamiento_equipo; la columna es_local (ajustes.sql)
+ *    marca al local. puntaje_a = local, puntaje_b = visitante. Partidos cargados antes
+ *    de esa columna toman como local al equipo de menor id.
  *  - La app NO tiene permiso DELETE sobre resultado (usuarios.sql): un resultado
  *    "deshecho" vuelve a estado 'pendiente', y no se pueden borrar partidos ni
  *    torneos que ya tengan resultados registrados.
@@ -67,7 +68,7 @@ try {
 
         case 'mine':
             $orgId = organizadorIdOf($pdo, requireLogin());
-            respond(['success' => true, 'tournaments' => $orgId ? listTournaments($pdo, 't.organizador_id_fk = ?', [$orgId]) : []]);
+            respond(['success' => true, 'tournaments' => $orgId ? listTournaments($pdo, 't.organizador_id_fk = :p0', [$orgId]) : []]);
 
         case 'get':
             $t = getFullTournament($pdo, (int)($_GET['id'] ?? 0));
@@ -266,14 +267,23 @@ function listTournaments(PDO $pdo, string $where, array $params): array {
         SELECT t.*, c.cant_equipos, c.precio_participacion, c.premios,
                CONCAT(u.nombre, ' ', u.apellido) AS organizador,
                (SELECT COUNT(*) FROM tabla_posiciones tp WHERE tp.torneo_id_fk = t.torneo_id AND tp.equipo_id_fk IS NOT NULL) AS team_count,
-               (SELECT COUNT(*) FROM enfrentamiento e WHERE e.torneo_id_fk = t.torneo_id) AS match_count
+               (SELECT COUNT(*) FROM enfrentamiento e WHERE e.torneo_id_fk = t.torneo_id) AS match_count,
+               (o.usuario_ci_fk = :me) AS is_owner,
+               EXISTS (SELECT 1 FROM tabla_posiciones tp2
+                         JOIN equipo_participante ep ON ep.equipo_id_fk = tp2.equipo_id_fk
+                         JOIN participante p ON p.participante_id = ep.participante_id_fk
+                        WHERE tp2.torneo_id_fk = t.torneo_id AND p.usuario_ci_fk = :me2) AS joined
         FROM torneo t
         LEFT JOIN configuracion_torneo c ON c.configuracion_id =
              (SELECT MIN(configuracion_id) FROM configuracion_torneo WHERE torneo_id_fk = t.torneo_id)
         LEFT JOIN organizador o ON o.organizador_id = t.organizador_id_fk
         LEFT JOIN usuario u ON u.ci = o.usuario_ci_fk
         WHERE $where ORDER BY t.torneo_id DESC");
-    $s->execute($params);
+    $me = currentCi() ?? '';
+    $s->bindValue(':me', $me);
+    $s->bindValue(':me2', $me);
+    foreach (array_values($params) as $i => $v) $s->bindValue(':p' . $i, $v);
+    $s->execute();
     return array_map(fn($t) => [
         'id'          => (int)$t['torneo_id'],
         'name'        => $t['nombre'],
@@ -291,6 +301,8 @@ function listTournaments(PDO $pdo, string $where, array $params): array {
         'prizesText'  => $t['premios'],
         'teamCount'   => (int)$t['team_count'],
         'matchCount'  => (int)$t['match_count'],
+        'isOwner'     => (bool)$t['is_owner'],
+        'joined'      => (bool)$t['joined'],
     ], $s->fetchAll());
 }
 
@@ -324,8 +336,8 @@ function getFullTournament(PDO $pdo, int $id): ?array {
 
     $mt = $pdo->prepare("
         SELECT e.enfrentamiento_id, e.ubicacion, e.fecha, r.nombre AS fase,
-               (SELECT MIN(equipo_id_fk) FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id) AS eq_a,
-               (SELECT CASE WHEN COUNT(*) > 1 THEN MAX(equipo_id_fk) END FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id) AS eq_b,
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1) AS eq_a,
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1 OFFSET 1) AS eq_b,
                res.puntaje_a, res.puntaje_b, res.estado AS res_estado
         FROM enfrentamiento e
         JOIN ronda r ON r.ronda_id = e.ronda_id_fk
@@ -642,8 +654,9 @@ function matchFields(PDO $pdo, int $torneoId, array $d): array {
 
 function setMatchTeams(PDO $pdo, int $matchId, ?int $home, ?int $away): void {
     $pdo->prepare("DELETE FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = ?")->execute([$matchId]);
-    $ins = $pdo->prepare("INSERT INTO enfrentamiento_equipo (enfrentamiento_id_fk, equipo_id_fk) VALUES (?, ?)");
-    foreach (array_filter([$home, $away]) as $e) $ins->execute([$matchId, $e]);
+    $ins = $pdo->prepare("INSERT INTO enfrentamiento_equipo (enfrentamiento_id_fk, equipo_id_fk, es_local) VALUES (?, ?, ?)");
+    if ($home !== null) $ins->execute([$matchId, $home, 1]);
+    if ($away !== null) $ins->execute([$matchId, $away, 0]);
 }
 
 function addMatch(PDO $pdo, int $torneoId, array $d): array {
@@ -681,7 +694,7 @@ function updateMatch(PDO $pdo, int $matchId, array $d): array {
 
     if ($played) {
         // puntaje_a corresponde siempre al equipo de menor id (ver comentario al inicio)
-        [$a, $b] = $home < $away ? [$hs, $as] : [$as, $hs];
+        [$a, $b] = [$hs, $as];                       // puntaje_a = local, puntaje_b = visitante
         $estado = $a == $b ? 'empate' : 'finalizado';
         $ganador = $a == $b ? null : ($hs > $as ? $home : $away);
         if ($resId === false) {
@@ -726,8 +739,8 @@ function recalcularPosiciones(PDO $pdo, int $torneoId): void {
     foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $e) $st[(int)$e] = ['pj' => 0, 'pg' => 0, 'pe' => 0, 'pp' => 0, 'pts' => 0];
 
     $m = $pdo->prepare("
-        SELECT (SELECT MIN(equipo_id_fk) FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id) AS a,
-               (SELECT MAX(equipo_id_fk) FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id) AS b,
+        SELECT (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1) AS a,
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1 OFFSET 1) AS b,
                r.puntaje_a, r.puntaje_b
         FROM enfrentamiento e
         JOIN resultado r ON r.resultado_id = (SELECT MAX(resultado_id) FROM resultado WHERE enfrentamiento_id_fk = e.enfrentamiento_id)
