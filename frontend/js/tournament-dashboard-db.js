@@ -1,987 +1,549 @@
 /* =====================================================
    COMPETIKA — tournament-dashboard-db.js
-   -----------------------------------------------------
-   Reemplaza POR COMPLETO el bloque de tournament_dashboard
-   que antes vivía en main.js (el que empezaba con
-   "const tdDashboard = document.getElementById('td-dashboard');").
+   Dashboard del organizador (tournament_dashboard.html), sobre la base de datos.
 
-   Toda la data (torneo, equipos, partidos, premios,
-   organizador) se lee y se escribe contra la API PHP
-   (api/tournaments.php), no contra localStorage.
+   Requiere, en este orden: main.js, navbar-user.js, tournament-api.js, este archivo.
 
-   REQUIERE que este archivo se cargue DESPUÉS de:
-     1) main.js
-     2) tournament-api.js   (define competikaApi, competikaListTournaments,
-                              competikaGetTournament, competikaDeleteTournament)
-
-   IMPORTANTE: en main.js hay que BORRAR el bloque viejo
-   (desde "const tdDashboard = ..." hasta el final del
-   archivo). Si dejás los dos, el navegador tira
-   "Identifier has already been declared" porque ambos
-   declaran las mismas variables/funciones a nivel global.
+   Seguridad: todo texto que viene de la base se escapa con esc() antes de
+   insertarlo en el HTML, y las acciones usan data-action (sin onclick en línea).
    ===================================================== */
+(function () {
+const root = document.getElementById('td-dashboard');
+if (!root) return;
 
-const tdDashboard = document.getElementById('td-dashboard');
+// ── Estado ────────────────────────────────────────────────────────────
+let tdData = null;          // torneo activo (respuesta de ?action=get)
+let tdEditMatchId = null;   // partido abierto en el panel de edición
 
-if (tdDashboard) {
+// ── Utilidades ────────────────────────────────────────────────────────
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = id => document.getElementById(id);
+const FL = 'style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)"';
+const PHASES = ['Fase de Grupos', 'Fecha 1', 'Fecha 2', 'Cuartos de Final', 'Semifinal', 'Gran Final'];
 
-// ── Torneo activo en memoria (se recarga desde la API tras cada cambio) ──
-let tdData = null;
-let tdCurrentSection = 'overview';
-let tdCurrentEditId  = null;
+const team      = id => tdData?.teams.find(t => t.id === id);
+const teamLabel = id => { const t = team(id); return t ? `${t.emoji} ${esc(t.name)}` : '🏆 Por definir'; };
 
-// ── Helpers de lectura sobre tdData (sin llamadas a red) ─────────────
-const tdTeam     = id => tdData?.teams?.find(t => t.id === id);
-const tdTeamName = id => tdTeam(id)?.name ?? 'Por definir';
-const tdEmoji    = id => tdTeam(id)?.emoji ?? '🏆';
-
-function tdFormatDate(str) {
-    if (!str) return '';
-    const d = new Date(str + 'T12:00:00');
-    return d.toLocaleDateString('es-UY', { weekday:'long', day:'numeric', month:'long' });
-}
-function tdShortDate(str) {
+function fmtDate(str, long = false) {
     if (!str) return '—';
     const d = new Date(str + 'T12:00:00');
-    return d.toLocaleDateString('es-UY', { day:'numeric', month:'short', year:'numeric' });
+    return d.toLocaleDateString('es-UY', long ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'short', year: 'numeric' });
 }
-function tdStatusLabel(s) {
-    return { pending:'Sin iniciar', active:'En curso', finished:'Finalizado' }[s] ?? s;
-}
-function tdStatusColor(s) {
-    return { pending:'rgba(245,158,11,0.9)', active:'var(--sun-glare-dark)', finished:'rgba(33,33,33,0.4)' }[s] ?? 'var(--sun-glare-dark)';
-}
-const tdPhaseColor = phase => ({
-    'Fase de Grupos':'bg-blue-violet/10 text-blue-violet-dark',
-    'Semifinal':     'bg-sun-glare/20 text-sun-glare-dark',
-    'Gran Final':    'bg-blue-violet text-cloud-dancer',
-})[phase] ?? 'bg-darkest-hour/10 text-darkest-hour/60';
-
-function tdGroupByDate(matches) {
-    return matches.reduce((acc, m) => {
-        (acc[m.date] = acc[m.date] || []).push(m); return acc;
-    }, {});
-}
-
-// ── Recarga completa del torneo activo desde la API ───────────────────
-async function tdReload() {
-    if (!tdData?.id) return;
-    tdData = await competikaGetTournament(tdData.id);
-}
+const STATUS = {
+    pending:  { label: 'Inscripciones abiertas', color: 'rgba(245,158,11,0.9)' },
+    active:   { label: 'En curso',               color: 'var(--sun-glare-dark)' },
+    finished: { label: 'Finalizado',             color: 'rgba(33,33,33,0.4)' },
+};
+const statusOf = s => STATUS[s] || STATUS.pending;
+const phaseClass = p => ({
+    'Fase de Grupos': 'bg-blue-violet/10 text-blue-violet-dark',
+    'Semifinal':      'bg-sun-glare/20 text-sun-glare-dark',
+    'Gran Final':     'bg-blue-violet text-cloud-dancer',
+})[p] || 'bg-darkest-hour/10 text-darkest-hour/60';
 
 // ── Toast ─────────────────────────────────────────────────────────────
-const tdToast = document.getElementById('td-toast');
-let tdToastTimer;
-function tdShowToast(msg, type = 'ok') {
-    clearTimeout(tdToastTimer);
-    if (!tdToast) return;
-    tdToast.textContent = msg;
-    tdToast.className = `td-toast td-toast--${type} td-toast--show`;
-    tdToastTimer = setTimeout(() => tdToast.classList.remove('td-toast--show'), 3200);
+let toastTimer;
+function toast(msg, type = 'ok') {
+    const el = $('td-toast');
+    if (!el) return;
+    clearTimeout(toastTimer);
+    el.textContent = msg;
+    el.className = `td-toast td-toast--${type} td-toast--show`;
+    toastTimer = setTimeout(() => el.classList.remove('td-toast--show'), 3200);
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────
-const tdSidebar  = document.getElementById('td-sidebar');
-const tdSideBack = document.getElementById('td-sidebar-backdrop');
-const tdToggle   = document.getElementById('td-sidebar-toggle');
-const tdSideInfo = document.getElementById('td-sidebar-info');
-const tdNavList  = document.getElementById('td-nav-list');
-
-tdToggle?.addEventListener('click', () => {
-    tdSidebar.classList.toggle('open');
-    tdSideBack.classList.toggle('open');
-});
-tdSideBack?.addEventListener('click', () => {
-    tdSidebar.classList.remove('open');
-    tdSideBack.classList.remove('open');
-});
-
-function tdUpdateSidebar() {
-    if (!tdData) {
-        if (tdSideInfo) tdSideInfo.innerHTML = `<p class="td-tournament-name" style="opacity:.4">Ningún torneo activo</p>`;
-        return;
-    }
-    if (tdSideInfo) tdSideInfo.innerHTML = `
-        <p class="td-tournament-name">${tdData.name}</p>
-        <span class="td-status-dot" style="background:${tdStatusColor(tdData.status)}"></span>
-        <span class="td-status-text" style="color:${tdStatusColor(tdData.status)}">${tdStatusLabel(tdData.status)}</span>
-    `;
+/** Ejecuta una acción de la API; si falla muestra el error. Devuelve true si salió bien. */
+async function call(action, opts, okMsg) {
+    const r = await competikaApi(action, opts);
+    if (r._status === 401) { competikaGoLogin(); return false; }
+    if (!r.success) { toast(r.error || 'No se pudo completar la acción.', 'warn'); return false; }
+    if (okMsg) toast(okMsg);
+    return true;
+}
+async function reload() {
+    if (tdData) tdData = await competikaGetTournament(tdData.id);
+    updateSidebar();
 }
 
-// ── Nav ───────────────────────────────────────────────────────────────
-const tdContent    = document.getElementById('td-section-content');
-const tdPageTitle  = document.getElementById('td-page-title');
-const tdBreadcrumb = document.getElementById('td-breadcrumb');
+// ── Sidebar y navegación ──────────────────────────────────────────────
+const sidebar = $('td-sidebar'), sideBack = $('td-sidebar-backdrop');
+const closeSidebar = () => { sidebar?.classList.remove('open'); sideBack?.classList.remove('open'); };
+$('td-sidebar-toggle')?.addEventListener('click', () => { sidebar.classList.toggle('open'); sideBack.classList.toggle('open'); });
+sideBack?.addEventListener('click', closeSidebar);
 
-const tdSectionMeta = {
-    selector:      { label:'Mis Torneos',               breadcrumb:'Torneos' },
-    overview:      { label:'Visión General del Torneo', breadcrumb:'Overview' },
-    participantes: { label:'Equipos Participantes',     breadcrumb:'Participantes' },
-    resultados:    { label:'Resultados de Partidos',    breadcrumb:'Resultados' },
-    configuracion: { label:'Configuración del Torneo',  breadcrumb:'Configuración' },
-    calendario:    { label:'Calendario de Partidos',    breadcrumb:'Calendario' },
+function updateSidebar() {
+    const info = $('td-sidebar-info');
+    if (!info) return;
+    if (!tdData) { info.innerHTML = '<p class="td-tournament-name" style="opacity:.4">Ningún torneo seleccionado</p>'; return; }
+    const st = statusOf(tdData.status);
+    info.innerHTML = `
+        <p class="td-tournament-name">${esc(tdData.name)}</p>
+        <span class="td-status-dot" style="background:${st.color}"></span>
+        <span class="td-status-text" style="color:${st.color}">${st.label}</span>`;
+}
+
+const SECTIONS = {
+    selector:      ['Mis Torneos', 'Torneos', renderSelector],
+    overview:      ['Visión General del Torneo', 'Overview', renderOverview],
+    participantes: ['Equipos Participantes', 'Participantes', renderParticipantes],
+    resultados:    ['Resultados y Posiciones', 'Resultados', renderResultados],
+    configuracion: ['Configuración del Torneo', 'Configuración', renderConfig],
+    calendario:    ['Calendario de Partidos', 'Calendario', renderCalendario],
 };
+let current = 'selector';
 
-function tdShowSection(id) {
-    tdCurrentSection = id;
-    tdCurrentEditId  = null;
-    const meta = tdSectionMeta[id] || {};
-    if (tdPageTitle)  tdPageTitle.textContent  = meta.label      || id;
-    if (tdBreadcrumb) tdBreadcrumb.textContent = meta.breadcrumb || id;
-
-    tdNavList?.querySelectorAll('.td-nav-item').forEach(li =>
-        li.classList.toggle('active', li.dataset.section === id)
-    );
-
-    if (tdContent) {
-        tdContent.innerHTML = '';
-        tdContent.classList.remove('td-section-anim');
-        void tdContent.offsetWidth;
-        tdContent.classList.add('td-section-anim');
-    }
-
-    ({
-        selector:      tdRenderSelector,
-        overview:      tdRenderOverview,
-        participantes: tdRenderParticipantes,
-        resultados:    tdRenderResultados,
-        configuracion: tdRenderConfig,
-        calendario:    tdRenderCalendario,
-    })[id]?.();
-
-    tdSidebar.classList.remove('open');
-    tdSideBack.classList.remove('open');
+function show(id) {
+    if (id !== 'selector' && !tdData) id = 'selector';
+    current = id;
+    tdEditMatchId = null;
+    const [title, crumb, render] = SECTIONS[id];
+    $('td-page-title').textContent = title;
+    $('td-breadcrumb').textContent = crumb;
+    document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.classList.toggle('active', li.dataset.section === id));
+    const c = $('td-section-content');
+    c.innerHTML = '';
+    c.classList.remove('td-section-anim'); void c.offsetWidth; c.classList.add('td-section-anim');
+    render();
+    closeSidebar();
 }
+const rerender = () => show(current);
 
-tdNavList?.querySelectorAll('.td-nav-item').forEach(li =>
-    li.addEventListener('click', () => {
-        if (li.dataset.section === 'selector') { tdData = null; tdUpdateSidebar(); }
-        tdShowSection(li.dataset.section);
-    })
-);
+document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.addEventListener('click', () => {
+    if (li.dataset.section === 'selector') { tdData = null; updateSidebar(); history.replaceState(null, '', location.pathname); }
+    show(li.dataset.section);
+}));
+['td-share-sidebar', 'td-share-top'].forEach(id => $(id)?.addEventListener('click', () => {
+    navigator.clipboard?.writeText(location.href);
+    toast('¡Link copiado al portapapeles!');
+}));
 
-['td-share-sidebar','td-share-top'].forEach(bid => {
-    document.getElementById(bid)?.addEventListener('click', () => {
-        if (navigator.clipboard) navigator.clipboard.writeText(location.href);
-        tdShowToast('¡Link copiado al portapapeles!');
-    });
-});
+const content = () => $('td-section-content');
 
-// ═══════════════════════════════════════════════════════════════════════
-// SELECTOR DE TORNEOS (lista real desde la BD)
-// ═══════════════════════════════════════════════════════════════════════
-async function tdRenderSelector() {
-    tdContent.innerHTML = `<p class="td-no-data">Cargando torneos…</p>`;
-    let all = [];
-    try {
-        all = await competikaListTournaments();
-    } catch (e) {
-        tdContent.innerHTML = `<p class="td-no-data">No se pudo conectar con el servidor. Revisá que la API esté disponible.</p>`;
-        return;
-    }
-
+// ═════════════════════════════════════════ MIS TORNEOS
+async function renderSelector() {
+    content().innerHTML = '<p class="td-no-data">Cargando torneos…</p>';
+    const all = await competikaListTournaments();
+    if (current !== 'selector') return;
+    const nuevo = `<a href="../tournament_form/tournament_form.html" class="td-btn-primary"><i class="ti ti-plus"></i> Crear torneo</a>`;
     if (!all.length) {
-        tdContent.innerHTML = `
-        <div class="td-empty-state">
-            <span class="td-empty-icon"><i class="ti ti-tournament"></i></span>
-            <h2 class="td-empty-title">Todavía no creaste ningún torneo</h2>
-            <p class="td-empty-sub">Creá tu primer torneo y volvé acá para gestionarlo.</p>
-            <a href="../tournament_form/tournament_form.html" class="td-btn-primary">
-                <i class="ti ti-plus"></i> Crear torneo
-            </a>
-        </div>`;
+        content().innerHTML = `
+            <div class="td-empty-state">
+                <span class="td-empty-icon"><i class="ti ti-tournament"></i></span>
+                <h2 class="td-empty-title">Todavía no organizás ningún torneo</h2>
+                <p class="td-empty-sub">Creá tu primer torneo y volvé acá para gestionarlo.</p>${nuevo}
+            </div>`;
         return;
     }
-
-    tdContent.innerHTML = `
-    <div class="td-selector-header">
-        <a href="../tournament_form/tournament_form.html" class="td-btn-primary">
-            <i class="ti ti-plus"></i> Nuevo torneo
-        </a>
-    </div>
-    <div class="td-selector-grid" id="td-selector-grid">
-        ${all.map(t => `
-        <div class="td-selector-card" data-tid="${t.id}">
-            <div class="td-sc-header">
-                <div>
-                    <p class="td-sc-sport">${t.sport || t.formatLabel || '—'}</p>
-                    <h3 class="td-sc-name">${t.name}</h3>
+    content().innerHTML = `
+        <div class="td-selector-header">${nuevo}</div>
+        <div class="td-selector-grid">
+        ${all.map(t => { const st = statusOf(t.status); return `
+            <div class="td-selector-card">
+                <div class="td-sc-header">
+                    <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
+                    <span class="td-sc-status" style="background:${st.color}20;color:${st.color}">${st.label}</span>
                 </div>
-                <span class="td-sc-status" style="background:${tdStatusColor(t.status)}20;color:${tdStatusColor(t.status)}">${tdStatusLabel(t.status)}</span>
-            </div>
-            <div class="td-sc-meta">
-                <span><i class="ti ti-calendar"></i>${tdShortDate(t.startDate)}</span>
-                <span><i class="ti ti-list-details"></i>${t.formatLabel || '—'}</span>
-                <span><i class="ti ti-users"></i>${t.teamCount || 0} / ${t.maxTeams} equipos</span>
-                ${t.venue ? `<span><i class="ti ti-map-pin"></i>${t.venue}</span>` : ''}
-            </div>
-            <div class="td-sc-footer">
-                <button class="td-btn-primary td-sc-enter" data-tid="${t.id}">
-                    <i class="ti ti-arrow-right"></i> Gestionar
-                </button>
-                <button class="td-sc-delete" data-tid="${t.id}" title="Eliminar torneo">
-                    <i class="ti ti-trash"></i>
-                </button>
-            </div>
-        </div>`).join('')}
-    </div>`;
-
-    tdContent.querySelectorAll('.td-sc-enter').forEach(btn => {
-        btn.addEventListener('click', () => tdSelectTournament(btn.dataset.tid));
-    });
-    tdContent.querySelectorAll('.td-sc-delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!confirm('¿Eliminar este torneo? Esta acción no se puede deshacer.')) return;
-            await competikaDeleteTournament(btn.dataset.tid);
-            tdShowToast('Torneo eliminado', 'warn');
-            tdRenderSelector();
-        });
-    });
+                <div class="td-sc-meta">
+                    <span><i class="ti ti-calendar"></i>${fmtDate(t.startDate)}</span>
+                    <span><i class="ti ti-list-details"></i>${esc(t.formatLabel || 'Formato a definir')}</span>
+                    <span><i class="ti ti-users"></i>${t.teamCount} / ${t.maxTeams} equipos</span>
+                    ${t.department || t.venue ? `<span><i class="ti ti-map-pin"></i>${esc([t.venue, t.department].filter(Boolean).join(', '))}</span>` : ''}
+                </div>
+                <div class="td-sc-footer">
+                    <button class="td-btn-primary td-sc-enter" data-action="open" data-id="${t.id}"><i class="ti ti-arrow-right"></i> Gestionar</button>
+                    <button class="td-sc-delete" data-action="delete-tournament" data-id="${t.id}" title="Eliminar torneo"><i class="ti ti-trash"></i></button>
+                </div>
+            </div>`; }).join('')}
+        </div>`;
 }
 
-async function tdSelectTournament(id) {
+async function openTournament(id) {
     tdData = await competikaGetTournament(id);
-    if (!tdData) { tdShowToast('Torneo no encontrado', 'warn'); return; }
-    tdUpdateSidebar();
-    tdShowSection('overview');
-    history.replaceState(null, '', `?t=${id}`);
+    if (!tdData) { toast('Torneo no encontrado', 'warn'); show('selector'); return; }
+    if (!tdData.isOwner) { tdData = null; toast('Solo el organizador puede gestionar este torneo.', 'warn'); show('selector'); return; }
+    updateSidebar();
+    history.replaceState(null, '', `?t=${encodeURIComponent(id)}`);
+    show('overview');
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// OVERVIEW
-// ═══════════════════════════════════════════════════════════════════════
-function tdRenderOverview() {
-    if (!tdData) { tdShowSection('selector'); return; }
-    const played  = tdData.matches.filter(m => m.played).length;
-    const pending = tdData.matches.filter(m => !m.played).length;
-    const groups  = [...new Set(tdData.teams.map(t => t.group).filter(Boolean))].sort();
-    const next    = tdData.matches.find(m => !m.played);
-    const accepted= tdData.teams.filter(t => t.status === 'accepted');
+// ═════════════════════════════════════════ OVERVIEW
+function renderOverview() {
+    const t = tdData;
+    const played = t.matches.filter(m => m.played).length;
+    const next = t.matches.find(m => !m.played);
+    const st = statusOf(t.status);
+    const leader = [...t.teams].sort((a, b) => b.points - a.points)[0];
 
-    tdContent.innerHTML = `
+    content().innerHTML = `
     <div class="td-overview-grid">
       <div class="td-stats-row">
-        ${[
-            { icon:'ti-users',    label:'Equipos',             val: accepted.length },
-            { icon:'ti-sword',    label:'Partidos Jugados',    val: played  },
-            { icon:'ti-clock',    label:'Partidos Pendientes', val: pending },
-            { icon:'ti-grid-dots',label:'Grupos',              val: groups.length || '—' },
-        ].map(s => `
-          <div class="td-stat-card">
-            <i class="ti ${s.icon} td-stat-icon"></i>
-            <div><p class="td-stat-label">${s.label}</p><p class="td-stat-val">${s.val}</p></div>
-          </div>`).join('')}
+        ${[['ti-users', 'Equipos', `${t.teams.length} / ${t.maxTeams}`], ['ti-sword', 'Partidos jugados', played],
+           ['ti-clock', 'Partidos pendientes', t.matches.length - played], ['ti-trophy', 'Puntero', leader && leader.points ? esc(leader.name) : '—']]
+          .map(([i, l, v]) => `<div class="td-stat-card"><i class="ti ${i} td-stat-icon"></i><div><p class="td-stat-label">${l}</p><p class="td-stat-val">${v}</p></div></div>`).join('')}
       </div>
-
       <div class="td-two-col">
         ${next ? `
         <div class="td-card">
           <p class="td-card-label">PRÓXIMO PARTIDO</p>
-          <span class="td-phase-badge ${tdPhaseColor(next.phase)}">${next.phase}</span>
+          <span class="td-phase-badge ${phaseClass(next.phase)}">${esc(next.phase)}</span>
           <div class="td-match-vs-big">
-            <div class="td-match-team"><span class="td-team-emoji">${tdEmoji(next.home)}</span><span>${tdTeamName(next.home)}</span></div>
-            <span class="td-vs-sep">VS</span>
-            <div class="td-match-team"><span class="td-team-emoji">${tdEmoji(next.away)}</span><span>${tdTeamName(next.away)}</span></div>
+            <div class="td-match-team">${teamLabel(next.home)}</div><span class="td-vs-sep">VS</span><div class="td-match-team">${teamLabel(next.away)}</div>
           </div>
-          <p class="td-match-meta"><i class="ti ti-calendar"></i>${tdShortDate(next.date)} · ${next.time || ''} · <i class="ti ti-map-pin"></i>${next.venue || '—'}</p>
+          <p class="td-match-meta"><i class="ti ti-calendar"></i>${fmtDate(next.date)} ${esc(next.time || '')} · <i class="ti ti-map-pin"></i>${esc(next.venue || '—')}</p>
         </div>` : `
-        <div class="td-card td-card--muted">
-          <p class="td-stat-label">Sin partidos próximos</p>
-          <p style="font-size:13px;margin-top:8px;color:rgba(33,33,33,0.4)">Agregá partidos desde la sección Calendario.</p>
-        </div>`}
-
+        <div class="td-card td-card--muted"><p class="td-stat-label">Sin partidos pendientes</p>
+          <p style="font-size:13px;margin-top:8px;color:rgba(33,33,33,0.4)">Agregá partidos desde Calendario.</p></div>`}
         <div class="td-card">
-          <div class="td-card-header-row">
-            <p class="td-card-label">FORMATO</p>
-            <span class="td-phase-badge bg-blue-violet text-cloud-dancer">${tdData.formatLabel || '—'}</span>
+          <div class="td-card-header-row"><p class="td-card-label">DATOS</p>
+            <span class="td-phase-badge" style="background:${st.color}20;color:${st.color}">${st.label}</span></div>
+          <div class="td-resumen">
+            <div class="td-resumen-row"><span>Deporte</span><span>${esc(t.sport || '—')}</span></div>
+            <div class="td-resumen-row"><span>Formato</span><span>${esc(t.formatLabel || '—')}</span></div>
+            <div class="td-resumen-row"><span>Fechas</span><span>${fmtDate(t.startDate)}${t.endDate ? ' → ' + fmtDate(t.endDate) : ''}</span></div>
+            <div class="td-resumen-row"><span>Lugar</span><span>${esc([t.venue, t.department].filter(Boolean).join(', ') || '—')}</span></div>
+            <div class="td-resumen-row"><span>Inscripción</span><span>${t.costs.entryFee > 0 ? '$' + t.costs.entryFee : 'Gratis'}</span></div>
           </div>
-          ${groups.length ? `
-          <div class="td-groups-mini-grid">
-            ${groups.map(g => {
-              const gTeams = accepted.filter(t => t.group === g);
-              return `<div class="td-group-mini">
-                <p class="td-group-mini-title">GRUPO ${g}</p>
-                ${gTeams.length ? gTeams.map(t => `
-                  <div class="td-group-mini-row">
-                    <span>${t.emoji || '⚽'} ${t.name}</span>
-                    <span class="td-group-mini-rec">${t.wins || 0}V ${t.losses || 0}D</span>
-                  </div>`).join('') : '<p class="td-no-data">Sin equipos</p>'}
-              </div>`;
-            }).join('')}
-          </div>` : `<p class="td-no-data" style="margin-top:12px">Aún no hay grupos definidos. Agregá equipos desde Participantes.</p>`}
         </div>
       </div>
-
-      ${(tdData.prizes?.length || tdData.prizesText) ? `
-      <div class="td-card">
-        <p class="td-card-label"><i class="ti ti-medal"></i> Premios</p>
-        ${tdData.prizesText ? `<p style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap;color:var(--darkest-hour)">${tdData.prizesText}</p>` : ''}
-        ${tdData.prizes?.length ? `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
-          ${tdData.prizes.map(p => `
-          <div style="flex:1;min-width:140px;background:rgba(95,31,197,0.04);border-radius:10px;padding:12px 14px;border:1px solid rgba(95,31,197,0.1)">
-            <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--blue-violet-dark);margin-bottom:6px">${['🥇','🥈','🥉'][p.place-1]||''} ${p.place}° LUGAR</p>
-            <p style="font-weight:700;font-size:14px">${p.title}</p>
-            <p style="font-size:12px;color:rgba(33,33,33,0.5);margin-top:2px">${p.detail}</p>
-          </div>`).join('')}
-        </div>` : ''}
-      </div>` : ''}
-
-      ${tdData.organizer?.name ? `
-      <div class="td-card">
-        <p class="td-card-label"><i class="ti ti-user-circle"></i> Contacto del organizador</p>
+      ${t.prizesText ? `<div class="td-card"><p class="td-card-label"><i class="ti ti-medal"></i> Premios</p>
+        <p style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap">${esc(t.prizesText)}</p></div>` : ''}
+      <div class="td-card"><p class="td-card-label"><i class="ti ti-user-circle"></i> Organizador</p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
-          <span style="font-size:14px;font-weight:700">${tdData.organizer.name}</span>
-          ${tdData.organizer.phone ? `<span class="td-match-meta"><i class="ti ti-phone"></i>${tdData.organizer.phone}</span>` : ''}
-          ${tdData.organizer.email ? `<span class="td-match-meta"><i class="ti ti-mail"></i>${tdData.organizer.email}</span>` : ''}
-        </div>
-      </div>` : ''}
+          <span style="font-size:14px;font-weight:700">${esc(t.organizer.name)}</span>
+          ${t.organizer.phone ? `<span class="td-match-meta"><i class="ti ti-phone"></i>${esc(t.organizer.phone)}</span>` : ''}
+          ${t.organizer.email ? `<span class="td-match-meta"><i class="ti ti-mail"></i>${esc(t.organizer.email)}</span>` : ''}
+        </div></div>
     </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// PARTICIPANTES
-// ═══════════════════════════════════════════════════════════════════════
-function tdRenderParticipantes() {
-    if (!tdData) { tdShowSection('selector'); return; }
-    const accepted = tdData.teams.filter(t => t.status === 'accepted');
-    const pending  = tdData.teams.filter(t => t.status === 'pending');
-    const rejected = tdData.teams.filter(t => t.status === 'rejected');
-    const groups   = [...new Set(tdData.teams.map(t => t.group).filter(Boolean))].sort();
-
-    const teamRow = (t, showActions=false) => `
-      <div class="td-team-row">
-        <span class="td-team-row-emoji">${t.emoji || '⚽'}</span>
-        <div class="td-team-row-info">
-          <p class="td-team-row-name">${t.name}</p>
-          <p class="td-team-row-sub">${t.players || 0} jugadores${t.group ? ' · Grupo '+t.group : ''}</p>
-        </div>
-        <span class="td-team-rec">${t.wins||0}V&nbsp;&nbsp;${t.losses||0}D</span>
-        ${showActions ? `
-          <button class="td-action-btn td-action-ok" title="Aceptar" onclick="tdApproveTeam('${t.id}',true)"><i class="ti ti-check"></i></button>
-          <button class="td-action-btn td-action-no" title="Rechazar" onclick="tdApproveTeam('${t.id}',false)"><i class="ti ti-x"></i></button>` : ''}
-        <button class="td-action-btn td-action-no" title="Eliminar" onclick="tdRemoveTeam('${t.id}')"><i class="ti ti-trash" style="font-size:12px"></i></button>
-        <span class="td-dot td-dot--${t.status}"></span>
-      </div>`;
-
-    tdContent.innerHTML = `
+// ═════════════════════════════════════════ PARTICIPANTES
+function renderParticipantes() {
+    const t = tdData;
+    const full = t.teams.length >= t.maxTeams;
+    content().innerHTML = `
     <div class="td-part-layout">
       <div class="td-part-list">
-        ${!tdData.teams.length ? `<div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-users"></i></span><p class="td-empty-sub">Todavía no hay equipos. Usá el panel de la derecha para agregar.</p></div>` : ''}
-        ${accepted.length ? `<p class="td-list-section-title"><i class="ti ti-check"></i> ACEPTADOS (${accepted.length})</p>${accepted.map(t=>teamRow(t)).join('')}` : ''}
-        ${pending.length  ? `<p class="td-list-section-title td-list-section-title--warn"><i class="ti ti-clock"></i> PENDIENTES (${pending.length})</p>${pending.map(t=>teamRow(t,true)).join('')}` : ''}
-        ${rejected.length ? `<p class="td-list-section-title td-list-section-title--err"><i class="ti ti-x"></i> RECHAZADOS (${rejected.length})</p>${rejected.map(t=>teamRow(t)).join('')}` : ''}
+        ${t.teams.length ? `<p class="td-list-section-title"><i class="ti ti-check"></i> INSCRIPTOS (${t.teams.length})</p>` : `
+          <div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-users"></i></span>
+          <p class="td-empty-sub">Todavía no hay equipos. Agregalos desde el panel de la derecha o esperá inscripciones.</p></div>`}
+        ${t.teams.map(e => `
+          <div class="td-team-row">
+            <span class="td-team-row-emoji">${e.emoji}</span>
+            <div class="td-team-row-info">
+              <p class="td-team-row-name">${esc(e.name)}</p>
+              <p class="td-team-row-sub">${e.players} jugador${e.players === 1 ? '' : 'es'} · ${e.points} pts</p>
+            </div>
+            <span class="td-team-rec">${e.wins}G ${e.draws}E ${e.losses}P</span>
+            <button class="td-action-btn td-action-ok" title="Renombrar" data-action="rename-team" data-id="${e.id}"><i class="ti ti-pencil" style="font-size:12px"></i></button>
+            <button class="td-action-btn td-action-no" title="Eliminar" data-action="delete-team" data-id="${e.id}"><i class="ti ti-trash" style="font-size:12px"></i></button>
+          </div>`).join('')}
       </div>
-
       <div class="td-card td-part-add">
-        <p class="td-card-label"><i class="ti ti-plus"></i> Agregar Equipo</p>
-        <div class="input-group mt-4">
-          <input type="text" id="td-add-name" class="input-field" placeholder=" ">
-          <label for="td-add-name" class="floating-label">Nombre del equipo</label>
-        </div>
-        <div class="input-group">
-          <input type="number" id="td-add-players" class="input-field" placeholder=" " min="1">
-          <label for="td-add-players" class="floating-label">N° de jugadores</label>
-        </div>
-        <div class="input-group">
-          <input type="text" id="td-add-group" class="input-field" placeholder=" " list="td-groups-datalist" value="${groups[0]||''}">
-          <label for="td-add-group" class="floating-label">Grupo</label>
-          <datalist id="td-groups-datalist">${groups.map(g=>`<option value="${g}">`).join('')}</datalist>
-        </div>
-        <button class="td-btn-primary" style="width:100%" onclick="tdAddTeam()">
-          <i class="ti ti-plus"></i> Agregar Equipo
-        </button>
-        <div class="td-resumen">
-          <p class="td-card-label" style="margin-top:16px">RESUMEN</p>
-          <div class="td-resumen-row"><span>Total equipos</span><span>${tdData.teams.length} / ${tdData.maxTeams}</span></div>
-          <div class="td-resumen-row"><span style="color:var(--sun-glare-dark)">Aceptados</span><span style="color:var(--sun-glare-dark)">${accepted.length}</span></div>
-          ${pending.length ? `<div class="td-resumen-row"><span style="color:#d97706">Pendientes</span><span style="color:#d97706">${pending.length}</span></div>` : ''}
-        </div>
+        <p class="td-card-label"><i class="ti ti-plus"></i> Agregar equipo</p>
+        <div class="input-group mt-4"><input type="text" id="td-add-name" class="input-field" placeholder=" " maxlength="100">
+          <label for="td-add-name" class="floating-label">Nombre del equipo</label></div>
+        <div class="input-group"><input type="number" id="td-add-players" class="input-field" placeholder=" " min="1" max="500">
+          <label for="td-add-players" class="floating-label">N° de jugadores</label></div>
+        <button class="td-btn-primary" style="width:100%" data-action="add-team" ${full ? 'disabled' : ''}>
+          <i class="ti ti-plus"></i> ${full ? 'Cupo completo' : 'Agregar equipo'}</button>
+        <div class="td-resumen"><p class="td-card-label" style="margin-top:16px">CUPO</p>
+          <div class="td-resumen-row"><span>Inscriptos</span><span>${t.teams.length} / ${t.maxTeams}</span></div></div>
       </div>
     </div>`;
 }
 
-window.tdApproveTeam = async function(id, approve) {
-    if (!tdData) return;
-    const t = tdData.teams.find(t => t.id === id);
-    if (!t) return;
-    await competikaApi('update_team', { method: 'POST', params: { team_id: id }, body: { status: approve ? 'accepted' : 'rejected' } });
-    await tdReload();
-    tdRenderParticipantes();
-    tdShowToast(approve ? `${t.name} aceptado ✓` : `${t.name} rechazado`, approve ? 'ok' : 'warn');
-};
-
-window.tdRemoveTeam = async function(id) {
-    if (!tdData) return;
-    const t = tdData.teams.find(t => t.id === id);
-    if (!t || !confirm(`¿Eliminar "${t.name}"?`)) return;
-    await competikaApi('delete_team', { method: 'POST', params: { team_id: id } });
-    await tdReload();
-    tdRenderParticipantes();
-    tdShowToast(`${t.name} eliminado`, 'warn');
-};
-
-window.tdAddTeam = async function() {
-    if (!tdData) return;
-    const name    = document.getElementById('td-add-name')?.value.trim();
-    const players = parseInt(document.getElementById('td-add-players')?.value) || 0;
-    const group   = document.getElementById('td-add-group')?.value.trim() || '';
-    if (!name) { tdShowToast('Ingresá el nombre del equipo', 'warn'); return; }
-    if (tdData.teams.filter(t => t.status !== 'rejected').length >= tdData.maxTeams) {
-        tdShowToast(`Límite de ${tdData.maxTeams} equipos alcanzado`, 'warn'); return;
-    }
-    const EMOJIS = ['⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🥍','🏒'];
-    const emoji = EMOJIS[tdData.teams.length % EMOJIS.length];
-    const res = await competikaApi('add_team', { method: 'POST', params: { id: tdData.id }, body: { name, players, group, status: 'accepted', emoji } });
-    if (!res.success) { tdShowToast(res.error || 'No se pudo agregar el equipo', 'warn'); return; }
-    await tdReload();
-    tdRenderParticipantes();
-    tdShowToast(`${name} agregado ✓`);
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// RESULTADOS
-// ═══════════════════════════════════════════════════════════════════════
-function tdRenderResultados() {
-    if (!tdData) { tdShowSection('selector'); return; }
-    const played   = tdData.matches.filter(m => m.played);
-    const upcoming = tdData.matches.filter(m => !m.played);
-
-    const playedRow = m => `
-      <div class="td-result-card">
-        <div class="td-result-header">
-          <span class="td-phase-badge ${tdPhaseColor(m.phase)}">${m.phase}</span>
-          <span class="td-result-date">${m.date} · ${m.time || ''}</span>
-        </div>
-        <div class="td-result-score-row">
-          <span class="td-result-team">${m.home ? tdEmoji(m.home)+' '+tdTeamName(m.home) : 'Por definir'}</span>
-          <span class="td-result-score">${m.homeScore} <span class="td-result-dash">—</span> ${m.awayScore}</span>
-          <span class="td-result-team">${m.away ? tdEmoji(m.away)+' '+tdTeamName(m.away) : 'Por definir'}</span>
-        </div>
-        ${m.venue ? `<p class="td-match-meta"><i class="ti ti-map-pin"></i>${m.venue}</p>` : ''}
+// ═════════════════════════════════════════ RESULTADOS + POSICIONES
+function renderResultados() {
+    const t = tdData;
+    const tabla = [...t.teams].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+    const played = t.matches.filter(m => m.played);
+    content().innerHTML = `
+      <div class="td-card">
+        <p class="td-card-label"><i class="ti ti-list-numbers"></i> Tabla de posiciones</p>
+        ${tabla.length ? `<table class="td-table">
+          <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
+          <tbody>${tabla.map((e, i) => `<tr class="${i === 0 && e.points > 0 ? 'td-table-first' : ''}">
+            <td class="td-table-pos">${i + 1}</td><td><span class="td-table-emoji">${e.emoji}</span>${esc(e.name)}</td>
+            <td>${e.wins + e.draws + e.losses}</td><td>${e.wins}</td><td>${e.draws}</td><td>${e.losses}</td>
+            <td class="td-table-pts">${e.points}</td></tr>`).join('')}</tbody></table>`
+          : '<p class="td-no-data" style="margin-top:12px">Sin equipos todavía.</p>'}
+      </div>
+      <p class="td-section-label" style="margin-top:28px"><i class="ti ti-circle-check"></i> PARTIDOS JUGADOS</p>
+      <div class="td-results-list">
+        ${played.length ? played.map(m => `
+          <div class="td-result-card">
+            <div class="td-result-header"><span class="td-phase-badge ${phaseClass(m.phase)}">${esc(m.phase)}</span>
+              <span class="td-result-date">${fmtDate(m.date)} ${esc(m.time || '')}</span></div>
+            <div class="td-result-score-row">
+              <span class="td-result-team">${teamLabel(m.home)}</span>
+              <span class="td-result-score">${m.homeScore} <span class="td-result-dash">—</span> ${m.awayScore}</span>
+              <span class="td-result-team">${teamLabel(m.away)}</span>
+            </div>
+          </div>`).join('') : '<p class="td-no-data">Todavía no se cargaron resultados. Hacelo desde Calendario.</p>'}
       </div>`;
-
-    const upcomingRow = m => `
-      <div class="td-result-card td-result-card--upcoming">
-        <div class="td-result-header">
-          <span class="td-phase-badge ${tdPhaseColor(m.phase)}">${m.phase}</span>
-          <span class="td-result-date">${m.date} · ${m.time || ''}</span>
-        </div>
-        <div class="td-result-score-row">
-          <span class="td-result-team">${m.home ? tdEmoji(m.home)+' '+tdTeamName(m.home) : 'Por definir'}</span>
-          <span class="td-result-vs">VS</span>
-          <span class="td-result-team">${m.away ? tdEmoji(m.away)+' '+tdTeamName(m.away) : 'Por definir'}</span>
-        </div>
-        ${m.venue ? `<p class="td-match-meta"><i class="ti ti-map-pin"></i>${m.venue}</p>` : ''}
-      </div>`;
-
-    if (!tdData.matches.length) {
-        tdContent.innerHTML = `<div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-chart-bar"></i></span><p class="td-empty-sub">Todavía no hay partidos. Agregá partidos desde Calendario.</p></div>`;
-        return;
-    }
-
-    tdContent.innerHTML = `
-      ${played.length  ? `<p class="td-section-label"><i class="ti ti-check-circle"></i> PARTIDOS JUGADOS</p><div class="td-results-list">${played.map(playedRow).join('')}</div>` : ''}
-      ${upcoming.length? `<p class="td-section-label" style="margin-top:32px"><i class="ti ti-clock"></i> PRÓXIMOS PARTIDOS</p><div class="td-results-list">${upcoming.map(upcomingRow).join('')}</div>` : ''}`;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// CONFIGURACIÓN
-// ═══════════════════════════════════════════════════════════════════════
-function tdRenderConfig() {
-    if (!tdData) { tdShowSection('selector'); return; }
+// ═════════════════════════════════════════ CONFIGURACIÓN
+function renderConfig() {
     const t = tdData;
-    const formats = tournamentTypes.flatMap(tt => tt.subtipos.map(s => ({ id: s.id, label: s.title })));
+    const sports = (typeof cardData !== 'undefined' ? cardData.map(s => s.title) : []);
+    if (t.sport && !sports.includes(t.sport)) sports.unshift(t.sport);
+    const formats = typeof tournamentTypes !== 'undefined' ? tournamentTypes.flatMap(tt => tt.subtipos.map(s => [s.id, s.title])) : [];
+    const deps = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida','Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha','Salto','San José','Soriano','Tacuarembó','Treinta y Tres'];
+    const opt = (list, sel) => list.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`; }).join('');
+    const field = (id, label, value, type = 'text', extra = '') =>
+        `<div class="input-group"><input type="${type}" id="${id}" class="input-field" value="${esc(value ?? '')}" placeholder=" " ${extra}><label for="${id}" class="floating-label" ${FL}>${label}</label></div>`;
 
-    tdContent.innerHTML = `
+    content().innerHTML = `
     <div class="td-config-layout">
       <div class="td-config-main">
-
         <div class="td-card">
-          <p class="td-card-label"><i class="ti ti-clipboard-text"></i> Datos del Torneo</p>
-          <div class="input-group mt-4">
-            <input type="text" id="cfg-name" class="input-field" value="${t.name}" placeholder=" ">
-            <label for="cfg-name" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Nombre del Torneo</label>
+          <p class="td-card-label"><i class="ti ti-clipboard-text"></i> Datos del torneo</p>
+          <div class="mt-4">${field('cfg-name', 'Nombre del torneo', t.name, 'text', 'maxlength="150"')}</div>
+          <div class="input-group"><select id="cfg-sport" class="input-field"><option value="">Sin deporte</option>${opt(sports, t.sport)}</select><label for="cfg-sport" class="floating-label" ${FL}>Deporte</label></div>
+          <div class="input-group"><select id="cfg-format" class="input-field"><option value="">A definir</option>${opt(formats, t.formatSubId)}</select><label for="cfg-format" class="floating-label" ${FL}>Formato</label></div>
+          <div class="td-ep-row2">${field('cfg-start', 'Fecha de inicio', t.startDate, 'date')}${field('cfg-end', 'Fecha de fin', t.endDate, 'date')}</div>
+          <div class="td-ep-row2">
+            <div class="input-group"><select id="cfg-dep" class="input-field"><option value="">Sin departamento</option>${opt(deps, t.department)}</select><label for="cfg-dep" class="floating-label" ${FL}>Departamento</label></div>
+            ${field('cfg-venue', 'Dirección / sede', t.venue, 'text', 'maxlength="150"')}
           </div>
-          <div class="input-group">
-            <input type="text" id="cfg-sport" class="input-field" value="${t.sport||''}" placeholder=" ">
-            <label for="cfg-sport" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Deporte</label>
+          <div class="input-group"><textarea id="cfg-desc" class="input-field" style="height:auto;min-height:72px;padding-top:16px" maxlength="2000" placeholder=" ">${esc(t.description || '')}</textarea><label for="cfg-desc" class="floating-label" ${FL}>Descripción</label></div>
+          <div class="td-ep-row2">
+            ${field('cfg-max', 'Cupo de equipos', t.maxTeams, 'number', 'min="2" max="1024"')}
+            <div class="input-group"><select id="cfg-status" class="input-field">${opt([['pending', 'Inscripciones abiertas'], ['active', 'En curso'], ['finished', 'Finalizado']], t.status)}</select><label for="cfg-status" class="floating-label" ${FL}>Estado</label></div>
           </div>
-          <div class="input-group">
-            <input type="text" id="cfg-venue" class="input-field" value="${t.venue||''}" placeholder=" ">
-            <label for="cfg-venue" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Sede / Ubicación</label>
-          </div>
-          <div class="input-group">
-            <input type="number" id="cfg-max" class="input-field" value="${t.maxTeams||8}" min="2" placeholder=" ">
-            <label for="cfg-max" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Máximo de Equipos</label>
-          </div>
-          <div class="input-group">
-            <select id="cfg-format" class="input-field" style="color:var(--darkest-hour)">
-              ${formats.map(f=>`<option value="${f.id}"${f.id===t.formatSubId?' selected':''}>${f.label}</option>`).join('')}
-            </select>
-            <label for="cfg-format" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Formato</label>
-          </div>
-          <div class="input-group">
-            <select id="cfg-status" class="input-field" style="color:var(--darkest-hour)">
-              <option value="pending"${t.status==='pending'?' selected':''}>Sin iniciar</option>
-              <option value="active"${t.status==='active'?' selected':''}>En curso</option>
-              <option value="finished"${t.status==='finished'?' selected':''}>Finalizado</option>
-            </select>
-            <label for="cfg-status" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Estado</label>
-          </div>
-          <button class="td-btn-primary" onclick="tdSaveConfig()"><i class="ti ti-device-floppy"></i> Guardar Cambios</button>
+          <button class="td-btn-primary" data-action="save-config"><i class="ti ti-device-floppy"></i> Guardar cambios</button>
         </div>
-
         <div class="td-card">
-          <p class="td-card-label"><i class="ti ti-user-circle"></i> Contacto del Organizador</p>
-          <div class="input-group mt-4">
-            <input type="text" id="cfg-org-name" class="input-field" value="${t.organizer?.name||''}" placeholder=" ">
-            <label for="cfg-org-name" class="floating-label" style="${t.organizer?.name?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Nombre</label>
-          </div>
-          <div class="input-group">
-            <input type="tel" id="cfg-org-phone" class="input-field" value="${t.organizer?.phone||''}" placeholder=" ">
-            <label for="cfg-org-phone" class="floating-label" style="${t.organizer?.phone?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Teléfono</label>
-          </div>
-          <div class="input-group">
-            <input type="email" id="cfg-org-email" class="input-field" value="${t.organizer?.email||''}" placeholder=" ">
-            <label for="cfg-org-email" class="floating-label" style="${t.organizer?.email?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Correo electrónico</label>
-          </div>
-          <button class="td-btn-primary" onclick="tdSaveOrganizer()"><i class="ti ti-device-floppy"></i> Guardar Contacto</button>
-        </div>
-
-        <div class="td-card">
-          <p class="td-card-label"><i class="ti ti-medal"></i> Premios</p>
-          ${[1,2,3].map(n => {
-            const p = (t.prizes||[]).find(x=>x.place===n) || {place:n,title:'',detail:''};
-            const labels = ['🥇 1° Lugar','🥈 2° Lugar','🥉 3° Lugar'];
-            return `<div class="td-prize-block">
-              <p class="td-prize-place">${labels[n-1]}</p>
-              <div class="input-group">
-                <input type="text" id="cfg-p${n}-title" class="input-field" value="${p.title}" placeholder=" ">
-                <label class="floating-label" style="${p.title?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Título</label>
-              </div>
-              <div class="input-group">
-                <input type="text" id="cfg-p${n}-detail" class="input-field" value="${p.detail}" placeholder=" ">
-                <label class="floating-label" style="${p.detail?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Premio</label>
-              </div>
-            </div>`;
-          }).join('')}
-          <button class="td-btn-primary" onclick="tdSavePrizes()"><i class="ti ti-device-floppy"></i> Guardar Premios</button>
+          <p class="td-card-label"><i class="ti ti-cash"></i> Costos y premios</p>
+          <div class="td-ep-row2 mt-4">${field('cfg-fee', 'Costo de inscripción', t.costs.entryFee, 'number', 'min="0" step="0.01"')}${field('cfg-field', 'Alquiler del lugar', t.costs.fieldCost, 'number', 'min="0" step="0.01"')}</div>
+          ${field('cfg-ref', 'Costo de árbitro', t.costs.refereeCost, 'number', 'min="0" step="0.01"')}
+          <div class="input-group"><textarea id="cfg-prizes" class="input-field" style="height:auto;min-height:72px;padding-top:16px" maxlength="255" placeholder=" ">${esc(t.prizesText || '')}</textarea><label for="cfg-prizes" class="floating-label" ${FL}>Premios (máx. 255 caracteres)</label></div>
+          <button class="td-btn-primary" data-action="save-costs"><i class="ti ti-device-floppy"></i> Guardar costos y premios</button>
         </div>
       </div>
-
       <div class="td-config-side">
         <div class="td-card td-card--danger">
-          <p class="td-card-label"><i class="ti ti-alert-triangle"></i> Zona de Peligro</p>
-          <button class="td-btn-ghost-warn" onclick="tdShowToast('Inscripciones pausadas','warn')">Pausar Inscripciones</button>
-          <button class="td-btn-danger" onclick="tdConfirmDelete()">Eliminar Torneo</button>
+          <p class="td-card-label"><i class="ti ti-alert-triangle"></i> Zona de peligro</p>
+          <p class="td-meta-small">Un torneo con resultados registrados no se puede eliminar: marcalo como Finalizado.</p>
+          <button class="td-btn-danger" data-action="delete-tournament" data-id="${t.id}">Eliminar torneo</button>
         </div>
       </div>
     </div>`;
 }
 
-window.tdSaveConfig = async function() {
-    if (!tdData) return;
-    const payload = {
-        name:      document.getElementById('cfg-name')?.value.trim()   || tdData.name,
-        sport:     document.getElementById('cfg-sport')?.value.trim()  || '',
-        venue:     document.getElementById('cfg-venue')?.value.trim()  || '',
-        maxTeams:  parseInt(document.getElementById('cfg-max')?.value) || tdData.maxTeams,
-        formatSubId: document.getElementById('cfg-format')?.value      || tdData.formatSubId,
-        status:    document.getElementById('cfg-status')?.value        || tdData.status,
-    };
-    const sub = tournamentTypes.flatMap(t => t.subtipos).find(s => s.id === payload.formatSubId);
-    if (sub) payload.formatLabel = sub.title;
+// ═════════════════════════════════════════ CALENDARIO
+function teamOptions(selected) {
+    return `<option value="">🏆 Por definir</option>` +
+        tdData.teams.map(e => `<option value="${e.id}"${e.id === selected ? ' selected' : ''}>${e.emoji} ${esc(e.name)}</option>`).join('');
+}
+const phaseList = id => `<datalist id="${id}">${PHASES.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`;
 
-    const res = await competikaApi('update', { method: 'POST', params: { id: tdData.id }, body: payload });
-    if (!res.success) { tdShowToast(res.error || 'No se pudo guardar', 'warn'); return; }
-    await tdReload();
-    tdUpdateSidebar();
-    tdShowToast('Cambios guardados ✓');
-};
+function renderCalendario() {
+    const t = tdData;
+    const byDate = {};
+    t.matches.forEach(m => (byDate[m.date || 'sin-fecha'] ||= []).push(m));
+    const played = t.matches.filter(m => m.played).length;
 
-window.tdSaveOrganizer = async function() {
-    if (!tdData) return;
-    const organizer = {
-        name:  document.getElementById('cfg-org-name')?.value.trim()  || '',
-        phone: document.getElementById('cfg-org-phone')?.value.trim() || '',
-        email: document.getElementById('cfg-org-email')?.value.trim() || '',
-    };
-    await competikaApi('update', { method: 'POST', params: { id: tdData.id }, body: { organizer } });
-    await tdReload();
-    tdShowToast('Contacto guardado ✓');
-};
-
-window.tdSavePrizes = async function() {
-    if (!tdData) return;
-    const prizes = [1,2,3].map(n => ({
-        place:  n,
-        title:  document.getElementById(`cfg-p${n}-title`)?.value.trim()  || '',
-        detail: document.getElementById(`cfg-p${n}-detail`)?.value.trim() || '',
-    })).filter(p => p.title);
-    await competikaApi('update', { method: 'POST', params: { id: tdData.id }, body: { prizes } });
-    await tdReload();
-    tdShowToast('Premios guardados ✓');
-};
-
-window.tdConfirmDelete = async function() {
-    if (!tdData) return;
-    if (!confirm(`¿Eliminar "${tdData.name}"? Esta acción no se puede deshacer.`)) return;
-    await competikaDeleteTournament(tdData.id);
-    tdData = null;
-    tdUpdateSidebar();
-    history.replaceState(null, '', 'tournament_dashboard.html');
-    tdShowSection('selector');
-    tdShowToast('Torneo eliminado', 'warn');
-};
-
-// ═══════════════════════════════════════════════════════════════════════
-// CALENDARIO + EDICIÓN DE PARTIDOS
-// ═══════════════════════════════════════════════════════════════════════
-function tdRenderCalendario() {
-    if (!tdData) { tdShowSection('selector'); return; }
-    const byDate  = tdGroupByDate(tdData.matches);
-    const played  = tdData.matches.filter(m => m.played).length;
-    const pending = tdData.matches.filter(m => !m.played).length;
-    const accepted= tdData.teams.filter(t => t.status === 'accepted');
-
-    const matchRow = m => `
-      <div class="td-cal-row" data-match-id="${m.id}" role="button" tabindex="0">
-        <div class="td-cal-time">
-          <span class="td-cal-hour">${m.time || '—'}</span>
-          <span class="td-cal-dot td-cal-dot--${m.played?'played':'upcoming'}"></span>
-        </div>
-        <div class="td-cal-match-info">
-          <div class="td-cal-teams">
-            <span>${m.home ? tdEmoji(m.home)+' '+tdTeamName(m.home) : '🏆 Por definir'}</span>
-            <span class="td-cal-sep">${m.played ? `<strong>${m.homeScore} — ${m.awayScore}</strong>` : 'VS'}</span>
-            <span>${m.away ? tdEmoji(m.away)+' '+tdTeamName(m.away) : '🏆 Por definir'}</span>
-          </div>
-          ${m.venue ? `<span class="td-cal-venue"><i class="ti ti-map-pin"></i>${m.venue}</span>` : ''}
-        </div>
-        <div class="td-cal-right">
-          <span class="td-phase-badge ${tdPhaseColor(m.phase)}">${m.phase}</span>
-          <i class="ti ti-pencil td-cal-edit-icon"></i>
-        </div>
-      </div>`;
-
-    tdContent.innerHTML = `
+    content().innerHTML = `
     <div class="td-cal-layout" id="td-cal-layout">
-
       <div class="td-stats-row td-stats-row--sm">
-        ${[
-          { label:'Total Fechas',       val: Object.keys(byDate).length, color:'color:var(--blue-violet-dark)' },
-          { label:'Partidos Jugados',   val: played,  color:'color:var(--sun-glare-dark)' },
-          { label:'Partidos Restantes', val: pending, color:'color:var(--blue-violet-dark)' },
-        ].map(s=>`<div class="td-stat-card"><p class="td-stat-val" style="${s.color}">${s.val}</p><p class="td-stat-label">${s.label}</p></div>`).join('')}
+        ${[['Fechas', Object.keys(byDate).length], ['Partidos jugados', played], ['Partidos restantes', t.matches.length - played]]
+          .map(([l, v]) => `<div class="td-stat-card"><p class="td-stat-val">${v}</p><p class="td-stat-label">${l}</p></div>`).join('')}
       </div>
-
-      <div id="td-cal-list">
-        ${!tdData.matches.length ? `<div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-calendar"></i></span><p class="td-empty-sub">Todavía no hay partidos. Usá el botón de abajo para agregar el primero.</p></div>` : ''}
-        ${Object.entries(byDate).sort(([a],[b])=>a.localeCompare(b)).map(([date, matches]) => `
+      <div>
+        ${!t.matches.length ? `<div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-calendar"></i></span>
+          <p class="td-empty-sub">Todavía no hay partidos. Agregá el primero abajo.</p></div>` : ''}
+        ${Object.keys(byDate).sort().map(d => `
           <div class="td-date-group">
-            <div class="td-date-header"><i class="ti ti-calendar-event"></i>${tdFormatDate(date).toUpperCase()}</div>
-            ${matches.map(matchRow).join('')}
+            <div class="td-date-header"><i class="ti ti-calendar-event"></i>${d === 'sin-fecha' ? 'SIN FECHA' : esc(fmtDate(d, true).toUpperCase())}</div>
+            ${byDate[d].map(m => `
+              <div class="td-cal-row" data-action="edit-match" data-id="${m.id}" role="button" tabindex="0">
+                <div class="td-cal-time"><span class="td-cal-hour">${esc(m.time || '—')}</span><span class="td-cal-dot td-cal-dot--${m.played ? 'played' : 'upcoming'}"></span></div>
+                <div class="td-cal-match-info">
+                  <div class="td-cal-teams"><span>${teamLabel(m.home)}</span>
+                    <span class="td-cal-sep">${m.played ? `<strong>${m.homeScore} — ${m.awayScore}</strong>` : 'VS'}</span><span>${teamLabel(m.away)}</span></div>
+                  ${m.venue ? `<span class="td-cal-venue"><i class="ti ti-map-pin"></i>${esc(m.venue)}</span>` : ''}
+                </div>
+                <div class="td-cal-right"><span class="td-phase-badge ${phaseClass(m.phase)}">${esc(m.phase)}</span><i class="ti ti-pencil td-cal-edit-icon"></i></div>
+              </div>`).join('')}
           </div>`).join('')}
-        <p class="td-cal-tip"><i class="ti ti-info-circle"></i> Hacé clic en un partido para editar su información</p>
+        ${t.matches.length ? '<p class="td-cal-tip"><i class="ti ti-info-circle"></i> Hacé clic en un partido para editarlo o cargar el resultado</p>' : ''}
       </div>
-
-      <!-- Agregar partido -->
-      <div class="td-card" id="td-add-match-form" style="margin-top:8px">
-        <p class="td-card-label"><i class="ti ti-plus"></i> Agregar Partido</p>
+      <div class="td-card" style="margin-top:8px">
+        <p class="td-card-label"><i class="ti ti-plus"></i> Agregar partido</p>
         <div class="td-ep-row2" style="margin-top:14px">
-          <div class="input-group">
-            <select id="am-home" class="input-field" style="color:var(--darkest-hour)">
-              <option value="">Local…</option>
-              ${accepted.map(t=>`<option value="${t.id}">${t.emoji||'⚽'} ${t.name}</option>`).join('')}
-              <option value="tbd">🏆 Por definir</option>
-            </select>
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Equipo local</label>
-          </div>
-          <div class="input-group">
-            <select id="am-away" class="input-field" style="color:var(--darkest-hour)">
-              <option value="">Visitante…</option>
-              ${accepted.map(t=>`<option value="${t.id}">${t.emoji||'⚽'} ${t.name}</option>`).join('')}
-              <option value="tbd">🏆 Por definir</option>
-            </select>
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Equipo visitante</label>
-          </div>
+          <div class="input-group"><select id="am-home" class="input-field">${teamOptions(null)}</select><label class="floating-label" ${FL}>Local</label></div>
+          <div class="input-group"><select id="am-away" class="input-field">${teamOptions(null)}</select><label class="floating-label" ${FL}>Visitante</label></div>
         </div>
         <div class="td-ep-row2">
-          <div class="input-group">
-            <input type="date" id="am-date" class="input-field" value="${tdData.startDate||''}">
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fecha</label>
-          </div>
-          <div class="input-group">
-            <input type="time" id="am-time" class="input-field" value="18:00">
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Hora</label>
-          </div>
+          <div class="input-group"><input type="date" id="am-date" class="input-field" value="${esc(t.startDate || '')}"><label class="floating-label" ${FL}>Fecha</label></div>
+          <div class="input-group"><input type="time" id="am-time" class="input-field" value="18:00"><label class="floating-label" ${FL}>Hora</label></div>
         </div>
         <div class="td-ep-row2">
-          <div class="input-group">
-            <input type="text" id="am-venue" class="input-field" value="${tdData.venue||''}" placeholder=" ">
-            <label for="am-venue" class="floating-label" style="${tdData.venue?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Sede</label>
-          </div>
-          <div class="input-group">
-            <input type="text" id="am-phase" class="input-field" placeholder=" " list="am-phase-list" value="Fase de Grupos">
-            <label for="am-phase" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fase</label>
-            <datalist id="am-phase-list">
-              <option>Fase de Grupos</option><option>Cuartos de Final</option>
-              <option>Semifinal</option><option>Gran Final</option>
-            </datalist>
-          </div>
+          <div class="input-group"><input type="text" id="am-venue" class="input-field" value="${esc(t.venue || '')}" placeholder=" " maxlength="150"><label class="floating-label" ${FL}>Lugar</label></div>
+          <div class="input-group"><input type="text" id="am-phase" class="input-field" value="Fase de Grupos" list="am-phases" maxlength="100"><label class="floating-label" ${FL}>Fase</label>${phaseList('am-phases')}</div>
         </div>
-        <button class="td-btn-primary" onclick="tdAddMatch()">
-          <i class="ti ti-calendar-plus"></i> Agregar Partido
-        </button>
+        <button class="td-btn-primary" data-action="add-match"><i class="ti ti-calendar-plus"></i> Agregar partido</button>
       </div>
     </div>
-
-    <div id="td-edit-panel" class="td-edit-panel" aria-hidden="true">
-      <div id="td-edit-panel-inner"></div>
-    </div>`;
-
-    tdContent.querySelectorAll('.td-cal-row').forEach(row => {
-        const id = row.dataset.matchId;
-        const open = () => tdOpenMatchEdit(id);
-        row.addEventListener('click', open);
-        row.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); open(); }});
-    });
+    <div id="td-edit-panel" class="td-edit-panel" aria-hidden="true"><div id="td-edit-panel-inner"></div></div>`;
 }
 
-window.tdAddMatch = async function() {
-    if (!tdData) return;
-    const homeVal = document.getElementById('am-home')?.value;
-    const awayVal = document.getElementById('am-away')?.value;
-    const date    = document.getElementById('am-date')?.value;
-    const time    = document.getElementById('am-time')?.value || '18:00';
-    const venue   = document.getElementById('am-venue')?.value.trim() || tdData.venue || '';
-    const phase   = document.getElementById('am-phase')?.value.trim() || 'Fase de Grupos';
-
-    if (!date) { tdShowToast('Ingresá la fecha del partido', 'warn'); return; }
-
-    const res = await competikaApi('add_match', {
-        method: 'POST',
-        params: { id: tdData.id },
-        body: { home: homeVal, away: awayVal, date, time, venue, phase },
-    });
-    if (!res.success) { tdShowToast(res.error || 'No se pudo agregar el partido', 'warn'); return; }
-    await tdReload();
-    tdRenderCalendario();
-    tdShowToast('Partido agregado ✓');
-};
-
-// ── Panel de edición ──────────────────────────────────────────────────
-function tdOpenMatchEdit(matchId) {
-    const m = tdData?.matches.find(x => x.id === matchId);
+function openMatch(id) {
+    const m = tdData.matches.find(x => x.id === id);
     if (!m) return;
-    tdCurrentEditId = matchId;
-    const panel = document.getElementById('td-edit-panel');
-    const inner = document.getElementById('td-edit-panel-inner');
-    if (!panel || !inner) return;
-    const homeLabel = m.home ? `${tdEmoji(m.home)} ${tdTeamName(m.home)}` : '🏆 Por definir';
-    const awayLabel = m.away ? `${tdEmoji(m.away)} ${tdTeamName(m.away)}` : '🏆 Por definir';
-    const accepted  = tdData.teams.filter(t => t.status === 'accepted');
-
-    inner.innerHTML = `
+    tdEditMatchId = id;
+    $('td-edit-panel-inner').innerHTML = `
       <div class="td-ep-header">
-        <div>
-          <span class="td-phase-badge ${tdPhaseColor(m.phase)}">${m.phase}</span>
-          <h2 class="td-ep-title">${homeLabel} vs ${awayLabel}</h2>
-        </div>
-        <button class="td-ep-close" onclick="tdCloseMatchEdit()" aria-label="Cerrar"><i class="ti ti-x"></i></button>
+        <div><span class="td-phase-badge ${phaseClass(m.phase)}">${esc(m.phase)}</span>
+          <h2 class="td-ep-title">${teamLabel(m.home)} vs ${teamLabel(m.away)}</h2></div>
+        <button class="td-ep-close" data-action="close-match" aria-label="Cerrar"><i class="ti ti-x"></i></button>
       </div>
-
       <div class="td-ep-section">
-        <p class="td-ep-section-title"><i class="ti ti-swap"></i> Equipos</p>
+        <p class="td-ep-section-title"><i class="ti ti-switch-horizontal"></i> Equipos</p>
         <div class="td-ep-row2">
-          <div class="input-group">
-            <select id="ep-home" class="input-field" style="color:var(--darkest-hour)">
-              <option value="">Por definir</option>
-              ${accepted.map(t=>`<option value="${t.id}"${t.id===m.home?' selected':''}>${t.emoji||'⚽'} ${t.name}</option>`).join('')}
-            </select>
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Local</label>
-          </div>
-          <div class="input-group">
-            <select id="ep-away" class="input-field" style="color:var(--darkest-hour)">
-              <option value="">Por definir</option>
-              ${accepted.map(t=>`<option value="${t.id}"${t.id===m.away?' selected':''}>${t.emoji||'⚽'} ${t.name}</option>`).join('')}
-            </select>
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Visitante</label>
-          </div>
+          <div class="input-group"><select id="ep-home" class="input-field">${teamOptions(m.home)}</select><label class="floating-label" ${FL}>Local</label></div>
+          <div class="input-group"><select id="ep-away" class="input-field">${teamOptions(m.away)}</select><label class="floating-label" ${FL}>Visitante</label></div>
         </div>
       </div>
-
       <div class="td-ep-section">
-        <p class="td-ep-section-title"><i class="ti ti-map-pin"></i> Logística</p>
+        <p class="td-ep-section-title"><i class="ti ti-map-pin"></i> Fecha y lugar</p>
         <div class="td-ep-row2">
-          <div class="input-group">
-            <input type="date" id="ep-date" class="input-field" value="${m.date}">
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fecha</label>
-          </div>
-          <div class="input-group">
-            <input type="time" id="ep-time" class="input-field" value="${m.time||''}">
-            <label class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Hora</label>
-          </div>
+          <div class="input-group"><input type="date" id="ep-date" class="input-field" value="${esc(m.date || '')}"><label class="floating-label" ${FL}>Fecha</label></div>
+          <div class="input-group"><input type="time" id="ep-time" class="input-field" value="${esc(m.time || '')}"><label class="floating-label" ${FL}>Hora</label></div>
         </div>
-        <div class="input-group">
-          <input type="text" id="ep-venue" class="input-field" value="${m.venue||''}" placeholder=" ">
-          <label for="ep-venue" class="floating-label" style="${m.venue?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Sede / Ubicación</label>
-        </div>
-        <div class="input-group">
-          <input type="text" id="ep-phase" class="input-field" value="${m.phase||''}" placeholder=" " list="ep-phase-list">
-          <label for="ep-phase" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fase</label>
-          <datalist id="ep-phase-list"><option>Fase de Grupos</option><option>Cuartos de Final</option><option>Semifinal</option><option>Gran Final</option></datalist>
-        </div>
-        <div class="input-group">
-          <input type="text" id="ep-referee" class="input-field" value="${m.referee||''}" placeholder=" ">
-          <label for="ep-referee" class="floating-label" style="${m.referee?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Nombre del árbitro</label>
-        </div>
-        <div class="input-group">
-          <input type="tel" id="ep-ref-phone" class="input-field" value="${m.refPhone||''}" placeholder=" ">
-          <label for="ep-ref-phone" class="floating-label" style="${m.refPhone?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Contacto del árbitro</label>
-        </div>
-        <div class="td-ep-row2">
-          <div class="input-group td-cost-group">
-            <span class="td-cost-prefix">$</span>
-            <input type="number" id="ep-venue-cost" class="input-field td-cost-input" value="${m.venueCost||''}" min="0" placeholder=" ">
-            <label class="floating-label" style="${m.venueCost?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Alquiler cancha</label>
-          </div>
-          <div class="input-group td-cost-group">
-            <span class="td-cost-prefix">$</span>
-            <input type="number" id="ep-ref-cost" class="input-field td-cost-input" value="${m.refCost||''}" min="0" placeholder=" ">
-            <label class="floating-label" style="${m.refCost?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Honorario árbitro</label>
-          </div>
-        </div>
-        <div class="td-ep-total" id="ep-total">
-          <span>Total estimado:</span>
-          <strong id="ep-total-val">$${((m.venueCost||0)+(m.refCost||0)).toLocaleString('es-UY')}</strong>
-        </div>
+        <div class="input-group"><input type="text" id="ep-venue" class="input-field" value="${esc(m.venue || '')}" placeholder=" " maxlength="150"><label class="floating-label" ${FL}>Lugar</label></div>
+        <div class="input-group"><input type="text" id="ep-phase" class="input-field" value="${esc(m.phase)}" list="ep-phases" maxlength="100"><label class="floating-label" ${FL}>Fase</label>${phaseList('ep-phases')}</div>
       </div>
-
       <div class="td-ep-section">
         <p class="td-ep-section-title"><i class="ti ti-chart-bar"></i> Resultado</p>
-        <label class="td-ep-toggle-row">
-          <span>Partido jugado</span>
+        <label class="td-ep-toggle-row"><span>Partido jugado</span>
           <span class="relative inline-flex h-7 w-12 shrink-0 items-center">
-            <input type="checkbox" id="ep-played" class="peer sr-only" ${m.played?'checked':''}>
+            <input type="checkbox" id="ep-played" class="peer sr-only" ${m.played ? 'checked' : ''}>
             <span class="absolute inset-0 rounded-full bg-darkest-hour/15 transition-colors duration-300 peer-checked:bg-sun-glare-dark"></span>
             <span class="absolute left-1 h-5 w-5 rounded-full bg-cloud-dancer shadow transition-transform duration-300 peer-checked:translate-x-5"></span>
-          </span>
-        </label>
-        <div class="td-ep-score-row" id="ep-score-row" style="${m.played?'':'display:none'}">
-          <div class="td-ep-score-team">
-            <span class="td-team-emoji">${m.home?tdEmoji(m.home):'🏆'}</span>
-            <span class="td-ep-score-name" style="font-size:10px;max-width:80px;word-break:break-word">${homeLabel}</span>
-            <input type="number" id="ep-home-score" class="td-score-input" value="${m.homeScore??''}" min="0">
-          </div>
+          </span></label>
+        <div class="td-ep-score-row" id="ep-score-row" style="${m.played ? '' : 'display:none'}">
+          <div class="td-ep-score-team"><span class="td-ep-score-name">Local</span><input type="number" id="ep-home-score" class="td-score-input" value="${m.homeScore ?? ''}" min="0"></div>
           <span class="td-ep-score-dash">—</span>
-          <div class="td-ep-score-team">
-            <input type="number" id="ep-away-score" class="td-score-input" value="${m.awayScore??''}" min="0">
-            <span class="td-ep-score-name" style="font-size:10px;max-width:80px;word-break:break-word">${awayLabel}</span>
-            <span class="td-team-emoji">${m.away?tdEmoji(m.away):'🏆'}</span>
-          </div>
+          <div class="td-ep-score-team"><span class="td-ep-score-name">Visitante</span><input type="number" id="ep-away-score" class="td-score-input" value="${m.awayScore ?? ''}" min="0"></div>
         </div>
+        <p class="td-meta-small">Los resultados quedan registrados de forma permanente: se pueden corregir, pero el partido ya no podrá eliminarse.</p>
       </div>
-
       <div class="td-ep-section">
-        <div class="input-group">
-          <textarea id="ep-notes" class="input-field" rows="2" placeholder=" " style="min-height:68px;padding-top:16px;resize:none">${m.notes||''}</textarea>
-          <label for="ep-notes" class="floating-label" style="${m.notes?'top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)':''}">Notas (opcional)</label>
-        </div>
-        <button class="td-btn-danger" style="width:100%;margin-top:2px" onclick="tdDeleteMatch('${m.id}')">
-          <i class="ti ti-trash"></i> Eliminar partido
-        </button>
+        <button class="td-btn-danger" data-action="delete-match" data-id="${m.id}"><i class="ti ti-trash"></i> Eliminar partido</button>
       </div>
-
       <div class="td-ep-actions">
-        <button class="td-btn-ghost" onclick="tdCloseMatchEdit()">Cancelar</button>
-        <button class="td-btn-primary" onclick="tdSaveMatch()"><i class="ti ti-device-floppy"></i> Guardar</button>
+        <button class="td-btn-ghost" data-action="close-match">Cancelar</button>
+        <button class="td-btn-primary" data-action="save-match"><i class="ti ti-device-floppy"></i> Guardar</button>
       </div>`;
-
-    ['ep-venue-cost','ep-ref-cost'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', () => {
-            const vc = parseFloat(document.getElementById('ep-venue-cost')?.value)||0;
-            const rc = parseFloat(document.getElementById('ep-ref-cost')?.value)||0;
-            const el = document.getElementById('ep-total-val');
-            if (el) el.textContent = `$${(vc+rc).toLocaleString('es-UY')}`;
-        });
-    });
-    document.getElementById('ep-played')?.addEventListener('change', e => {
-        document.getElementById('ep-score-row').style.display = e.target.checked ? '' : 'none';
-    });
-
-    panel.classList.add('open');
-    panel.setAttribute('aria-hidden','false');
-    document.getElementById('td-cal-layout')?.classList.add('panel-open');
-    setTimeout(() => document.getElementById('ep-date')?.focus(), 320);
+    $('ep-played').addEventListener('change', e => { $('ep-score-row').style.display = e.target.checked ? '' : 'none'; });
+    $('td-edit-panel').classList.add('open');
+    $('td-edit-panel').setAttribute('aria-hidden', 'false');
+    $('td-cal-layout')?.classList.add('panel-open');
+}
+function closeMatch() {
+    $('td-edit-panel')?.classList.remove('open');
+    $('td-edit-panel')?.setAttribute('aria-hidden', 'true');
+    $('td-cal-layout')?.classList.remove('panel-open');
+    tdEditMatchId = null;
 }
 
-window.tdCloseMatchEdit = function() {
-    const panel = document.getElementById('td-edit-panel');
-    panel?.classList.remove('open');
-    panel?.setAttribute('aria-hidden','true');
-    document.getElementById('td-cal-layout')?.classList.remove('panel-open');
-    tdCurrentEditId = null;
+// ═════════════════════════════════════════ ACCIONES (delegación de eventos)
+const val = id => $(id)?.value.trim() ?? '';
+const tid = () => ({ id: tdData.id });
+
+const ACTIONS = {
+    'open': el => openTournament(el.dataset.id),
+
+    'delete-tournament': async el => {
+        if (!confirm('¿Eliminar este torneo? Esta acción no se puede deshacer.')) return;
+        if (!await call('delete', { method: 'POST', params: { id: el.dataset.id } }, 'Torneo eliminado')) return;
+        tdData = null; updateSidebar(); history.replaceState(null, '', location.pathname); show('selector');
+    },
+
+    'add-team': async () => {
+        const name = val('td-add-name');
+        if (!name) { toast('Ingresá el nombre del equipo', 'warn'); return; }
+        if (await call('add_team', { method: 'POST', params: tid(), body: { name, players: parseInt(val('td-add-players'), 10) || 1 } }, `${name} agregado ✓`)) {
+            await reload(); rerender();
+        }
+    },
+    'rename-team': async el => {
+        const e = team(el.dataset.id);
+        const name = prompt('Nuevo nombre del equipo:', e?.name || '');
+        if (!name || !name.trim()) return;
+        if (await call('update_team', { method: 'POST', params: { team_id: el.dataset.id }, body: { name: name.trim() } }, 'Equipo actualizado ✓')) {
+            await reload(); rerender();
+        }
+    },
+    'delete-team': async el => {
+        const e = team(el.dataset.id);
+        if (!confirm(`¿Eliminar "${e?.name}" del torneo?`)) return;
+        if (await call('delete_team', { method: 'POST', params: { team_id: el.dataset.id } }, 'Equipo eliminado')) {
+            await reload(); rerender();
+        }
+    },
+
+    'save-config': async () => {
+        const body = {
+            name: val('cfg-name'), sport: val('cfg-sport'), formatSubId: val('cfg-format'),
+            startDate: val('cfg-start'), endDate: val('cfg-end'), department: val('cfg-dep'), venue: val('cfg-venue'),
+            description: val('cfg-desc'), maxTeams: parseInt(val('cfg-max'), 10), status: val('cfg-status'),
+        };
+        if (await call('update', { method: 'POST', params: tid(), body }, 'Cambios guardados ✓')) { await reload(); rerender(); }
+    },
+    'save-costs': async () => {
+        const body = {
+            costs: { entryFee: parseFloat(val('cfg-fee')) || 0, fieldCost: parseFloat(val('cfg-field')) || 0, refereeCost: parseFloat(val('cfg-ref')) || 0 },
+            prizesText: val('cfg-prizes'),
+        };
+        if (await call('update', { method: 'POST', params: tid(), body }, 'Costos y premios guardados ✓')) { await reload(); rerender(); }
+    },
+
+    'add-match': async () => {
+        if (!val('am-date')) { toast('Ingresá la fecha del partido', 'warn'); return; }
+        const body = { home: val('am-home'), away: val('am-away'), date: val('am-date'), time: val('am-time'), venue: val('am-venue'), phase: val('am-phase') };
+        if (await call('add_match', { method: 'POST', params: tid(), body }, 'Partido agregado ✓')) { await reload(); rerender(); }
+    },
+    'edit-match': el => openMatch(el.dataset.id),
+    'close-match': () => closeMatch(),
+    'save-match': async () => {
+        const played = $('ep-played').checked;
+        const body = {
+            home: val('ep-home'), away: val('ep-away'), date: val('ep-date'), time: val('ep-time'),
+            venue: val('ep-venue'), phase: val('ep-phase'), played,
+            homeScore: played ? val('ep-home-score') : null, awayScore: played ? val('ep-away-score') : null,
+        };
+        if (await call('update_match', { method: 'POST', params: { match_id: tdEditMatchId }, body }, 'Partido actualizado ✓')) {
+            closeMatch(); await reload(); rerender();
+        }
+    },
+    'delete-match': async el => {
+        if (!confirm('¿Eliminar este partido?')) return;
+        if (await call('delete_match', { method: 'POST', params: { match_id: el.dataset.id } }, 'Partido eliminado')) {
+            closeMatch(); await reload(); rerender();
+        }
+    },
 };
 
-window.tdSaveMatch = async function() {
-    if (!tdData) return;
-    const m = tdData.matches.find(x => x.id === tdCurrentEditId);
-    if (!m) return;
-
-    const played = document.getElementById('ep-played')?.checked ?? false;
-    const payload = {
-        home:      document.getElementById('ep-home')?.value || null,
-        away:      document.getElementById('ep-away')?.value || null,
-        date:      document.getElementById('ep-date')?.value || m.date,
-        time:      document.getElementById('ep-time')?.value || m.time,
-        venue:     document.getElementById('ep-venue')?.value.trim() || '',
-        phase:     document.getElementById('ep-phase')?.value.trim() || m.phase,
-        referee:   document.getElementById('ep-referee')?.value.trim() || '',
-        refPhone:  document.getElementById('ep-ref-phone')?.value.trim() || '',
-        venueCost: parseFloat(document.getElementById('ep-venue-cost')?.value) || 0,
-        refCost:   parseFloat(document.getElementById('ep-ref-cost')?.value) || 0,
-        notes:     document.getElementById('ep-notes')?.value.trim() || '',
-        played,
-        homeScore: played ? (parseInt(document.getElementById('ep-home-score')?.value) ?? null) : null,
-        awayScore: played ? (parseInt(document.getElementById('ep-away-score')?.value) ?? null) : null,
-    };
-
-    const res = await competikaApi('update_match', { method: 'POST', params: { match_id: tdCurrentEditId }, body: payload });
-    if (!res.success) { tdShowToast(res.error || 'No se pudo guardar el partido', 'warn'); return; }
-    await tdReload();
-    tdCloseMatchEdit();
-    tdRenderCalendario();
-    tdShowToast('Partido actualizado ✓');
-};
-
-window.tdDeleteMatch = async function(id) {
-    if (!tdData || !confirm('¿Eliminar este partido?')) return;
-    await competikaApi('delete_match', { method: 'POST', params: { match_id: id } });
-    await tdReload();
-    tdCloseMatchEdit();
-    tdRenderCalendario();
-    tdShowToast('Partido eliminado', 'warn');
-};
-
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && tdCurrentEditId !== null) tdCloseMatchEdit();
+root.addEventListener('click', e => {
+    const el = e.target.closest('[data-action]');
+    if (el && root.contains(el) && ACTIONS[el.dataset.action] && !el.disabled) ACTIONS[el.dataset.action](el);
 });
+root.addEventListener('keydown', e => {
+    const el = e.target.closest('[data-action="edit-match"]');
+    if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openMatch(el.dataset.id); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && tdEditMatchId !== null) closeMatch(); });
 
-// ═══════════════════════════════════════════════════════════════════════
-// INIT — auto-seleccionar torneo desde ?t=ID
-// ═══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════ INICIO
 (async () => {
-    const tdUrlParam = new URLSearchParams(location.search).get('t');
-    if (tdUrlParam) {
-        tdData = await competikaGetTournament(tdUrlParam);
-        if (tdData) { tdUpdateSidebar(); tdShowSection('overview'); }
-        else { tdUpdateSidebar(); tdShowSection('selector'); }
-    } else {
-        tdUpdateSidebar();
-        tdShowSection('selector');
-    }
+    const user = await competikaSession();
+    if (!user) { competikaGoLogin(); return; }
+    const id = new URLSearchParams(location.search).get('t');
+    updateSidebar();
+    if (id) await openTournament(id); else show('selector');
 })();
-
-} // end if (tdDashboard)
+})();

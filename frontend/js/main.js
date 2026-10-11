@@ -861,82 +861,10 @@ if (tfForm) {
         tfStartDate.min = new Date().toISOString().split('T')[0];
     }
  
-    // ── Envío del formulario ───────────────────────────────────────────────
-    tfForm.addEventListener('submit', (e) => {
-        e.preventDefault();
- 
-        // Validación mínima: solo que haya nombre de torneo
-        const name = document.getElementById('tf-name')?.value.trim();
-        if (!name) {
-            document.getElementById('tf-name')?.focus();
-            return;
-        }
- 
-        const subChecked = document.querySelector('input[name="tf-subtype"]:checked');
-        const typeObj    = tournamentTypes.find(t => t.id === tfSelectedTypeId);
-        const subObj     = typeObj?.subtipos.find(s => s.id === subChecked?.value);
- 
-        const val = id => document.getElementById(id)?.value.trim() || '';
- 
-        const tournament = {
-            id:           Date.now().toString(),
-            name,
-            formatTypeId: tfSelectedTypeId  || '',
-            formatSubId:  subChecked?.value || '',
-            formatLabel:  subObj?.title || typeObj?.title || '',
-            maxTeams:     parseInt(val('tf-max-participants')) || 0,
-            startDate:    val('tf-start-date'),
-            status:       'pending',
-            costs: {
-                entryFee:    parseFloat(val('tf-entry-fee'))    || 0,
-                currency:    val('tf-currency'),
-                fieldCost:   parseFloat(val('tf-field-cost'))   || 0,
-                refereeCost: parseFloat(val('tf-referee-cost')) || 0,
-            },
-            referee: {
-                name:  val('tf-referee-name'),
-                phone: val('tf-referee-phone'),
-                email: val('tf-referee-email'),
-            },
-            prizesText: val('tf-prizes'),
-            prizes:     [],
-            organizer: {
-                name:  val('tf-organizer-name'),
-                phone: val('tf-organizer-phone'),
-                email: val('tf-organizer-email'),
-            },
-            teams:     [],
-            matches:   [],
-            createdAt: new Date().toISOString(),
-        };
- 
-        // Guardar en localStorage
-        try {
-            const saved = JSON.parse(localStorage.getItem('competika_tournaments') || '[]');
-            saved.push(tournament);
-            localStorage.setItem('competika_tournaments', JSON.stringify(saved));
-        } catch (err) {
-            console.error('Error guardando torneo:', err);
-        }
- 
-        // — nombre del torneo en el texto
-        const successNameEl = tfSuccess?.querySelector('[data-tf-success-name]');
-        if (successNameEl) successNameEl.textContent = name;
- 
-        // — apuntar el botón "Ir al Dashboard" al torneo recién creado
-        const dashLink = document.getElementById('tf-success-dashboard-link');
-        if (dashLink) dashLink.href = `tournament_dashboard.html?t=${tournament.id}`;
- 
-        // Ocultar wizard y mostrar panel de éxito
-        if (tfWizard) tfWizard.classList.add('hidden');
-        if (tfSuccess) {
-            tfSuccess.classList.remove('hidden', 'tf-step-anim');
-            void tfSuccess.offsetWidth;
-            tfSuccess.classList.add('tf-step-anim');
-            tfSuccess.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    });
- 
+    // ── Envío del formulario ──────────────────────────────────────────────
+    // Lo maneja tournament-api.js: guarda el torneo en la base de datos
+    // (api/tournaments.php) y recién entonces muestra el panel de éxito.
+
     // ── Crear otro torneo (reset) ──────────────────────────────────────────
     document.getElementById('tf-reset-btn')?.addEventListener('click', () => {
         tfForm.reset();
@@ -964,100 +892,31 @@ let selectedSport  = cardData[0].title;
 let selectedStatus = "all";
 let searchText     = "";
 
-// Torneos de prueba
-const tournaments = [
-    {
-        nombre: "Copa Apertura",
-        deporte: "Fútbol",
-        ciudad: "Montevideo",
-        organizador: "Liga Uruguaya",
-        estado: "open",
-        nivel: "Pro",
-        formato: "Liga",
-        participantes: 10,
-        maxParticipantes: 16,
-        premio: "$80.000",
-        inscripcion: "$1200"
-    },
-    {
-        nombre: "Copa Apertura",
-        deporte: "Fútbol",
-        ciudad: "Montevideo",
-        organizador: "Liga Uruguaya",
-        estado: "open",
-        nivel: "Pro",
-        formato: "Liga",
-        participantes: 5,
-        maxParticipantes: 16,
-        premio: "$80.000",
-        inscripcion: "$1200"
-    },
-    {
-        nombre: "Copa Apertura",
-        deporte: "Fútbol",
-        ciudad: "Montevideo",
-        organizador: "Liga Uruguaya",
-        estado: "open",
-        nivel: "Pro",
-        formato: "Liga",
-        participantes: 1,
-        maxParticipantes: 16,
-        premio: "$80.000",
-        inscripcion: "$1200"
-    },
-    {
-        nombre: "Copa del Este",
-        deporte: "Fútbol",
-        ciudad: "Maldonado",
-        organizador: "Campus FC",
-        estado: "closing",
-        nivel: "Semi-Pro",
-        formato: "Eliminación",
-        participantes: 14,
-        maxParticipantes: 16,
-        premio: "$50.000",
-        inscripcion: "$1000"
-    },
-    {
-        nombre: "Basket Cup",
-        deporte: "Basketball",
-        ciudad: "Montevideo",
-        organizador: "FUBB",
-        estado: "open",
-        nivel: "Pro",
-        formato: "Liga",
-        participantes: 8,
-        maxParticipantes: 12,
-        premio: "$120.000",
-        inscripcion: "$1500"
-    },
-    {
-        nombre: "Volleyball Summer",
-        deporte: "Volleyball",
-        ciudad: "Canelones",
-        organizador: "Liga Costa",
-        estado: "closing",
-        nivel: "Amateur",
-        formato: "Grupos",
-        participantes: 14,
-        maxParticipantes: 16,
-        premio: "$18.000",
-        inscripcion: "$700"
-    },
-    {
-        nombre: "Copa Playa Norte",
-        deporte: "Volleyball",
-        ciudad: "Rocha",
-        organizador: "Club Atlántico",
-        estado: "full",
-        nivel: "Amateur",
-        formato: "Eliminación",
-        participantes: 16,
-        maxParticipantes: 16,
-        premio: "$12.000",
-        inscripcion: "$500"
-    }
-];
+// Torneos reales: se cargan desde api/tournaments.php?action=list (ver ARRANQUE)
+let tournaments = [];
+
+// Escapa texto antes de insertarlo con innerHTML (evita XSS con nombres cargados por usuarios)
+const tsEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Adapta un torneo de la API al formato que usa esta página
+function tsFromApi(t) {
+    const lleno = t.teamCount >= t.maxTeams;
+    const pct = t.maxTeams ? t.teamCount / t.maxTeams : 0;
+    return {
+        id: t.id,
+        nombre: t.name,
+        deporte: t.sport,
+        ciudad: [t.venue, t.department].filter(Boolean).join(', ') || 'Ubicación a confirmar',
+        organizador: t.organizer || '—',
+        estado: (t.status !== 'pending' || lleno) ? 'full' : (pct >= 0.85 ? 'closing' : 'open'),
+        cerrado: t.status !== 'pending',
+        formato: t.formatLabel || 'Formato a definir',
+        participantes: t.teamCount,
+        maxParticipantes: t.maxTeams,
+        premio: t.prizesText || 'Sin premios definidos',
+        inscripcion: t.entryFee > 0 ? `$${t.entryFee}` : 'Gratis',
+    };
+}
 
 /* --------------------------------------------------
    1. DIBUJAR LAS CARDS DE DEPORTES
@@ -1144,7 +1003,7 @@ function renderTournaments(lista) {
                     <div class="torneo-deporte-icono">
                         <i class="ti ${sport.icon}"></i>
                     </div>
-                    <span class="torneo-nombre">${t.nombre}</span>
+                    <span class="torneo-nombre">${tsEsc(t.nombre)}</span>
                 </div>
                 <span class="estado-badge ${estadoClase[t.estado]}">
                     ${estadoLabel[t.estado]}
@@ -1152,19 +1011,19 @@ function renderTournaments(lista) {
             </div>
 
             <div class="torneo-pills">
-                <span class="pill ${nivelClase}">${t.nivel}</span>
-                <span class="pill formato-pill">${t.formato}</span>
+                ${t.nivel ? `<span class="pill ${nivelClase}">${tsEsc(t.nivel)}</span>` : ''}
+                <span class="pill formato-pill">${tsEsc(t.formato)}</span>
             </div>
 
             <div class="torneo-info">
                 <div class="torneo-info-fila">
-                    <i class="ti ti-map-pin"></i> ${t.ciudad}
+                    <i class="ti ti-map-pin"></i> ${tsEsc(t.ciudad)}
                 </div>
                 <div class="torneo-info-fila">
-                    <i class="ti ti-user"></i> ${t.organizador}
+                    <i class="ti ti-user"></i> ${tsEsc(t.organizador)}
                 </div>
                 <div class="torneo-info-fila torneo-premio">
-                    <i class="ti ti-trophy"></i> ${t.premio} en premios
+                    <i class="ti ti-trophy"></i> ${tsEsc(t.premio)}
                 </div>
             </div>
 
@@ -1182,17 +1041,29 @@ function renderTournaments(lista) {
 
             <div class="torneo-pie">
                 <div class="torneo-inscripcion">
-                    <i class="ti ti-ticket"></i> Inscripción: ${t.inscripcion}
+                    <i class="ti ti-ticket"></i> Inscripción: ${tsEsc(t.inscripcion)}
                 </div>
                 ${isFull
-                    ? `<button class="btn-completo" disabled><i class="ti ti-lock"></i> Completo</button>
+                    ? `<button class="btn-completo" disabled><i class="ti ti-lock"></i> ${t.cerrado ? 'Cerrado' : 'Completo'}</button>
                     <button class="btn-seguir"><i class="ti ti-eye"></i> Seguir</button>`
-                    : `<button class="btn-inscribirse"><i class="ti ti-door-enter"></i> Inscribirme</button>`
+                    : `<button class="btn-inscribirse" data-id="${t.id}"><i class="ti ti-door-enter"></i> Inscribirme</button>`
                 }
             </div>
         `;
 
         grilla.appendChild(card);
+
+        card.querySelector(".btn-inscribirse")?.addEventListener("click", async (ev) => {
+            const btn = ev.currentTarget;
+            const teamName = prompt("Nombre de tu equipo (dejalo vacío para usar tu nombre):", "");
+            if (teamName === null) return;                       // canceló
+            btn.disabled = true;
+            const r = await competikaInscribirse(Number(btn.dataset.id), teamName.trim());
+            btn.disabled = false;
+            if (r._status === 401) return;                       // ya redirigió al login
+            alert(r.success ? "¡Inscripción realizada!" : (r.error || "No se pudo completar la inscripción."));
+            if (r.success) tsCargarTorneos();
+        });
 
         card.querySelectorAll(".barra-relleno").forEach(barra => {
             barra.offsetWidth;
@@ -1248,10 +1119,21 @@ document.querySelectorAll(".btn-estado").forEach(btn => {
 /* --------------------------------------------------
    5. ARRANQUE
 -------------------------------------------------- */
+async function tsCargarTorneos() {
+    // competikaListPublicTournaments está en tournament-api.js (se carga después de main.js)
+    const lista = typeof competikaListPublicTournaments === "function" ? await competikaListPublicTournaments() : [];
+    tournaments = lista.map(tsFromApi);
+    renderSports();
+    filterAndRender();
+}
+
 renderSports();
 filterAndRender();
+window.addEventListener("DOMContentLoaded", tsCargarTorneos);
 
 } // fin if (document.getElementById("buscador"))
 
-
-
+// ====================================================================
+// TOURNAMENT DASHBOARD → frontend/js/tournament-dashboard-db.js
+// (lee y escribe en la base de datos a través de api/tournaments.php)
+// ====================================================================

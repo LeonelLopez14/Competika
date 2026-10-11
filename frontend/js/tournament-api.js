@@ -1,100 +1,163 @@
 /* =====================================================
    COMPETIKA — tournament-api.js
+   Acceso a api/tournaments.php y api/session.php.
+
+   Cargar DESPUÉS de main.js:
+     <script src="../../js/main.js"></script>
+     <script src="../../js/navbar-user.js"></script>
+     <script src="../../js/tournament-api.js"></script>
+     <!-- solo en el dashboard: -->
+     <script src="../../js/tournament-dashboard-db.js"></script>
    ===================================================== */
-const COMPETIKA_API_BASE = new URL(
-    '../../api/tournaments.php',
-    document.currentScript ? document.currentScript.src : window.location.href
-).href;
- 
+
+// Rutas calculadas desde la ubicación de este archivo (frontend/js/): funcionan
+// en cualquier carpeta de htdocs, en Docker y detrás de un proxy.
+const COMPETIKA_BASE = document.currentScript ? document.currentScript.src : window.location.href;
+const COMPETIKA_API_URL     = new URL('../../api/tournaments.php', COMPETIKA_BASE).href;
+const COMPETIKA_SESSION_URL = new URL('../../api/session.php', COMPETIKA_BASE).href;
+const COMPETIKA_LOGIN_URL   = new URL('../paginas/login/login.html', COMPETIKA_BASE).href;
+
 async function competikaApi(action, { method = 'GET', params = {}, body = null } = {}) {
-    const url = new URL(COMPETIKA_API_BASE, window.location.origin);
+    const url = new URL(COMPETIKA_API_URL);
     url.searchParams.set('action', action);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
- 
-    const opts = { method, headers: {} };
+
+    const opts = { method, credentials: 'same-origin', headers: {} };
     if (body !== null) {
         opts.headers['Content-Type'] = 'application/json';
         opts.body = JSON.stringify(body);
     }
- 
-    const res = await fetch(url.toString(), opts);
-    const data = await res.json().catch(() => ({ success: false, error: 'Respuesta inválida del servidor' }));
-    if (!res.ok && !('success' in data)) {
-        throw new Error(`Error HTTP ${res.status}`);
+    try {
+        const res = await fetch(url.toString(), opts);
+        const data = await res.json();
+        data._status = res.status;
+        return data;
+    } catch (e) {
+        return { success: false, error: 'No se pudo conectar con el servidor.', _status: 0 };
     }
-    return data;
 }
- 
-/* =====================================================
-   1) FORMULARIO DE CREACIÓN 
-   ===================================================== */
-(function initTournamentCreateApi() {
-    const form = document.getElementById('tf-form');
-    if (!form) return;
- 
-    form.addEventListener('submit', async (e) => {
 
-        const name = document.getElementById('tf-name')?.value.trim();
-        if (!name) return; 
- 
-        const val = id => document.getElementById(id)?.value.trim() || '';
-        const subChecked = document.querySelector('input[name="tf-subtype"]:checked');
-        const formatChecked = document.querySelector('input[name="tf-format"]:checked');
- 
-        const payload = {
-            name,
-            formatTypeId: formatChecked?.value || '',
-            formatSubId:  subChecked?.value || '',
-            formatLabel:  subChecked?.closest('label')?.querySelector('span')?.textContent || '',
-            maxTeams:     parseInt(val('tf-max-participants')) || 8,
-            startDate:    val('tf-start-date'),
-            costs: {
-                entryFee:    parseFloat(val('tf-entry-fee'))    || 0,
-                currency:    val('tf-currency'),
-                fieldCost:   parseFloat(val('tf-field-cost'))   || 0,
-                refereeCost: parseFloat(val('tf-referee-cost')) || 0,
-            },
-            referee: {
-                name:  val('tf-referee-name'),
-                phone: val('tf-referee-phone'),
-                email: val('tf-referee-email'),
-            },
-            prizesText: val('tf-prizes'),
-            organizer: {
-                name:  val('tf-organizer-name'),
-                phone: val('tf-organizer-phone'),
-                email: val('tf-organizer-email'),
-            },
-        };
- 
-        try {
-            const result = await competikaApi('create', { method: 'POST', body: payload });
-            if (result.success) {
-                sessionStorage.setItem('competika_last_created_db_id', result.id);
-                const dashLink = document.querySelector('#tf-success a');
-                if (dashLink) dashLink.href = `../tournament_dashboard/tournament_dashboard.html?t=${result.id}&src=db`;
-            } else {
-                console.error('No se pudo guardar el torneo en la base de datos:', result.error);
-            }
-        } catch (err) {
-            console.error('Error de red al crear el torneo:', err);
-        }
-    });
-})();
- 
-/* =====================================================
-   2) LISTADO DE TORNEOS DEL USUARIO 
-   ===================================================== */
+/** Sesión actual (la crea controller/login.php). Devuelve null si no hay sesión. */
+async function competikaSession() {
+    try {
+        const res = await fetch(COMPETIKA_SESSION_URL, { credentials: 'same-origin' });
+        const data = await res.json();
+        return data.logged ? data : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function competikaGoLogin() { window.location.href = COMPETIKA_LOGIN_URL; }
+
+/* ---------- funciones usadas por las páginas ---------- */
+
+async function competikaListPublicTournaments() {
+    const r = await competikaApi('list');
+    return r.success ? r.tournaments : [];
+}
+
+/** Torneos que organiza el usuario logueado. Sin sesión, lleva al login. */
 async function competikaListTournaments() {
-    const result = await competikaApi('list');
-    return result.success ? result.tournaments : [];
+    const r = await competikaApi('mine');
+    if (r._status === 401) { competikaGoLogin(); return []; }
+    return r.success ? r.tournaments : [];
 }
- 
+
 async function competikaGetTournament(id) {
-    const result = await competikaApi('get', { params: { id } });
-    return result.success ? result.tournament : null;
+    const r = await competikaApi('get', { params: { id } });
+    return r.success ? r.tournament : null;
 }
- 
+
 async function competikaDeleteTournament(id) {
     return competikaApi('delete', { method: 'POST', params: { id } });
 }
+
+async function competikaInscribirse(torneoId, teamName = '') {
+    const r = await competikaApi('inscribirse', { method: 'POST', body: { torneoId, teamName } });
+    if (r._status === 401) competikaGoLogin();
+    return r;
+}
+
+/* =====================================================
+   Formulario de creación (tournament_form.html)
+   ===================================================== */
+(function initTournamentForm() {
+    const form = document.getElementById('tf-form');
+    if (!form) return;
+
+    // Datos de contacto del organizador = los de su cuenta
+    competikaSession().then(user => {
+        const info = document.getElementById('tf-organizer-info');
+        if (!info) return;
+        if (!user) {
+            info.innerHTML = 'Necesitás <a class="underline" href="' + COMPETIKA_LOGIN_URL + '">iniciar sesión</a> para crear un torneo.';
+            return;
+        }
+        info.textContent = `${user.nombre} ${user.apellido} · ${user.email}`;
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const val = id => document.getElementById(id)?.value.trim() || '';
+
+        const name = val('tf-name');
+        if (!name) { document.getElementById('tf-name')?.focus(); return; }
+        if (!val('tf-sport')) { alert('Elegí el deporte del torneo.'); document.getElementById('tf-sport')?.focus(); return; }
+
+        const btn = document.getElementById('tf-submit-btn');
+        const btnHtml = btn?.innerHTML;
+        if (btn) { btn.disabled = true; btn.textContent = 'Creando…'; }
+
+        const result = await competikaApi('create', {
+            method: 'POST',
+            body: {
+                name,
+                sport:       val('tf-sport'),
+                description: val('tf-description'),
+                formatSubId: document.querySelector('input[name="tf-subtype"]:checked')?.value || '',
+                maxTeams:    parseInt(val('tf-max-participants'), 10) || 8,
+                startDate:   val('tf-start-date'),
+                endDate:     val('tf-end-date'),
+                venue:       val('tf-venue'),
+                department:  val('tf-department'),
+                costs: {
+                    entryFee:    parseFloat(val('tf-entry-fee'))    || 0,
+                    fieldCost:   parseFloat(val('tf-field-cost'))   || 0,
+                    refereeCost: parseFloat(val('tf-referee-cost')) || 0,
+                },
+                prizesText: val('tf-prizes'),
+            },
+        });
+
+        if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+
+        if (result._status === 401) {
+            alert('Necesitás iniciar sesión para crear un torneo.');
+            competikaGoLogin();
+            return;
+        }
+        if (!result.success) {
+            alert(result.error || 'No se pudo crear el torneo.');
+            return;
+        }
+
+        // Guardado confirmado por el servidor: recién ahora se muestra el éxito
+        const wizard  = document.getElementById('tf-wizard');
+        const success = document.getElementById('tf-success');
+        wizard?.classList.add('hidden');
+        if (success) {
+            const nameEl = success.querySelector('[data-tf-success-name]');
+            if (nameEl) nameEl.textContent = name;
+            const link = success.querySelector('a');
+            if (link) {
+                link.href = `../tournament_dashboard/tournament_dashboard.html?t=${encodeURIComponent(result.id)}`;
+                link.innerHTML = '<i class="ti ti-layout-dashboard"></i> Ir al Dashboard';
+            }
+            success.classList.remove('hidden', 'tf-step-anim');
+            void success.offsetWidth;
+            success.classList.add('tf-step-anim');
+            success.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+})();

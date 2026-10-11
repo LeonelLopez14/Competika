@@ -209,18 +209,40 @@
 
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                             <div class="input-group">
-                                                <input type="date" id="tf-start-date" class="input-field" placeholder=" " required>
-                                                <label for="tf-start-date" class="floating-label">
-                                                    Fecha de inicio
-                                                </label>
+                                                <select id="tf-sport" class="input-field" required><option value="">Elegí un deporte…</option><option value="Fútbol">Fútbol</option><option value="Basketball">Basketball</option><option value="Tenis">Tenis</option><option value="Ajedrez">Ajedrez</option><option value="Juegos de cartas">Juegos de cartas</option><option value="Videojuegos">Videojuegos</option><option value="Volleyball">Volleyball</option><option value="Natación">Natación</option><option value="Rugby">Rugby</option><option value="Baseball">Baseball</option><option value="Running">Running</option><option value="Artes marciales">Artes marciales</option><option value="Boxeo">Boxeo</option><option value="Gimnasia">Gimnasia</option><option value="Otros">Otros</option></select>
+                                                <label for="tf-sport" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Deporte</label>
                                             </div>
-
                                             <div class="input-group">
-                                                <input type="number" id="tf-max-participants" class="input-field" placeholder=" " min="2">
-                                                <label for="tf-max-participants" class="floating-label">
-                                                    Cantidad de participantes
-                                                </label>
+                                                <input type="number" id="tf-max-participants" class="input-field" placeholder=" " min="2" max="1024">
+                                                <label for="tf-max-participants" class="floating-label">Cantidad de participantes</label>
                                             </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                            <div class="input-group">
+                                                <input type="date" id="tf-start-date" class="input-field" placeholder=" " required>
+                                                <label for="tf-start-date" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fecha de inicio</label>
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="date" id="tf-end-date" class="input-field" placeholder=" ">
+                                                <label for="tf-end-date" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fecha de fin (opcional)</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                            <div class="input-group">
+                                                <select id="tf-department" class="input-field"><option value="">Elegí un departamento…</option><option value="Artigas">Artigas</option><option value="Canelones">Canelones</option><option value="Cerro Largo">Cerro Largo</option><option value="Colonia">Colonia</option><option value="Durazno">Durazno</option><option value="Flores">Flores</option><option value="Florida">Florida</option><option value="Lavalleja">Lavalleja</option><option value="Maldonado">Maldonado</option><option value="Montevideo">Montevideo</option><option value="Paysandú">Paysandú</option><option value="Río Negro">Río Negro</option><option value="Rivera">Rivera</option><option value="Rocha">Rocha</option><option value="Salto">Salto</option><option value="San José">San José</option><option value="Soriano">Soriano</option><option value="Tacuarembó">Tacuarembó</option><option value="Treinta y Tres">Treinta y Tres</option></select>
+                                                <label for="tf-department" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Departamento</label>
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="text" id="tf-venue" class="input-field" placeholder=" " maxlength="150">
+                                                <label for="tf-venue" class="floating-label">Dirección / sede</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="input-group">
+                                            <textarea id="tf-description" class="input-field" style="height:auto;min-height:80px;padding-top:14px;resize:vertical;" rows="2" placeholder=" " maxlength="2000"></textarea>
+                                            <label for="tf-description" class="floating-label">Descripción (opcional)</label>
                                         </div>
                                     </div>
                                 </div>
@@ -242,13 +264,6 @@
                                         </div>
 
                                         <div class="input-group">
-                                            <input type="text" id="tf-currency" class="input-field" placeholder=" ">
-                                            <label for="tf-currency" class="floating-label">
-                                                Moneda
-                                            </label>
-                                        </div>
-
-                                        <div class="input-group">
                                             <input type="number" id="tf-field-cost" class="input-field" placeholder=" ">
                                             <label for="tf-field-cost" class="floating-label">
                                                 Costo alquiler cancha
@@ -263,36 +278,6 @@
                                     </div>
                                 </div>
 
-                                <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 sm:p-8">
-                                    <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
-                                        <i class="ti ti-whistle text-blue-violet-dark"></i>
-                                        Árbitro principal
-                                    </h3>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-                                        <div class="input-group">
-                                            <input type="text" id="tf-referee-name" class="input-field" placeholder=" ">
-                                            <label for="tf-referee-name" class="floating-label">
-                                                Nombre
-                                            </label>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <input type="tel" id="tf-referee-phone" class="input-field" placeholder=" ">
-                                            <label for="tf-referee-phone" class="floating-label">
-                                                Teléfono
-                                            </label>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <input type="email" id="tf-referee-email" class="input-field" placeholder=" ">
-                                            <label for="tf-referee-email" class="floating-label">
-                                                Correo
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="flex flex-col gap-6">
@@ -319,29 +304,12 @@
                                         </h3>
 
                                         <p class="mt-1 text-xs text-darkest-hour/45">
-                                            Así los participantes podrán comunicarse ante cualquier duda.
+                                            Los participantes verán estos datos para comunicarse con vos.
                                         </p>
                                     </div>
-                                    <div class="flex flex-col gap-4">
-                                        <div class="input-group">
-                                            <input type="text" id="tf-organizer-name" class="input-field" placeholder=" ">
-                                            <label for="tf-organizer-name" class="floating-label">
-                                                Nombre
-                                            </label>
-                                        </div>
-                                        <div class="input-group">
-                                            <input type="tel" id="tf-organizer-phone" class="input-field" placeholder=" ">
-                                            <label for="tf-organizer-phone" class="floating-label">
-                                                Teléfono
-                                            </label>
-                                        </div>
-                                        <div class="input-group">
-                                            <input type="email" id="tf-organizer-email" class="input-field" placeholder=" ">
-                                            <label for="tf-organizer-email" class="floating-label">
-                                                Correo electrónico
-                                            </label>
-                                        </div>
-                                    </div>
+                                    <p id="tf-organizer-info" class="text-sm text-darkest-hour/70">
+                                        Se usan el nombre, teléfono y correo de tu cuenta. Podés cambiarlos desde <a href="../profile_configuration/profile_configuration.html" class="underline">Configuración</a>.
+                                    </p>
                                 </div>
                             </div>
                             <div id="btns-container" class="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
