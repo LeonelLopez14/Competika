@@ -1,10 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap');
 
-*, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    
+/* El reset va en una capa (@layer) para que sea lo de menor prioridad: así no
+   pisa las clases de Tailwind (que también van en capas) en las páginas que lo
+   usan, como el formulario de torneo y el dashboard. En el resto no cambia nada. */
+@layer reset {
+    *, *::before, *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 }
 
 :root {

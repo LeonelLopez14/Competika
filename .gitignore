@@ -1,0 +1,5 @@
+.env
+
+# Fotos de perfil subidas por usuarios
+uploads/avatars/*
+!uploads/avatars/.gitkeep

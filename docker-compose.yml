@@ -1,0 +1,55 @@
+# Competika: Apache+PHP (web) y MariaDB (db).
+# Uso:  cp .env.example .env  →  editar claves  →  docker compose up -d --build
+services:
+  web:
+    build: .
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      DB_HOST: db
+      DB_NAME: competika_db
+      DB_USER: competika_app
+      DB_PASS: ${APP_DB_PASS:?Definí APP_DB_PASS en .env}
+    volumes:
+      # Fotos de perfil: fuera de la imagen para que sobrevivan a un rebuild
+      - avatars:/var/www/html/uploads/avatars
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS:?Definí DB_ROOT_PASS en .env}
+      APP_DB_PASS: ${APP_DB_PASS:?Definí APP_DB_PASS en .env}
+    volumes:
+      - db_data:/var/lib/mysql
+      # Se ejecutan en orden alfabético y SOLO la primera vez (volumen vacío)
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/ajustes.sql:/docker-entrypoint-initdb.d/02-ajustes.sql:ro
+      - ./docker/db-init.sh:/docker-entrypoint-initdb.d/03-usuario-app.sh:ro
+      - ./database/usuarios.sql:/competika/usuarios.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # Sin "ports": la base NO queda expuesta fuera de Docker; solo "web" la alcanza.
+
+  # Solo para desarrollo:  docker compose --profile dev up -d
+  phpmyadmin:
+    image: phpmyadmin:5
+    profiles: ["dev"]
+    environment:
+      PMA_HOST: db
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+  avatars:

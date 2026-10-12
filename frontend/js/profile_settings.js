@@ -1,227 +1,240 @@
 /* =====================================================
-   COMPETIKA — profile_settings.js
+   COMPETIKA — profile_settings.js  (profile_configuration.html)
+   Todos los cambios se guardan en la base de datos vía api/profile.php.
+   Requiere navbar-user.js cargado antes (define competikaSiteRoot y
+   competikaRefreshSession).
    ===================================================== */
+(function () {
+const API = (window.competikaSiteRoot || '../../..') + '/api/profile.php';
+const $ = id => document.getElementById(id);
 
-const PF_USER_KEY = 'competika_user';
-
-function pfGetUser() {
-    try { return JSON.parse(localStorage.getItem(PF_USER_KEY) || 'null'); } catch (e) { return null; }
-}
-
-function pfSaveUser(patch) {
-    const current = pfGetUser() || {
-        fullname: 'Alex Rodríguez',
-        username: 'alex.rodriguez',
-        email: 'alex.rodriguez@competika.com',
-        bio: 'Apasionado del deporte competitivo. Organizo torneos locales de fútbol y baloncesto desde 2019. Siempre buscando nuevos retos.',
-        avatar: null,
-        roles: { organizador: true, participante: true }
-    };
-    const updated = { ...current, ...patch };
-    if (patch.roles) updated.roles = { ...current.roles, ...patch.roles };
-    localStorage.setItem(PF_USER_KEY, JSON.stringify(updated));
-    return updated;
-}
-
-/* ── Precargar los campos del formulario con lo guardado (si existe) ── */
-function pfPrefillSettingsForm() {
-    const user = pfGetUser();
-    if (!user) return;
-
-    if (user.fullname) document.getElementById('settings-fullname').value = user.fullname;
-    if (user.username) document.getElementById('settings-username').value = user.username;
-    if (user.bio) document.getElementById('settings-bio').value = user.bio;
-    if (user.email) document.getElementById('settings-current-email-value').textContent = user.email;
-    if (user.avatar) {
-        document.getElementById('settings-avatar-preview').src = user.avatar;
-        document.querySelectorAll('.nav-avatar-img').forEach(img => img.src = user.avatar);
+async function api(action, { method = 'GET', body = null, form = null } = {}) {
+    const opts = { method, credentials: 'same-origin', headers: {} };
+    if (form) opts.body = form;
+    else if (body !== null) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    try {
+        const res = await fetch(`${API}?action=${encodeURIComponent(action)}`, opts);
+        const data = await res.json();
+        if (res.status === 401) { location.replace((window.competikaSiteRoot || '../../..') + '/frontend/paginas/login/login.html'); }
+        return data;
+    } catch (e) {
+        return { success: false, error: 'No se pudo conectar con el servidor.' };
     }
-    if (user.roles) {
-        const organizadorInput = document.getElementById('settings-role-organizador');
-        const participanteInput = document.getElementById('settings-role-participante');
-        if (organizadorInput) organizadorInput.checked = !!user.roles.organizador;
-        if (participanteInput) participanteInput.checked = !!user.roles.participante;
-    }
-
-    document.querySelectorAll('.nud-name').forEach(el => el.textContent = user.fullname || el.textContent);
-    document.querySelectorAll('.nud-email').forEach(el => el.textContent = user.email || el.textContent);
 }
 
 /* ── Toast ── */
-function showSettingsToast(message, isDanger = false) {
-    const toast = document.getElementById('settings-toast');
-    if (!toast) return;
-    toast.innerHTML = `<i class="ti ${isDanger ? 'ti-alert-triangle' : 'ti-circle-check'}"></i><span>${message}</span>`;
-    toast.classList.toggle('settings-toast--danger', isDanger);
-    toast.classList.add('show');
-    clearTimeout(toast._hideTimer);
-    toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+function toast(message, isDanger = false) {
+    const el = $('settings-toast');
+    if (!el) return;
+    el.innerHTML = `<i class="ti ${isDanger ? 'ti-alert-triangle' : 'ti-circle-check'}"></i><span></span>`;
+    el.querySelector('span').textContent = message;             // texto, nunca HTML
+    el.classList.toggle('settings-toast--danger', isDanger);
+    el.classList.add('show');
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+function busy(btn, on) {
+    if (!btn) return;
+    btn.disabled = on;
+    btn.style.opacity = on ? '0.6' : '';
+}
+
+/* ── Cargar los datos reales de la cuenta ── */
+let defaultAvatar = '';
+function fill(user) {
+    $('settings-nombre').value   = user.nombre || '';
+    $('settings-apellido').value = user.apellido || '';
+    $('settings-username').value = user.nombreUsuario || '';
+    $('settings-telefono').value = user.telefono || '';
+    $('settings-bio').value      = user.biografia || '';
+    $('settings-current-email-value').textContent = user.email || '—';
+    $('settings-role-organizador').checked  = !!user.roles?.organizador;
+    $('settings-role-participante').checked = !!user.roles?.participante;
+    setAvatar(user.foto);
+
+    const juez = document.querySelector('.settings-role-pending-badge');
+    if (juez && user.roles?.juez) juez.textContent = 'Activo';
+}
+
+function setAvatar(url) {
+    const preview = $('settings-avatar-preview');
+    if (preview) preview.src = url ? `${window.competikaSiteRoot}/${url}` : defaultAvatar;
+    const remove = $('settings-avatar-remove');
+    if (remove) remove.hidden = !url;
+}
+
+async function load() {
+    defaultAvatar = $('settings-avatar-preview')?.getAttribute('src') || '';
+    const r = await api('me');
+    if (r.success) fill(r.user);
+    else if (r.error) toast(r.error, true);
 }
 
 /* ── Navegación entre paneles ── */
-function initSettingsNav() {
-    const navButtons = document.querySelectorAll('.settings-nav-btn');
+function initNav() {
+    const buttons = document.querySelectorAll('.settings-nav-btn');
     const panels = document.querySelectorAll('.settings-panel');
-
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            navButtons.forEach(b => b.classList.remove('active'));
-            panels.forEach(p => p.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(btn.dataset.target)?.classList.add('active');
-            document.getElementById('settings-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    });
+    buttons.forEach(btn => btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        panels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        $(btn.dataset.target)?.classList.add('active');
+        $('settings-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
 }
 
-/* ── Avatar: preview ── */
-function initAvatarUpload() {
-    const input   = document.getElementById('settings-avatar-input');
-    const preview = document.getElementById('settings-avatar-preview');
-    if (!input || !preview) return;
+/* ── Foto de perfil ── */
+function initAvatar() {
+    const input = $('settings-avatar-input');
+    $('settings-avatar-btn')?.addEventListener('click', () => input?.click());
 
-    input.addEventListener('change', () => {
+    input?.addEventListener('change', async () => {
         const file = input.files && input.files[0];
+        input.value = '';
         if (!file) return;
+        if (!['image/jpeg', 'image/png'].includes(file.type)) { toast('Solo se aceptan imágenes JPG o PNG.', true); return; }
+        if (file.size > 5 * 1024 * 1024) { toast('La imagen supera los 5MB permitidos.', true); return; }
 
-        if (file.size > 5 * 1024 * 1024) {
-            showSettingsToast('La imagen supera los 5MB permitidos.', true);
-            input.value = '';
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            preview.src = e.target.result;
-            document.querySelectorAll('.nav-avatar-img').forEach(img => img.src = e.target.result);
-            pfSaveUser({ avatar: e.target.result });
-        };
-        reader.readAsDataURL(file);
+        const form = new FormData();
+        form.append('avatar', file);
+        busy($('settings-avatar-btn'), true);
+        const r = await api('avatar', { method: 'POST', form });
+        busy($('settings-avatar-btn'), false);
+        if (!r.success) { toast(r.error || 'No se pudo subir la foto.', true); return; }
+        setAvatar(r.foto);
+        window.competikaRefreshSession?.();
+        toast('Foto de perfil actualizada.');
     });
 
-    document.getElementById('settings-avatar-btn')?.addEventListener('click', () => input.click());
+    $('settings-avatar-remove')?.addEventListener('click', async () => {
+        const r = await api('avatar_delete', { method: 'POST' });
+        if (!r.success) { toast(r.error || 'No se pudo quitar la foto.', true); return; }
+        setAvatar(null);
+        window.competikaRefreshSession?.();
+        toast('Foto de perfil eliminada.');
+    });
 }
 
-/* ── Formulario: Editar perfil ── */
+/* ── Editar perfil ── */
 function initProfileForm() {
-    const form = document.getElementById('settings-profile-form');
-    if (!form) return;
-    form.addEventListener('submit', (e) => {
+    const form = $('settings-profile-form');
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const body = {
+            nombre:        $('settings-nombre').value.trim(),
+            apellido:      $('settings-apellido').value.trim(),
+            nombreUsuario: $('settings-username').value.trim(),
+            telefono:      $('settings-telefono').value.trim(),
+            biografia:     $('settings-bio').value.trim(),
+            roles: {
+                organizador:  $('settings-role-organizador').checked,
+                participante: $('settings-role-participante').checked,
+            },
+        };
+        if (!body.nombre || !body.apellido) { toast('Completá tu nombre y apellido.', true); return; }
 
-        const fullname = document.getElementById('settings-fullname').value.trim();
-        const username = document.getElementById('settings-username').value.trim();
-        const bio = document.getElementById('settings-bio').value.trim();
-        const organizador = document.getElementById('settings-role-organizador')?.checked ?? true;
-        const participante = document.getElementById('settings-role-participante')?.checked ?? true;
-
-        if (!fullname) {
-            showSettingsToast('El nombre completo no puede quedar vacío.', true);
+        const btn = form.querySelector('.settings-save-btn');
+        busy(btn, true);
+        const r = await api('update', { method: 'POST', body });
+        busy(btn, false);
+        if (!r.success) {
+            toast(r.error || 'No se pudo guardar.', true);
+            const me = await api('me');                      // deja los interruptores como están en la base
+            if (me.success) fill(me.user);
             return;
         }
-
-        pfSaveUser({ fullname, username, bio, roles: { organizador, participante } });
-        document.querySelectorAll('.nud-name').forEach(el => el.textContent = fullname);
-        showSettingsToast('Perfil actualizado correctamente.');
+        fill(r.user);
+        window.competikaRefreshSession?.();
+        toast('Perfil actualizado correctamente.');
     });
 }
 
-/* ── Formulario: Correo electrónico ── */
+/* ── Correo ── */
 function initEmailForm() {
-    const form = document.getElementById('settings-email-form');
-    if (!form) return;
-    form.addEventListener('submit', (e) => {
+    const form = $('settings-email-form');
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const newEmail = document.getElementById('settings-new-email').value.trim();
-        const pass = document.getElementById('settings-email-password').value;
+        const email = $('settings-new-email').value.trim();
+        const password = $('settings-email-password').value;
+        if (!email || !password) { toast('Completá el nuevo correo y tu contraseña actual.', true); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Ingresá un correo electrónico válido.', true); return; }
 
-        if (!newEmail || !pass) {
-            showSettingsToast('Completá el nuevo correo y tu contraseña actual.', true);
-            return;
-        }
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(newEmail)) {
-            showSettingsToast('Ingresá un correo electrónico válido.', true);
-            return;
-        }
-
-        pfSaveUser({ email: newEmail });
-        document.getElementById('settings-current-email-value').textContent = newEmail;
-        document.querySelectorAll('.nud-email').forEach(el => el.textContent = newEmail);
+        const btn = form.querySelector('.settings-save-btn');
+        busy(btn, true);
+        const r = await api('email', { method: 'POST', body: { email, password } });
+        busy(btn, false);
+        if (!r.success) { toast(r.error || 'No se pudo actualizar el correo.', true); return; }
+        $('settings-current-email-value').textContent = r.email;
         form.reset();
-        showSettingsToast('Correo electrónico actualizado.');
+        window.competikaRefreshSession?.();
+        toast('Correo electrónico actualizado.');
     });
 }
 
-/* ── Formulario: Contraseña ── */
+/* ── Contraseña ── */
 function initPasswordForm() {
-    const form = document.getElementById('settings-password-form');
-    if (!form) return;
-
-    form.addEventListener('submit', (e) => {
+    const form = $('settings-password-form');
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const current = document.getElementById('settings-current-password').value;
-        const next    = document.getElementById('settings-new-password').value;
-        const confirm = document.getElementById('settings-confirm-password').value;
+        const current = $('settings-current-password').value;
+        const next    = $('settings-new-password').value;
+        const confirm = $('settings-confirm-password').value;
+        if (!current || !next || !confirm) { toast('Completá todos los campos de contraseña.', true); return; }
+        if (next.length < 8 || !/[A-Za-z]/.test(next) || !/\d/.test(next)) {
+            toast('La nueva contraseña debe tener al menos 8 caracteres, con letras y números.', true); return;
+        }
+        if (next !== confirm) { toast('Las contraseñas nuevas no coinciden.', true); return; }
 
-        if (!current || !next || !confirm) {
-            showSettingsToast('Completá todos los campos de contraseña.', true);
-            return;
-        }
-        if (next.length < 8) {
-            showSettingsToast('La nueva contraseña debe tener al menos 8 caracteres.', true);
-            return;
-        }
-        if (next !== confirm) {
-            showSettingsToast('Las contraseñas nuevas no coinciden.', true);
-            return;
-        }
-
-        // Nota: sin backend no se valida contra una password ni persiste
+        const btn = form.querySelector('.settings-save-btn');
+        busy(btn, true);
+        const r = await api('password', { method: 'POST', body: { current, next } });
+        busy(btn, false);
+        if (!r.success) { toast(r.error || 'No se pudo cambiar la contraseña.', true); return; }
         form.reset();
-        showSettingsToast('Contraseña actualizada correctamente.');
+        toast('Contraseña actualizada correctamente.');
     });
 
-    document.querySelectorAll('.settings-toggle-pass').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const input = document.getElementById(btn.dataset.for);
-            if (!input) return;
-            const isPass = input.type === 'password';
-            input.type = isPass ? 'text' : 'password';
-            btn.querySelector('i').className = `ti ${isPass ? 'ti-eye-off' : 'ti-eye'}`;
-        });
-    });
+    document.querySelectorAll('.settings-toggle-pass').forEach(btn => btn.addEventListener('click', () => {
+        const input = $(btn.dataset.for);
+        if (!input) return;
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        btn.querySelector('i').className = `ti ${isPass ? 'ti-eye-off' : 'ti-eye'}`;
+    }));
 }
 
-/* ── Zona de peligro: eliminar cuenta ── */
+/* ── Eliminar cuenta ── */
 function initDeleteAccount() {
-    const checkbox = document.getElementById('settings-delete-confirm-check');
-    const textInput = document.getElementById('settings-delete-confirm-text');
-    const deleteBtn = document.getElementById('settings-delete-btn');
-    if (!checkbox || !textInput || !deleteBtn) return;
+    const check = $('settings-delete-confirm-check');
+    const text = $('settings-delete-confirm-text');
+    const pass = $('settings-delete-password');
+    const btn = $('settings-delete-btn');
+    if (!check || !text || !btn) return;
 
-    function refreshState() {
-        const ready = checkbox.checked && textInput.value.trim().toUpperCase() === 'ELIMINAR';
-        deleteBtn.classList.toggle('enabled', ready);
-        deleteBtn.disabled = !ready;
-    }
+    const refresh = () => {
+        const ready = check.checked && text.value.trim().toUpperCase() === 'ELIMINAR' && !!pass?.value;
+        btn.classList.toggle('enabled', ready);
+        btn.disabled = !ready;
+    };
+    [check, text, pass].forEach(el => el?.addEventListener(el.type === 'checkbox' ? 'change' : 'input', refresh));
 
-    checkbox.addEventListener('change', refreshState);
-    textInput.addEventListener('input', refreshState);
-
-    deleteBtn.addEventListener('click', () => {
-        if (deleteBtn.disabled) return;
-        localStorage.removeItem(PF_USER_KEY);
-        localStorage.removeItem('competika_tournaments');
-        showSettingsToast('Cuenta eliminada. Redirigiendo…', true);
-        setTimeout(() => { window.location.href = 'index.html'; }, 1800);
+    btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
+        busy(btn, true);
+        const r = await api('delete_account', { method: 'POST', body: { password: pass.value, confirm: text.value } });
+        busy(btn, false);
+        if (!r.success) { toast(r.error || 'No se pudo eliminar la cuenta.', true); return; }
+        toast('Cuenta eliminada. Redirigiendo…', true);
+        setTimeout(() => { location.href = `${window.competikaSiteRoot}/frontend/index.html`; }, 1500);
     });
 }
 
-pfPrefillSettingsForm();
-initSettingsNav();
-initAvatarUpload();
+initNav();
+initAvatar();
 initProfileForm();
 initEmailForm();
 initPasswordForm();
 initDeleteAccount();
+(window.competikaSessionReady || Promise.resolve({ logged: true })).then(s => { if (s && s.logged) load(); });
+})();

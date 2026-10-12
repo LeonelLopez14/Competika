@@ -9,10 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css">
-    <link rel="stylesheet" href="tournament_form.css">
-    <link rel="stylesheet" href="../../css/navbar-user.css">
-    <link rel="stylesheet" href="../../css/style..css">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
+    <link rel="stylesheet" href="tournament_form.css?v=20261011">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
+    <link rel="stylesheet" href="../../css/style..css?v=20261011">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261011">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <style type="text/tailwindcss">
@@ -38,7 +39,7 @@
 
 <body>
     <video autoplay muted loop playsinline id="background-video">
-        <source src="../../assets/video/Fondo pagg.mp4" type="video/mp4">
+        <source src="../../assets/video/Fondo de la pagina.mp4" type="video/mp4">
     </video>
     <header id="menu">
         <nav class="navbar">
@@ -59,7 +60,7 @@
                     <div class="nav-notif-wrap nav-dropdown-wrap" id="notif-wrap">
                         <button class="nav-bell" id="notif-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
                             <i class="ti ti-bell"></i>
-                            <span class="nav-bell-badge" id="notif-badge">3</span>
+                            <span class="nav-bell-badge" id="notif-badge" style="display:none">0</span>
                         </button>
 
                         <div class="nav-notif-dropdown">
@@ -73,20 +74,20 @@
                     <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
                         <a href="../profile/profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
                             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
-                            <span class="nav-avatar-name">Alex R.</span>
+                            <span class="nav-avatar-name">Invitado</span>
                         </a>
                         <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
                             <i class="ti ti-chevron-down"></i>
                         </button>
                         <div class="nav-user-dropdown">
                             <div class="nud-header">
-                                <span class="nud-name">Alex Rodríguez</span>
-                                <span class="nud-email">alex.rodriguez@competika.com</span>
+                                <span class="nud-name">Invitado</span>
+                                <span class="nud-email">Navegando sin cuenta</span>
                             </div>
                             <a href="../profile/profile.html" class="nud-item">
                                 <i class="ti ti-user"></i>Mi Perfil
                             </a>
-                            <a href="../profile/profile_configuration.html" class="nud-item">
+                            <a href="../profile_configuration/profile_configuration.html" class="nud-item">
                                 <i class="ti ti-settings"></i>Configuración
                             </a>
                             <a href="../../index.html" class="nud-item nud-item--danger">
@@ -118,7 +119,7 @@
                 <li><a href="../login/login.html">Iniciar sesión</a></li>
                 <li><a href="../register/register.html">Registrarse</a></li>
                 <li><a href="../profile/profile.html">Mi Perfil</a></li>
-                <li><a href="../profile/profile_configuration.html">Configuración</a></li>
+                <li><a href="../profile_configuration/profile_configuration.html">Configuración</a></li>
             </ul>
         </div>
     </header>
@@ -209,18 +210,40 @@
 
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                             <div class="input-group">
-                                                <input type="date" id="tf-start-date" class="input-field" placeholder=" " required>
-                                                <label for="tf-start-date" class="floating-label">
-                                                    Fecha de inicio
-                                                </label>
+                                                <select id="tf-sport" class="input-field" required><option value="">Elegí un deporte…</option><option value="Fútbol">Fútbol</option><option value="Basketball">Basketball</option><option value="Tenis">Tenis</option><option value="Ajedrez">Ajedrez</option><option value="Juegos de cartas">Juegos de cartas</option><option value="Videojuegos">Videojuegos</option><option value="Volleyball">Volleyball</option><option value="Natación">Natación</option><option value="Rugby">Rugby</option><option value="Baseball">Baseball</option><option value="Running">Running</option><option value="Artes marciales">Artes marciales</option><option value="Boxeo">Boxeo</option><option value="Gimnasia">Gimnasia</option><option value="Otros">Otros</option></select>
+                                                <label for="tf-sport" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Deporte</label>
                                             </div>
-
                                             <div class="input-group">
-                                                <input type="number" id="tf-max-participants" class="input-field" placeholder=" " min="2">
-                                                <label for="tf-max-participants" class="floating-label">
-                                                    Cantidad de participantes
-                                                </label>
+                                                <input type="number" id="tf-max-participants" class="input-field" placeholder=" " min="2" max="1024">
+                                                <label for="tf-max-participants" class="floating-label">Cantidad de participantes</label>
                                             </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                            <div class="input-group">
+                                                <input type="date" id="tf-start-date" class="input-field" placeholder=" " required>
+                                                <label for="tf-start-date" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fecha de inicio</label>
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="date" id="tf-end-date" class="input-field" placeholder=" ">
+                                                <label for="tf-end-date" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Fecha de fin (opcional)</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                            <div class="input-group">
+                                                <select id="tf-department" class="input-field"><option value="">Elegí un departamento…</option><option value="Artigas">Artigas</option><option value="Canelones">Canelones</option><option value="Cerro Largo">Cerro Largo</option><option value="Colonia">Colonia</option><option value="Durazno">Durazno</option><option value="Flores">Flores</option><option value="Florida">Florida</option><option value="Lavalleja">Lavalleja</option><option value="Maldonado">Maldonado</option><option value="Montevideo">Montevideo</option><option value="Paysandú">Paysandú</option><option value="Río Negro">Río Negro</option><option value="Rivera">Rivera</option><option value="Rocha">Rocha</option><option value="Salto">Salto</option><option value="San José">San José</option><option value="Soriano">Soriano</option><option value="Tacuarembó">Tacuarembó</option><option value="Treinta y Tres">Treinta y Tres</option></select>
+                                                <label for="tf-department" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Departamento</label>
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="text" id="tf-venue" class="input-field" placeholder=" " maxlength="150">
+                                                <label for="tf-venue" class="floating-label">Dirección / sede</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="input-group">
+                                            <textarea id="tf-description" class="input-field" style="height:auto;min-height:80px;padding-top:14px;resize:vertical;" rows="2" placeholder=" " maxlength="2000"></textarea>
+                                            <label for="tf-description" class="floating-label">Descripción (opcional)</label>
                                         </div>
                                     </div>
                                 </div>
@@ -235,27 +258,31 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                                         <div class="input-group">
-                                            <input type="number" id="tf-entry-fee" class="input-field" placeholder=" ">
+                                            <select id="tf-currency" class="input-field">
+                                                <option value="UYU" selected>UYU — Peso uruguayo</option>
+                                                <option value="USD">USD — Dólar</option>
+                                                <option value="ARS">ARS — Peso argentino</option>
+                                                <option value="BRL">BRL — Real</option>
+                                                <option value="EUR">EUR — Euro</option>
+                                            </select>
+                                            <label for="tf-currency" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Moneda</label>
+                                        </div>
+
+                                        <div class="input-group">
+                                            <input type="number" id="tf-entry-fee" class="input-field" placeholder=" " min="0" step="0.01" inputmode="decimal">
                                             <label for="tf-entry-fee" class="floating-label">
                                                 Costo inscripción
                                             </label>
                                         </div>
 
                                         <div class="input-group">
-                                            <input type="text" id="tf-currency" class="input-field" placeholder=" ">
-                                            <label for="tf-currency" class="floating-label">
-                                                Moneda
-                                            </label>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <input type="number" id="tf-field-cost" class="input-field" placeholder=" ">
+                                            <input type="number" id="tf-field-cost" class="input-field" placeholder=" " min="0" step="0.01" inputmode="decimal">
                                             <label for="tf-field-cost" class="floating-label">
                                                 Costo alquiler cancha
                                             </label>
                                         </div>
                                         <div class="input-group">
-                                            <input type="number" id="tf-referee-cost" class="input-field" placeholder=" ">
+                                            <input type="number" id="tf-referee-cost" class="input-field" placeholder=" " min="0" step="0.01" inputmode="decimal">
                                             <label for="tf-referee-cost" class="floating-label">
                                                 Costo árbitro
                                             </label>
@@ -263,36 +290,6 @@
                                     </div>
                                 </div>
 
-                                <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 sm:p-8">
-                                    <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
-                                        <i class="ti ti-whistle text-blue-violet-dark"></i>
-                                        Árbitro principal
-                                    </h3>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-                                        <div class="input-group">
-                                            <input type="text" id="tf-referee-name" class="input-field" placeholder=" ">
-                                            <label for="tf-referee-name" class="floating-label">
-                                                Nombre
-                                            </label>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <input type="tel" id="tf-referee-phone" class="input-field" placeholder=" ">
-                                            <label for="tf-referee-phone" class="floating-label">
-                                                Teléfono
-                                            </label>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <input type="email" id="tf-referee-email" class="input-field" placeholder=" ">
-                                            <label for="tf-referee-email" class="floating-label">
-                                                Correo
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="flex flex-col gap-6">
@@ -311,6 +308,28 @@
                                 </div>
 
                                 <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
+                                    <div>
+                                        <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                                            <i class="ti ti-gavel text-blue-violet-dark"></i>
+                                            Árbitro principal
+                                        </h3>
+                                        <p class="mt-1 text-xs text-darkest-hour/45">Opcional. Podés completarlo más tarde desde el panel del torneo.</p>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="tf-referee-name" class="input-field" placeholder=" " maxlength="150" autocomplete="off">
+                                        <label for="tf-referee-name" class="floating-label">Nombre completo</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="tel" id="tf-referee-phone" class="input-field" placeholder=" " maxlength="20" pattern="[\d\s\+\-\(\)]{6,20}" autocomplete="off">
+                                        <label for="tf-referee-phone" class="floating-label">Teléfono</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="email" id="tf-referee-email" class="input-field" placeholder=" " maxlength="150" autocomplete="off">
+                                        <label for="tf-referee-email" class="floating-label">Correo electrónico</label>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
 
                                     <div>
                                         <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
@@ -319,28 +338,20 @@
                                         </h3>
 
                                         <p class="mt-1 text-xs text-darkest-hour/45">
-                                            Así los participantes podrán comunicarse ante cualquier duda.
+                                            Se completan con los datos de tu cuenta; podés cambiarlos solo para este torneo. Los participantes los verán para comunicarse con vos.
                                         </p>
                                     </div>
-                                    <div class="flex flex-col gap-4">
-                                        <div class="input-group">
-                                            <input type="text" id="tf-organizer-name" class="input-field" placeholder=" ">
-                                            <label for="tf-organizer-name" class="floating-label">
-                                                Nombre
-                                            </label>
-                                        </div>
-                                        <div class="input-group">
-                                            <input type="tel" id="tf-organizer-phone" class="input-field" placeholder=" ">
-                                            <label for="tf-organizer-phone" class="floating-label">
-                                                Teléfono
-                                            </label>
-                                        </div>
-                                        <div class="input-group">
-                                            <input type="email" id="tf-organizer-email" class="input-field" placeholder=" ">
-                                            <label for="tf-organizer-email" class="floating-label">
-                                                Correo electrónico
-                                            </label>
-                                        </div>
+                                    <div class="input-group">
+                                        <input type="text" id="tf-organizer-name" class="input-field" placeholder=" " maxlength="150" autocomplete="name">
+                                        <label for="tf-organizer-name" class="floating-label">Nombre de contacto</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="tel" id="tf-organizer-phone" class="input-field" placeholder=" " maxlength="20" pattern="[\d\s\+\-\(\)]{6,20}" autocomplete="tel">
+                                        <label for="tf-organizer-phone" class="floating-label">Teléfono de contacto</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="email" id="tf-organizer-email" class="input-field" placeholder=" " maxlength="150" autocomplete="email">
+                                        <label for="tf-organizer-email" class="floating-label">Correo de contacto</label>
                                     </div>
                                 </div>
                             </div>
@@ -349,34 +360,35 @@
                                     <i class="ti ti-chevron-left"></i>
                                     Atrás
                                 </button>
-                                <button type="submit" id="tf-submit-btn" class="inline-flex items-center w-40 h-10 gap-2 rounded-xl bg-sun-glare px-9 py-4 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                                <button type="submit" id="tf-submit-btn" class="inline-flex items-center whitespace-nowrap gap-2 rounded-xl bg-sun-glare px-9 py-4 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
                                     <i class="ti ti-bolt"></i>
                                     Crear Torneo
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-8 py-16 text-center">
-                        <span class="tf-success-icon flex h-16 w-16 items-center justify-center rounded-full bg-sun-glare-dark text-3xl text-darkest-hour">
-                            <i class="ti ti-trophy"></i>
-                        </span>
-                        <h2 class="font-display text-2xl font-black uppercase text-darkest-hour">
-                            ¡Torneo creado!
-                        </h2>
-                        <p class="text-sm text-darkest-hour/60">
-                            <span data-tf-success-name class="font-bold text-darkest-hour"></span>
-                            ya está listo. Pronto vas a poder gestionar participantes, calendario y resultados desde tu panel.
-                        </p>
-                        <div class="mt-2 flex flex-col gap-3 sm:flex-row">
-                            <a href="../tournament_search/tournament_search.html" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
-                                <i class="ti ti-eye"></i>
-                                Ver torneos
-                            </a>
-                            <button type="button" id="tf-reset-btn" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
-                                <i class="ti ti-plus"></i>
-                                Crear otro torneo
-                            </button>
-                        </div>
+                </div>
+
+                <div id="tf-success" class="hidden flex w-full max-w-xl flex-col items-center gap-4 self-center rounded-2xl border border-sun-glare-dark/40 bg-sun-glare/10 px-8 py-16 text-center">
+                    <span class="tf-success-icon flex h-16 w-16 items-center justify-center rounded-full bg-sun-glare-dark text-3xl text-darkest-hour">
+                        <i class="ti ti-trophy"></i>
+                    </span>
+                    <h2 class="font-display text-2xl font-black uppercase text-darkest-hour">
+                        ¡Torneo creado!
+                    </h2>
+                    <p class="text-sm text-darkest-hour/60">
+                        <span data-tf-success-name class="font-bold text-darkest-hour"></span>
+                        ya está listo. Gestioná participantes, calendario y resultados desde tu panel.
+                    </p>
+                    <div class="mt-2 flex flex-col gap-3 sm:flex-row">
+                        <a href="../tournament_search/tournament_search.html" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sun-glare px-7 py-3.5 font-body text-sm font-extrabold uppercase tracking-wider text-darkest-hour transition-all duration-300 hover:-translate-x-1.5 hover:shadow-[-6px_6px_0_var(--sun-glare-dark)]">
+                            <i class="ti ti-eye"></i>
+                            Ver torneos
+                        </a>
+                        <button type="button" id="tf-reset-btn" class="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-violet/25 px-7 py-3.5 font-body text-sm font-bold uppercase tracking-wider text-blue-violet-dark transition-all duration-300 hover:border-blue-violet hover:bg-blue-violet/5">
+                            <i class="ti ti-plus"></i>
+                            Crear otro torneo
+                        </button>
                     </div>
                 </div>
             </form>
@@ -480,8 +492,8 @@
             </p>
         </div>
     </footer>
-    <script src="../../js/main.js"></script>
-    <script src="../../js/navbar-user.js"></script>
-    <script src="../../js/tournament-api.js"></script>
+    <script src="../../js/main.js?v=20261011"></script>
+    <script src="../../js/navbar-user.js?v=20261011"></script>
+    <script src="../../js/tournament-api.js?v=20261011"></script>
 </body>
 </html>

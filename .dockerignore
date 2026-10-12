@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+database
+docker/db-init.sh
+apache
+docker-compose.yml
+test_conexion.php
+*.md
+uploads/avatars/*
+!uploads/avatars/.gitkeep

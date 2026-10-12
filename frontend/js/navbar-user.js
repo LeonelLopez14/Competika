@@ -45,60 +45,20 @@
         }
     });
 
-    /* ── Notificaciones de ejemplo ── */
-    const notifications = [
-        { icon: 'ti-mail-opened', title: 'Fuiste invitado a jugar en <strong>Liga Municipal Baloncesto</strong>.', time: 'Hace 2 h', unread: true },
-        { icon: 'ti-alarm-snooze', title: 'Tu partido vs <strong>Atlético Sur</strong> es mañana a las 09:00 h.', time: 'Hace 5 h', unread: true },
-        { icon: 'ti-trophy', title: 'Ganaste tu partido vs <strong>FC Norte</strong> 3-1.', time: 'Hace 1 día', unread: true },
-        { icon: 'ti-tournament', title: '<strong>Copa Regional Fútbol 2026</strong> ya tiene la fase de grupos definida.', time: 'Hace 2 días', unread: false },
-        { icon: 'ti-award', title: 'Alcanzaste el logro “Top Jugador 2025”.', time: 'Hace 4 días', unread: false }
-    ];
-
-    function renderNotifications() {
-        const list  = document.getElementById('notif-list');
-        const badge = document.getElementById('notif-badge');
-        if (!list) return;
-
-        list.innerHTML = notifications.length
-            ? notifications.map(n => `
-                <div class="nnd-item ${n.unread ? 'nnd-item--unread' : ''}">
-                    <span class="nnd-icon"><i class="ti ${n.icon}"></i></span>
-                    <span class="nnd-body">
-                        <span class="nnd-title">${n.title}</span>
-                        <span class="nnd-time">${n.time}</span>
-                    </span>
-                </div>
-            `).join('')
-            : `<div class="nnd-empty">No tenés notificaciones nuevas.</div>`;
-
-        const unreadCount = notifications.filter(n => n.unread).length;
-        if (badge) {
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
-                badge.style.display = '';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-    }
-
-    document.getElementById('notif-mark-all')?.addEventListener('click', () => {
-        notifications.forEach(n => n.unread = false);
-        renderNotifications();
-    });
-
-    renderNotifications();
-
-    /* ── Reflejar datos guardados (nombre / correo / foto) en el navbar ── */
-    try {
-        const user = JSON.parse(localStorage.getItem('competika_user') || 'null');
-        if (user && user.avatar) document.querySelectorAll('.nav-avatar-img').forEach(img => img.src = user.avatar);
-    } catch (e) { /* localStorage no disponible o dato corrupto: se ignora */ }
-
+    /* ── Sesión: siempre desde el servidor (api/session.php) ──
+       Sin sesión el sitio muestra "Invitado" y los enlaces Iniciar sesión /
+       Registrarse; con sesión, esos enlaces desaparecen y se ven los datos
+       reales de la cuenta. Nada de la cuenta se guarda en el navegador. */
     const siteRoot = scriptSrc.replace(/\/frontend\/js\/navbar-user\.js.*$/, '');
     const navUser = document.querySelector('.navbar-user');
     const guestItems = Array.from(document.querySelectorAll('.navbar-list a[href$="login/login.html"], .navbar-list a[href$="register/register.html"], .mobile-menu-list a[href$="login/login.html"], .mobile-menu-list a[href$="register/register.html"]')).map(a => a.closest('li'));
     const memberItems = Array.from(document.querySelectorAll('.mobile-menu-list a[href$="profile/profile.html"], .mobile-menu-list a[href$="profile_configuration/profile_configuration.html"]')).map(a => a.closest('li'));
+    const defaultAvatar = document.querySelector('.nav-avatar-img')?.getAttribute('src') || '';
+    const LOGIN = siteRoot + '/frontend/paginas/login/login.html';
+    const REGISTER = siteRoot + '/frontend/paginas/register/register.html';
+    const PROFILE = siteRoot + '/frontend/paginas/profile/profile.html';
+    const SETTINGS = siteRoot + '/frontend/paginas/profile_configuration/profile_configuration.html';
+    const DASHBOARD = siteRoot + '/frontend/paginas/tournament_dashboard/tournament_dashboard.html';
 
     [navUser, ...guestItems, ...memberItems].forEach(el => { if (el) el.style.visibility = 'hidden'; });
 
@@ -106,33 +66,188 @@
         document.querySelectorAll(selector).forEach(el => { el.textContent = value; });
     }
 
+    function setAvatar(url) {
+        const src = url ? siteRoot + '/' + url : defaultAvatar;
+        document.querySelectorAll('.nav-avatar-img, .pf-avatar').forEach(img => { img.src = src; });
+    }
+
+    function setMenu(items) {
+        document.querySelectorAll('.nav-user-dropdown').forEach(dd => {
+            dd.querySelectorAll('.nud-item').forEach((a, i) => {
+                const it = items[i];
+                a.style.display = it ? '' : 'none';
+                if (!it) return;
+                a.href = it.href;
+                a.classList.toggle('nud-item--danger', !!it.danger);
+                a.innerHTML = `<i class="ti ${it.icon}"></i>`;
+                a.appendChild(document.createTextNode(it.text));
+            });
+        });
+    }
+
     function renderSession(s) {
         const logged = !!(s && s.logged);
         guestItems.forEach(li => { if (li) { li.style.display = logged ? 'none' : ''; li.style.visibility = ''; } });
         memberItems.forEach(li => { if (li) { li.style.display = logged ? '' : 'none'; li.style.visibility = ''; } });
-        if (navUser) {
-            navUser.style.display = logged ? '' : 'none';
-            navUser.style.visibility = '';
-        }
+        if (navUser) { navUser.style.display = ''; navUser.style.visibility = ''; }
+        const bell = document.getElementById('notif-wrap');
+
         if (!logged) {
             if (/\/frontend\/paginas\/(profile|profile_configuration)\//.test(location.pathname)) {
-                location.replace(siteRoot + '/frontend/paginas/login/login.html');
+                location.replace(LOGIN);
+                return;
             }
+            // Invitado
+            if (bell) bell.style.display = 'none';
+            setText('.nav-avatar-name', 'Invitado');
+            setText('.nud-name', 'Invitado');
+            setText('.nud-email', 'Navegando sin cuenta');
+            setAvatar(null);
+            document.querySelectorAll('.nav-avatar-link').forEach(a => { a.href = LOGIN; a.setAttribute('aria-label', 'Iniciar sesión'); });
+            setMenu([
+                { href: LOGIN, icon: 'ti-login', text: 'Iniciar sesión' },
+                { href: REGISTER, icon: 'ti-user-plus', text: 'Registrarse' },
+            ]);
             return;
         }
+
+        if (bell) bell.style.display = '';
         const initial = s.apellido ? ' ' + s.apellido.charAt(0).toUpperCase() + '.' : '';
         setText('.nud-name, .pf-name', (s.nombre + ' ' + s.apellido).trim());
         setText('.nud-email, .pf-email', s.email);
         setText('.nav-avatar-name', s.nombre + initial);
-        document.querySelectorAll('.nud-item--danger').forEach(a => { a.href = siteRoot + '/controller/logout.php'; });
-        const orgPill = document.querySelector('.pf-role--organizador');
-        const partPill = document.querySelector('.pf-role--participante');
-        if (orgPill) orgPill.style.display = s.rol === 'organizador' ? '' : 'none';
-        if (partPill) partPill.style.display = s.rol === 'participante' ? '' : 'none';
+        setAvatar(s.foto);
+        document.querySelectorAll('.nav-avatar-link').forEach(a => { a.href = PROFILE; a.setAttribute('aria-label', 'Ir a mi perfil'); });
+        setMenu([
+            { href: PROFILE, icon: 'ti-user', text: 'Mi Perfil' },
+            { href: SETTINGS, icon: 'ti-settings', text: 'Configuración' },
+            { href: siteRoot + '/controller/logout.php', icon: 'ti-logout', text: 'Cerrar sesión', danger: true },
+        ]);
+        const roles = s.roles || {};
+        [['organizador', roles.organizador], ['participante', roles.participante], ['juez', roles.juez]].forEach(([rol, on]) => {
+            document.querySelectorAll('.pf-role--' + rol).forEach(el => { el.style.display = on ? '' : 'none'; });
+        });
+        startNotifications();
     }
 
-    fetch(siteRoot + '/api/session.php', { credentials: 'same-origin', cache: 'no-store' })
+    /* ── Notificaciones reales (api/notifications.php) ──
+       Se cargan al entrar y después llegan en tiempo real por Server-Sent
+       Events; si el navegador o el servidor no lo permiten, se consulta
+       cada 30 s. */
+    const NOTIF_API = siteRoot + '/api/notifications.php';
+    const ICONS = {
+        nuevo_inscripto: 'ti-user-plus', inscripcion: 'ti-door-enter', partido: 'ti-calendar-event',
+        resultado: 'ti-trophy', recordatorio: 'ti-alarm', torneo_estado: 'ti-tournament',
+        torneo_cancelado: 'ti-circle-x', partido_cancelado: 'ti-calendar-x', baja: 'ti-user-minus', honor: 'ti-heart-handshake',
+    };
+    let notifs = [];
+    let unread = 0;
+    let started = false;
+    let receivedAt = Date.now();
+
+    function haceTexto(seg) {
+        if (seg < 60) return 'Hace un momento';
+        if (seg < 3600) return `Hace ${Math.floor(seg / 60)} min`;
+        if (seg < 86400) return `Hace ${Math.floor(seg / 3600)} h`;
+        const d = Math.floor(seg / 86400);
+        return d === 1 ? 'Hace 1 día' : `Hace ${d} días`;
+    }
+
+    function linkDe(n) {
+        if (n.tipo === 'nuevo_inscripto' && n.torneoId) return `${DASHBOARD}?t=${encodeURIComponent(n.torneoId)}`;
+        return PROFILE;
+    }
+
+    function renderNotifications() {
+        const list = document.getElementById('notif-list');
+        const badge = document.getElementById('notif-badge');
+        if (list) {
+            list.textContent = '';
+            if (!notifs.length) {
+                const empty = document.createElement('div');
+                empty.className = 'nnd-empty';
+                empty.textContent = 'No tenés notificaciones.';
+                list.appendChild(empty);
+            }
+            const extra = Math.floor((Date.now() - receivedAt) / 1000);
+            notifs.forEach(n => {
+                const item = document.createElement('a');
+                item.className = 'nnd-item' + (n.leida ? '' : ' nnd-item--unread');
+                item.href = linkDe(n);
+                item.style.textDecoration = 'none';
+                item.innerHTML = `<span class="nnd-icon"><i class="ti ${ICONS[n.tipo] || 'ti-bell'}"></i></span>
+                    <span class="nnd-body"><span class="nnd-title"></span><span class="nnd-time"></span></span>`;
+                item.querySelector('.nnd-title').textContent = n.mensaje;          // texto, nunca HTML
+                item.querySelector('.nnd-time').textContent = haceTexto(n.hace + extra);
+                item.addEventListener('click', () => {
+                    if (!n.leida) {
+                        n.leida = true; unread = Math.max(0, unread - 1);
+                        navigator.sendBeacon?.(`${NOTIF_API}?action=read`, new Blob([JSON.stringify({ id: n.id })], { type: 'application/json' }));
+                    }
+                });
+                list.appendChild(item);
+            });
+        }
+        if (badge) {
+            badge.textContent = unread > 9 ? '9+' : String(unread);
+            badge.style.display = unread > 0 ? '' : 'none';
+        }
+    }
+
+    async function loadNotifications() {
+        try {
+            const r = await fetch(`${NOTIF_API}?action=list`, { credentials: 'same-origin', cache: 'no-store' });
+            const d = await r.json();
+            if (!d.success) return;
+            notifs = d.items; unread = d.unread; receivedAt = Date.now();
+            renderNotifications();
+        } catch (e) { /* sin conexión: se reintenta en el próximo ciclo */ }
+    }
+
+    function addNotification(n) {
+        if (notifs.some(x => x.id === n.id)) return;
+        const extra = Math.floor((Date.now() - receivedAt) / 1000);
+        notifs.forEach(x => { x.hace += extra; });
+        receivedAt = Date.now();
+        notifs.unshift(n);
+        notifs = notifs.slice(0, 30);
+        if (!n.leida) unread++;
+        renderNotifications();
+        const badge = document.getElementById('notif-badge');
+        badge?.animate?.([{ transform: 'scale(1.5)' }, { transform: 'scale(1)' }], { duration: 400 });
+    }
+
+    async function startNotifications() {
+        if (started) return;
+        started = true;
+        await loadNotifications();
+        const after = notifs.reduce((m, n) => Math.max(m, n.id), 0);
+        if ('EventSource' in window) {
+            const es = new EventSource(`${NOTIF_API}?action=stream&after=${after}`);
+            es.addEventListener('notif', e => { try { addNotification(JSON.parse(e.data)); } catch (err) { /* dato inválido */ } });
+            es.onerror = () => {
+                if (es.readyState === EventSource.CLOSED) setInterval(loadNotifications, 30000);
+            };
+        } else {
+            setInterval(loadNotifications, 30000);
+        }
+        setInterval(renderNotifications, 60000);           // refresca el "Hace X min"
+    }
+
+    document.getElementById('notif-mark-all')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        notifs.forEach(n => { n.leida = true; });
+        unread = 0;
+        renderNotifications();
+        try { await fetch(`${NOTIF_API}?action=read_all`, { method: 'POST', credentials: 'same-origin' }); } catch (err) { /* reintento al recargar */ }
+    });
+
+    // Otras páginas (perfil, configuración, formulario) reutilizan esta misma consulta
+    window.competikaSiteRoot = siteRoot;
+    window.competikaSessionReady = fetch(siteRoot + '/api/session.php', { credentials: 'same-origin', cache: 'no-store' })
         .then(r => r.json())
-        .catch(() => ({ logged: false }))
-        .then(renderSession);
+        .catch(() => ({ logged: false }));
+    window.competikaSessionReady.then(renderSession);
+    window.competikaRefreshSession = () => fetch(siteRoot + '/api/session.php', { credentials: 'same-origin', cache: 'no-store' })
+        .then(r => r.json()).then(s => { renderSession(s); return s; });
 })();

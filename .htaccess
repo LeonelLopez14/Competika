@@ -2,7 +2,7 @@ Options -Indexes -MultiViews
 ServerSignature Off
 DirectoryIndex frontend/index.html index.php index.html
 
-<FilesMatch "\.(sql|md|log|ini|bak|swp|lock)$|^\.">
+<FilesMatch "\.(sql|md|log|ini|bak|swp|lock|ya?ml)$|^\.|^(Dockerfile|bootstrap\.php|test_conexion\.php)$">
     Require all denied
 </FilesMatch>
 
@@ -11,12 +11,18 @@ DirectoryIndex frontend/index.html index.php index.html
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+    # Páginas, estilos y scripts: el navegador siempre pregunta si cambiaron
+    # (evita que quede mostrando una versión vieja después de actualizar el sitio).
+    <FilesMatch "\.(html|css|js)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    RewriteRule ^(config|model|repository|database|apache|\.git)(/|$) - [F,NC,L]
+    RewriteRule ^(config|model|repository|database|apache|docker|\.git)(/|$) - [F,NC,L]
 
     RewriteRule ^$ /frontend/index.html [R=302,L]
 
