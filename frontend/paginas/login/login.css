@@ -166,25 +166,6 @@
     gap: 20px;
 }
 
-.guest-form { width: 100%; }
-
-.form-btn--guest {
-    width: 100%;
-    border: 1px solid var(--blue-violet-light);
-    color: var(--blue-violet-dark);
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.form-btn--guest .btn-icon { font-size: 1.25rem; }
-
-.form-btn--guest:hover {
-    background-color: #dedede7f;
-    color: var(--blue-violet);
-    transform: translateY(-3px);
-}
-
 .form-btn--social {
     border: 1px solid #c0c0c0;
     transition: all 0.3s ease;

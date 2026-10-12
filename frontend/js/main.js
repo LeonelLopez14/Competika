@@ -914,7 +914,7 @@ function tsFromApi(t) {
         participantes: t.teamCount,
         maxParticipantes: t.maxTeams,
         premio: t.prizesText || 'Sin premios definidos',
-        inscripcion: t.entryFee > 0 ? `$${t.entryFee}` : 'Gratis',
+        inscripcion: t.entryFee > 0 ? `${({ UYU: '$', USD: 'US$', ARS: 'AR$', BRL: 'R$', EUR: '€' })[t.currency] || '$'} ${t.entryFee}` : 'Gratis',
         esMio: !!t.isOwner,
         inscripto: !!t.joined,
     };

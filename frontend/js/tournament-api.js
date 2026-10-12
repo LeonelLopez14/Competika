@@ -10,8 +10,6 @@
      <script src="../../js/tournament-dashboard-db.js"></script>
    ===================================================== */
 
-// Rutas calculadas desde la ubicación de este archivo (frontend/js/): funcionan
-// en cualquier carpeta de htdocs, en Docker y detrás de un proxy.
 const COMPETIKA_BASE = document.currentScript ? document.currentScript.src : window.location.href;
 const COMPETIKA_API_URL     = new URL('../../api/tournaments.php', COMPETIKA_BASE).href;
 const COMPETIKA_SESSION_URL = new URL('../../api/session.php', COMPETIKA_BASE).href;
@@ -86,15 +84,17 @@ async function competikaInscribirse(torneoId, teamName = '') {
     const form = document.getElementById('tf-form');
     if (!form) return;
 
-    // Datos de contacto del organizador = los de su cuenta
+    // Contacto del organizador: se precarga con los datos de su cuenta (editable)
     competikaSession().then(user => {
-        const info = document.getElementById('tf-organizer-info');
-        if (!info) return;
         if (!user) {
-            info.innerHTML = 'Necesitás <a class="underline" href="' + COMPETIKA_LOGIN_URL + '">iniciar sesión</a> para crear un torneo.';
+            const head = document.querySelector('#tf-organizer-name')?.closest('.rounded-2xl')?.querySelector('p');
+            if (head) head.innerHTML = 'Necesitás <a class="underline" href="' + COMPETIKA_LOGIN_URL + '">iniciar sesión</a> para crear un torneo.';
             return;
         }
-        info.textContent = `${user.nombre} ${user.apellido} · ${user.email}`;
+        const pre = (id, v) => { const el = document.getElementById(id); if (el && !el.value) el.value = v || ''; };
+        pre('tf-organizer-name',  `${user.nombre || ''} ${user.apellido || ''}`.trim());
+        pre('tf-organizer-phone', user.telefono);
+        pre('tf-organizer-email', user.email);
     });
 
     form.addEventListener('submit', async (e) => {
@@ -104,6 +104,16 @@ async function competikaInscribirse(torneoId, teamName = '') {
         const name = val('tf-name');
         if (!name) { document.getElementById('tf-name')?.focus(); return; }
         if (!val('tf-sport')) { alert('Elegí el deporte del torneo.'); document.getElementById('tf-sport')?.focus(); return; }
+
+        // Teléfonos y correos opcionales, pero si se escriben deben ser válidos
+        for (const id of ['tf-referee-phone', 'tf-referee-email', 'tf-organizer-phone', 'tf-organizer-email']) {
+            const el = document.getElementById(id);
+            if (el && el.value.trim() && !el.checkValidity()) {
+                alert(`Revisá el campo «${el.labels?.[0]?.textContent.trim() || id}».`);
+                el.focus();
+                return;
+            }
+        }
 
         const btn = document.getElementById('tf-submit-btn');
         const btnHtml = btn?.innerHTML;
@@ -122,11 +132,22 @@ async function competikaInscribirse(torneoId, teamName = '') {
                 venue:       val('tf-venue'),
                 department:  val('tf-department'),
                 costs: {
+                    currency:    val('tf-currency') || 'UYU',
                     entryFee:    parseFloat(val('tf-entry-fee'))    || 0,
                     fieldCost:   parseFloat(val('tf-field-cost'))   || 0,
                     refereeCost: parseFloat(val('tf-referee-cost')) || 0,
                 },
                 prizesText: val('tf-prizes'),
+                referee: {
+                    name:  val('tf-referee-name'),
+                    phone: val('tf-referee-phone'),
+                    email: val('tf-referee-email'),
+                },
+                contact: {
+                    name:  val('tf-organizer-name'),
+                    phone: val('tf-organizer-phone'),
+                    email: val('tf-organizer-email'),
+                },
             },
         });
 

@@ -57,6 +57,7 @@ const TIPO_CATEGORIA = [
     'gran_premio' => 'especial', 'copa_desafio' => 'especial',
 ];
 const EMOJIS = ['⚽','🏀','🏈','⚾','🎾','🏐','🏉','🎱','🥍','🏒'];
+const MONEDAS = ['UYU', 'USD', 'ARS', 'BRL', 'EUR'];
 
 $pdo = db();
 $action = $_GET['action'] ?? '';
@@ -264,8 +265,8 @@ function borrarEquipoSiHuerfano(PDO $pdo, int $equipoId): void {
 
 function listTournaments(PDO $pdo, string $where, array $params): array {
     $s = $pdo->prepare("
-        SELECT t.*, c.cant_equipos, c.precio_participacion, c.premios,
-               CONCAT(u.nombre, ' ', u.apellido) AS organizador,
+        SELECT t.*, c.cant_equipos, c.precio_participacion, c.premios, c.moneda,
+               COALESCE(NULLIF(c.contacto_nombre, ''), CONCAT(u.nombre, ' ', u.apellido)) AS organizador,
                (SELECT COUNT(*) FROM tabla_posiciones tp WHERE tp.torneo_id_fk = t.torneo_id AND tp.equipo_id_fk IS NOT NULL) AS team_count,
                (SELECT COUNT(*) FROM enfrentamiento e WHERE e.torneo_id_fk = t.torneo_id) AS match_count,
                (o.usuario_ci_fk = :me) AS is_owner,
@@ -298,6 +299,7 @@ function listTournaments(PDO $pdo, string $where, array $params): array {
         'status'      => estadoToJs($t['estado']),
         'organizer'   => $t['organizador'],
         'entryFee'    => num($t['precio_participacion']) ?? 0,
+        'currency'    => $t['moneda'],
         'prizesText'  => $t['premios'],
         'teamCount'   => (int)$t['team_count'],
         'matchCount'  => (int)$t['match_count'],
@@ -308,7 +310,8 @@ function listTournaments(PDO $pdo, string $where, array $params): array {
 
 function getFullTournament(PDO $pdo, int $id): ?array {
     $s = $pdo->prepare("
-        SELECT t.*, c.cant_equipos, c.precio_participacion, c.alquiler_lugar, c.precio_juez, c.premios,
+        SELECT t.*, c.cant_equipos, c.precio_participacion, c.alquiler_lugar, c.precio_juez, c.premios, c.moneda,
+               c.arbitro_nombre, c.arbitro_telefono, c.arbitro_email, c.contacto_nombre, c.contacto_telefono, c.contacto_email,
                u.nombre AS org_nombre, u.apellido AS org_apellido, u.telefono AS org_tel, u.email AS org_email
         FROM torneo t
         LEFT JOIN configuracion_torneo c ON c.configuracion_id =
@@ -349,7 +352,7 @@ function getFullTournament(PDO $pdo, int $id): ?array {
         $played = in_array($r['res_estado'], ['finalizado', 'empate'], true);
         return [
             'id'        => (string)$r['enfrentamiento_id'],
-            'home'      => $r['eq_a'] !== null ? (string)$r['eq_a'] : null,   // home = equipo A (menor id)
+            'home'      => $r['eq_a'] !== null ? (string)$r['eq_a'] : null,   // local
             'away'      => $r['eq_b'] !== null ? (string)$r['eq_b'] : null,
             'homeScore' => $played ? num($r['puntaje_a']) : null,
             'awayScore' => $played ? num($r['puntaje_b']) : null,
@@ -379,12 +382,19 @@ function getFullTournament(PDO $pdo, int $id): ?array {
             'entryFee'    => num($t['precio_participacion']) ?? 0,
             'fieldCost'   => num($t['alquiler_lugar']) ?? 0,
             'refereeCost' => num($t['precio_juez']) ?? 0,
+            'currency'    => $t['moneda'],
+        ],
+        'referee' => [
+            'name'  => $t['arbitro_nombre'],
+            'phone' => $t['arbitro_telefono'],
+            'email' => $t['arbitro_email'],
         ],
         'prizesText' => $t['premios'],
+        // Contacto que ven los participantes: el cargado en el torneo o, si no hay, el de la cuenta
         'organizer'  => [
-            'name'  => trim(($t['org_nombre'] ?? '') . ' ' . ($t['org_apellido'] ?? '')),
-            'phone' => $t['org_tel'],
-            'email' => $t['org_email'],
+            'name'  => $t['contacto_nombre'] ?: trim(($t['org_nombre'] ?? '') . ' ' . ($t['org_apellido'] ?? '')),
+            'phone' => $t['contacto_telefono'] ?: $t['org_tel'],
+            'email' => $t['contacto_email'] ?: $t['org_email'],
         ],
         'isOwner'    => ($ci = currentCi()) !== null && organizadorIdOf($pdo, $ci) === (int)$t['organizador_id_fk'],
         'teams'      => $teams,
@@ -440,6 +450,28 @@ function readConfigFields(array $d, bool $partial): array {
         }
     }
     if (array_key_exists('prizesText', $d)) $c['premios'] = strOrNull($d['prizesText'], 255);
+    if (isset($d['costs']) && is_array($d['costs']) && array_key_exists('currency', $d['costs'])) {
+        $m = strtoupper(trim((string)$d['costs']['currency']));
+        if ($m !== '' && !in_array($m, MONEDAS, true)) respond(['success' => false, 'error' => 'Moneda inválida.'], 422);
+        $c['moneda'] = $m === '' ? null : $m;
+    }
+    foreach (['referee' => ['arbitro', 'del árbitro'], 'contact' => ['contacto', 'de contacto']] as $key => [$pref, $txt]) {
+        if (!isset($d[$key]) || !is_array($d[$key])) continue;
+        $x = $d[$key];
+        if (array_key_exists('name', $x)) {
+            $c["{$pref}_nombre"] = strOrNull($x['name'], 150);
+        }
+        if (array_key_exists('phone', $x)) {
+            $tel = strOrNull($x['phone'], 20);
+            if ($tel !== null && !preg_match('/^[0-9+()\s-]{6,20}$/', $tel)) respond(['success' => false, 'error' => "El teléfono $txt no es válido."], 422);
+            $c["{$pref}_telefono"] = $tel;
+        }
+        if (array_key_exists('email', $x)) {
+            $mail = strOrNull($x['email'], 150);
+            if ($mail !== null && !filter_var($mail, FILTER_VALIDATE_EMAIL)) respond(['success' => false, 'error' => "El correo $txt no es válido."], 422);
+            $c["{$pref}_email"] = $mail;
+        }
+    }
     return $c;
 }
 
@@ -455,10 +487,12 @@ function createTournament(PDO $pdo, array $d): array {
                    $t['direccion'], $t['departamento'], $orgId]);
     $id = (int)$pdo->lastInsertId();
 
-    $pdo->prepare("INSERT INTO configuracion_torneo (precio_participacion, cant_participante, cant_equipos, premios, competitivo,
-                   alquiler_lugar, precio_juez, torneo_id_fk, admin_id_fk) VALUES (?,?,?,?,1,?,?,?,NULL)")
-        ->execute([$c['precio_participacion'] ?? 0, $c['cant_participante'], $c['cant_equipos'], $c['premios'] ?? null,
-                   $c['alquiler_lugar'] ?? 0, $c['precio_juez'] ?? 0, $id]);
+    $c += ['precio_participacion' => 0, 'alquiler_lugar' => 0, 'precio_juez' => 0];
+    $c['competitivo'] = 1;
+    $c['torneo_id_fk'] = $id;
+    $cols = implode(', ', array_keys($c));
+    $marks = implode(', ', array_fill(0, count($c), '?'));
+    $pdo->prepare("INSERT INTO configuracion_torneo ($cols) VALUES ($marks)")->execute(array_values($c));
     $pdo->commit();
     return ['success' => true, 'id' => $id];
 }
@@ -479,6 +513,9 @@ function updateTournament(PDO $pdo, int $id, array $d): array {
     if (isset($c['cant_equipos']) && $c['cant_equipos'] < cantEquipos($pdo, $id)) {
         return ['success' => false, 'error' => 'El cupo no puede ser menor que la cantidad de equipos ya inscriptos.'];
     }
+    $prev = $pdo->prepare("SELECT estado FROM torneo WHERE torneo_id = ?");
+    $prev->execute([$id]);
+    $estadoAntes = $prev->fetchColumn();
 
     $pdo->beginTransaction();
     if ($t) {
@@ -497,6 +534,12 @@ function updateTournament(PDO $pdo, int $id, array $d): array {
         $pdo->prepare("UPDATE configuracion_torneo SET $set WHERE configuracion_id = ?")->execute([...array_values($c), $cid]);
     }
     $pdo->commit();
+
+    if (isset($t['estado']) && $t['estado'] !== $estadoAntes && in_array($t['estado'], ['activo', 'finalizado'], true)) {
+        $nombre = nombreTorneo($pdo, $id);
+        $msg = $t['estado'] === 'activo' ? "«{$nombre}» comenzó. ¡Éxitos!" : "«{$nombre}» finalizó. Mirá cómo terminó la tabla en tu perfil.";
+        foreach (usuariosDeTorneo($pdo, $id) as $u) notificar($pdo, $u, 'torneo_estado', $msg, $id);
+    }
     return ['success' => true];
 }
 
@@ -509,6 +552,8 @@ function deleteTournament(PDO $pdo, int $id): array {
     $eq = $pdo->prepare("SELECT equipo_id_fk FROM tabla_posiciones WHERE torneo_id_fk = ? AND equipo_id_fk IS NOT NULL");
     $eq->execute([$id]);
     $equipos = array_map('intval', $eq->fetchAll(PDO::FETCH_COLUMN));
+    $avisar = usuariosDeTorneo($pdo, $id);
+    $nombre = nombreTorneo($pdo, $id);
 
     $pdo->beginTransaction();
     $sub = "SELECT enfrentamiento_id FROM enfrentamiento WHERE torneo_id_fk = ?";
@@ -522,6 +567,7 @@ function deleteTournament(PDO $pdo, int $id): array {
     }
     foreach ($equipos as $e) borrarEquipoSiHuerfano($pdo, $e);
     $pdo->commit();
+    foreach ($avisar as $u) notificar($pdo, $u, 'torneo_cancelado', "El organizador eliminó el torneo «{$nombre}».");
     return ['success' => true];
 }
 
@@ -571,6 +617,7 @@ function deleteTeam(PDO $pdo, int $equipoId): array {
     if ((int)$r->fetchColumn() > 0) {
         return ['success' => false, 'error' => 'El equipo tiene partidos con resultado registrado y no se puede eliminar.'];
     }
+    $avisar = usuariosDeEquipo($pdo, $equipoId);
     $pdo->beginTransaction();
     $pdo->prepare("DELETE FROM enfrentamiento_equipo WHERE equipo_id_fk = ?
                    AND enfrentamiento_id_fk IN (SELECT enfrentamiento_id FROM enfrentamiento WHERE torneo_id_fk = ?)")
@@ -578,6 +625,8 @@ function deleteTeam(PDO $pdo, int $equipoId): array {
     $pdo->prepare("DELETE FROM tabla_posiciones WHERE torneo_id_fk = ? AND equipo_id_fk = ?")->execute([$torneoId, $equipoId]);
     borrarEquipoSiHuerfano($pdo, $equipoId);
     $pdo->commit();
+    $nombre = nombreTorneo($pdo, $torneoId);
+    foreach ($avisar as $u) notificar($pdo, $u, 'baja', "El organizador te quitó del torneo «{$nombre}».", $torneoId);
     return ['success' => true];
 }
 
@@ -620,6 +669,17 @@ function inscribirse(PDO $pdo, array $d): array {
     $pdo->prepare("INSERT INTO tabla_posiciones (torneo_id_fk, equipo_id_fk, participante_id_fk) VALUES (?, ?, ?)")
         ->execute([$torneoId, $equipoId, $participanteId]);
     $pdo->commit();
+
+    $nombre = nombreTorneo($pdo, $torneoId);
+    $q = $pdo->prepare("SELECT CONCAT(u.nombre, ' ', u.apellido) AS quien, o.usuario_ci_fk AS org
+                        FROM usuario u, torneo t JOIN organizador o ON o.organizador_id = t.organizador_id_fk
+                        WHERE u.ci = ? AND t.torneo_id = ?");
+    $q->execute([$ci, $torneoId]);
+    $x = $q->fetch();
+    if ($x && $x['org'] !== $ci) {
+        notificar($pdo, $x['org'], 'nuevo_inscripto', "{$x['quien']} se inscribió en «{$nombre}» con el equipo «{$teamName}».", $torneoId);
+    }
+    notificar($pdo, $ci, 'inscripcion', "Te inscribiste en «{$nombre}». Te avisamos cuando haya partidos.", $torneoId);
     return ['success' => true, 'message' => 'Inscripción realizada.'];
 }
 
@@ -668,6 +728,7 @@ function addMatch(PDO $pdo, int $torneoId, array $d): array {
     $id = (int)$pdo->lastInsertId();
     setMatchTeams($pdo, $id, $home, $away);
     $pdo->commit();
+    avisarPartido($pdo, $torneoId, $id, $home, $away, $fecha, $ubicacion, 'Nuevo partido');
     return ['success' => true, 'id' => $id];
 }
 
@@ -683,6 +744,7 @@ function updateMatch(PDO $pdo, int $matchId, array $d): array {
         if ($hs === null || $as === null || $hs < 0 || $as < 0) return ['success' => false, 'error' => 'Ingresá el marcador de ambos equipos.'];
     }
 
+    $antes = estadoPartido($pdo, $matchId);
     $pdo->beginTransaction();
     $pdo->prepare("UPDATE enfrentamiento SET ubicacion = ?, fecha = ?, ronda_id_fk = ? WHERE enfrentamiento_id = ?")
         ->execute([$ubicacion, $fecha, $ronda, $matchId]);
@@ -693,7 +755,6 @@ function updateMatch(PDO $pdo, int $matchId, array $d): array {
     $resId = $s->fetchColumn();
 
     if ($played) {
-        // puntaje_a corresponde siempre al equipo de menor id (ver comentario al inicio)
         [$a, $b] = [$hs, $as];                       // puntaje_a = local, puntaje_b = visitante
         $estado = $a == $b ? 'empate' : 'finalizado';
         $ganador = $a == $b ? null : ($hs > $as ? $home : $away);
@@ -711,6 +772,14 @@ function updateMatch(PDO $pdo, int $matchId, array $d): array {
     }
     recalcularPosiciones($pdo, $torneoId);
     $pdo->commit();
+
+    // Avisos: resultado nuevo o corregido, o cambios de fecha/lugar/rival
+    $resultadoNuevo = $played && ($antes['a'] === null || (float)$antes['a'] != $hs || (float)$antes['b'] != $as);
+    if ($resultadoNuevo) {
+        avisarResultado($pdo, $torneoId, $matchId, $home, $away, $hs, $as);
+    } elseif (!$played && ($antes['fecha'] !== $fecha || $antes['lugar'] !== $ubicacion || $antes['home'] !== $home || $antes['away'] !== $away)) {
+        avisarPartido($pdo, $torneoId, $matchId, $home, $away, $fecha, $ubicacion, 'Partido actualizado');
+    }
     return ['success' => true];
 }
 
@@ -721,6 +790,7 @@ function deleteMatch(PDO $pdo, int $matchId): array {
     if ((int)$s->fetchColumn() > 0) {
         return ['success' => false, 'error' => 'Este partido ya tuvo un resultado registrado y no se puede eliminar (los resultados son permanentes).'];
     }
+    $antes = estadoPartido($pdo, $matchId);
     $pdo->beginTransaction();
     foreach (['enfrentamiento_juez', 'enfrentamiento_equipo', 'enfrentamiento_participante'] as $tbl) {
         $pdo->prepare("DELETE FROM $tbl WHERE enfrentamiento_id_fk = ?")->execute([$matchId]);
@@ -728,6 +798,12 @@ function deleteMatch(PDO $pdo, int $matchId): array {
     $pdo->prepare("DELETE FROM enfrentamiento WHERE enfrentamiento_id = ?")->execute([$matchId]);
     recalcularPosiciones($pdo, $torneoId);
     $pdo->commit();
+    $nombre = nombreTorneo($pdo, $torneoId);
+    foreach ([[$antes['home'], $antes['away']], [$antes['away'], $antes['home']]] as [$mio, $rival]) {
+        foreach (usuariosDeEquipo($pdo, $mio) as $u) {
+            notificar($pdo, $u, 'partido_cancelado', "Se canceló tu partido vs " . nombreEquipo($pdo, $rival) . " en «{$nombre}».", $torneoId);
+        }
+    }
     return ['success' => true];
 }
 
@@ -757,4 +833,50 @@ function recalcularPosiciones(PDO $pdo, int $torneoId): void {
     $u = $pdo->prepare("UPDATE tabla_posiciones SET puntos = ?, partidos_jugados = ?, partidos_ganados = ?, partidos_empatados = ?, partidos_perdidos = ?
                         WHERE torneo_id_fk = ? AND equipo_id_fk = ?");
     foreach ($st as $e => $x) $u->execute([$x['pts'], $x['pj'], $x['pg'], $x['pe'], $x['pp'], $torneoId, $e]);
+}
+
+// =====================================================
+// Avisos de partidos
+// =====================================================
+
+/** Local, visitante, fecha, lugar y marcador actuales de un partido. */
+function estadoPartido(PDO $pdo, int $matchId): array {
+    $s = $pdo->prepare("
+        SELECT e.fecha, e.ubicacion,
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1) AS home,
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1 OFFSET 1) AS away,
+               (SELECT puntaje_a FROM resultado WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY resultado_id DESC LIMIT 1) AS a,
+               (SELECT puntaje_b FROM resultado WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY resultado_id DESC LIMIT 1) AS b
+        FROM enfrentamiento e WHERE e.enfrentamiento_id = ?");
+    $s->execute([$matchId]);
+    $r = $s->fetch() ?: [];
+    return [
+        'fecha' => $r['fecha'] ?? null,
+        'lugar' => $r['ubicacion'] ?? null,
+        'home'  => isset($r['home']) ? (int)$r['home'] : null,
+        'away'  => isset($r['away']) ? (int)$r['away'] : null,
+        'a'     => $r['a'] ?? null,
+        'b'     => $r['b'] ?? null,
+    ];
+}
+
+function avisarPartido(PDO $pdo, int $torneoId, int $matchId, ?int $home, ?int $away, ?string $fecha, ?string $lugar, string $titulo): void {
+    $nombre = nombreTorneo($pdo, $torneoId);
+    $cuando = fechaCorta($fecha) . ($lugar ? " · $lugar" : '');
+    foreach ([[$home, $away], [$away, $home]] as [$mio, $rival]) {
+        foreach (usuariosDeEquipo($pdo, $mio) as $u) {
+            notificar($pdo, $u, 'partido', "$titulo en «{$nombre}»: vs " . nombreEquipo($pdo, $rival) . " — $cuando.", $torneoId, $matchId);
+        }
+    }
+}
+
+function avisarResultado(PDO $pdo, int $torneoId, int $matchId, int $home, int $away, float $hs, float $as): void {
+    $nombre = nombreTorneo($pdo, $torneoId);
+    $fmt = fn(float $n) => floor($n) == $n ? (string)(int)$n : (string)$n;
+    foreach ([[$home, $away, $hs, $as], [$away, $home, $as, $hs]] as [$mio, $rival, $yo, $el]) {
+        $verbo = $yo > $el ? 'Ganaste' : ($yo < $el ? 'Perdiste' : 'Empataste');
+        foreach (usuariosDeEquipo($pdo, $mio) as $u) {
+            notificar($pdo, $u, 'resultado', "$verbo {$fmt($yo)}-{$fmt($el)} vs " . nombreEquipo($pdo, $rival) . " en «{$nombre}».", $torneoId, $matchId);
+        }
+    }
 }

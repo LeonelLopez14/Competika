@@ -4,10 +4,15 @@ Arquitectura: navegador → Apache + PHP (`frontend/` + `api/` + `controller/`) 
 La base se crea con tres archivos, siempre en este orden:
 
 1. `database/schema.sql`
-2. `database/ajustes.sql` (admin_id_fk opcional; columnas de perfil `nombre_usuario`, `biografia`, `foto_perfil`; `es_local` en `enfrentamiento_equipo`). Se puede correr más de una vez.
+2. `database/ajustes.sql` (admin_id_fk opcional; columnas de perfil `nombre_usuario`, `biografia`, `foto_perfil`; `es_local` en `enfrentamiento_equipo`; moneda, árbitro principal y contacto en `configuracion_torneo`; tablas nuevas `notificacion` y `honor`). Se puede correr más de una vez.
 3. `database/usuarios.sql` (usuario `competika_app` con permisos mínimos)
 
-Si ya tenías la base creada, alcanza con volver a ejecutar `database/ajustes.sql`.
+Si ya tenías la base creada, alcanza con volver a ejecutar `database/ajustes.sql` y después `database/usuarios.sql`
+(este último da los permisos sobre las tablas nuevas `notificacion` y `honor`).
+
+Las notificaciones de la campana llegan en tiempo real con Server-Sent Events (`api/notifications.php?action=stream`).
+Si hay un proxy delante (Nginx, Proxmox con reverse proxy), tiene que dejar pasar la respuesta sin buffer
+(`proxy_buffering off;`) y sin comprimirla. Si no, el sitio cae solo a consultar cada 30 s.
 
 Las fotos de perfil se guardan en `uploads/avatars/`. Apache tiene que poder escribir ahí
 y PHP necesita la extensión **GD** (XAMPP la trae; en Ubuntu: `php-gd`) y
@@ -73,5 +78,4 @@ docker compose up -d --build  # http://localhost:8080
 - Los equipos de un torneo son las filas de `tabla_posiciones` con `equipo_id_fk`.
 - `enfrentamiento_equipo.es_local` marca al local; `puntaje_a` es el del local.
 - La app no tiene `DELETE` sobre `resultado`: no se borran partidos/equipos/torneos con resultados.
-- No hay columnas para moneda, árbitro de contacto, costos/notas por partido, grupos ni aprobación de inscripciones.
-- Los "honores" del perfil se recuerdan en el navegador (no hay tabla para ellos) y las notificaciones del menú son de ejemplo.
+- No hay columnas para costos/notas por partido, grupos ni aprobación de inscripciones.

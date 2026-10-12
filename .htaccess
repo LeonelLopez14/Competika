@@ -11,6 +11,12 @@ DirectoryIndex frontend/index.html index.php index.html
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+    # Páginas, estilos y scripts: el navegador siempre pregunta si cambiaron
+    # (evita que quede mostrando una versión vieja después de actualizar el sitio).
+    <FilesMatch "\.(html|css|js)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>

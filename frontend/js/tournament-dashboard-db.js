@@ -1,23 +1,23 @@
 /* =====================================================
    COMPETIKA — tournament-dashboard-db.js
-   Dashboard del organizador (tournament_dashboard.html), sobre la base de datos.
+   Dashboard del organizador (tournament_dashboard.html)
 
    Requiere, en este orden: main.js, navbar-user.js, tournament-api.js, este archivo.
 
-   Seguridad: todo texto que viene de la base se escapa con esc() antes de
-   insertarlo en el HTML, y las acciones usan data-action (sin onclick en línea).
    ===================================================== */
 (function () {
 const root = document.getElementById('td-dashboard');
 if (!root) return;
 
 // ── Estado ────────────────────────────────────────────────────────────
-let tdData = null;          // torneo activo (respuesta de ?action=get)
+let tdData = null;          // torneo activo 
 let tdEditMatchId = null;   // partido abierto en el panel de edición
 
 // ── Utilidades ────────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = id => document.getElementById(id);
+const SIMBOLO = { UYU: '$', USD: 'US$', ARS: 'AR$', BRL: 'R$', EUR: '€' };
+const money = n => `${SIMBOLO[tdData?.costs?.currency] || '$'} ${Number(n).toLocaleString('es-UY')}`;
 const FL = 'style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)"';
 const PHASES = ['Fase de Grupos', 'Fecha 1', 'Fecha 2', 'Cuartos de Final', 'Semifinal', 'Gran Final'];
 
@@ -201,12 +201,20 @@ function renderOverview() {
             <div class="td-resumen-row"><span>Formato</span><span>${esc(t.formatLabel || '—')}</span></div>
             <div class="td-resumen-row"><span>Fechas</span><span>${fmtDate(t.startDate)}${t.endDate ? ' → ' + fmtDate(t.endDate) : ''}</span></div>
             <div class="td-resumen-row"><span>Lugar</span><span>${esc([t.venue, t.department].filter(Boolean).join(', ') || '—')}</span></div>
-            <div class="td-resumen-row"><span>Inscripción</span><span>${t.costs.entryFee > 0 ? '$' + t.costs.entryFee : 'Gratis'}</span></div>
+            <div class="td-resumen-row"><span>Inscripción</span><span>${t.costs.entryFee > 0 ? money(t.costs.entryFee) : 'Gratis'}</span></div>
+            ${t.costs.fieldCost > 0 ? `<div class="td-resumen-row"><span>Alquiler del lugar</span><span>${money(t.costs.fieldCost)}</span></div>` : ''}
+            ${t.costs.refereeCost > 0 ? `<div class="td-resumen-row"><span>Costo de árbitro</span><span>${money(t.costs.refereeCost)}</span></div>` : ''}
           </div>
         </div>
       </div>
       ${t.prizesText ? `<div class="td-card"><p class="td-card-label"><i class="ti ti-medal"></i> Premios</p>
         <p style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap">${esc(t.prizesText)}</p></div>` : ''}
+      ${t.referee && (t.referee.name || t.referee.phone || t.referee.email) ? `<div class="td-card"><p class="td-card-label"><i class="ti ti-gavel"></i> Árbitro principal</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
+          ${t.referee.name ? `<span style="font-size:14px;font-weight:700">${esc(t.referee.name)}</span>` : ''}
+          ${t.referee.phone ? `<span class="td-match-meta"><i class="ti ti-phone"></i>${esc(t.referee.phone)}</span>` : ''}
+          ${t.referee.email ? `<span class="td-match-meta"><i class="ti ti-mail"></i>${esc(t.referee.email)}</span>` : ''}
+        </div></div>` : ''}
       <div class="td-card"><p class="td-card-label"><i class="ti ti-user-circle"></i> Organizador</p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
           <span style="font-size:14px;font-weight:700">${esc(t.organizer.name)}</span>
@@ -316,10 +324,20 @@ function renderConfig() {
         </div>
         <div class="td-card">
           <p class="td-card-label"><i class="ti ti-cash"></i> Costos y premios</p>
-          <div class="td-ep-row2 mt-4">${field('cfg-fee', 'Costo de inscripción', t.costs.entryFee, 'number', 'min="0" step="0.01"')}${field('cfg-field', 'Alquiler del lugar', t.costs.fieldCost, 'number', 'min="0" step="0.01"')}</div>
+          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt([['UYU', 'UYU — Peso uruguayo'], ['USD', 'USD — Dólar'], ['ARS', 'ARS — Peso argentino'], ['BRL', 'BRL — Real'], ['EUR', 'EUR — Euro']], t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
+          <div class="td-ep-row2">${field('cfg-fee', 'Costo de inscripción', t.costs.entryFee, 'number', 'min="0" step="0.01"')}${field('cfg-field', 'Alquiler del lugar', t.costs.fieldCost, 'number', 'min="0" step="0.01"')}</div>
           ${field('cfg-ref', 'Costo de árbitro', t.costs.refereeCost, 'number', 'min="0" step="0.01"')}
           <div class="input-group"><textarea id="cfg-prizes" class="input-field" style="height:auto;min-height:72px;padding-top:16px" maxlength="255" placeholder=" ">${esc(t.prizesText || '')}</textarea><label for="cfg-prizes" class="floating-label" ${FL}>Premios (máx. 255 caracteres)</label></div>
           <button class="td-btn-primary" data-action="save-costs"><i class="ti ti-device-floppy"></i> Guardar costos y premios</button>
+        </div>
+        <div class="td-card">
+          <p class="td-card-label"><i class="ti ti-gavel"></i> Árbitro principal</p>
+          <div class="mt-4">${field('cfg-ref-name', 'Nombre completo', t.referee?.name, 'text', 'maxlength="150"')}</div>
+          <div class="td-ep-row2">${field('cfg-ref-phone', 'Teléfono', t.referee?.phone, 'tel', 'maxlength="20"')}${field('cfg-ref-email', 'Correo electrónico', t.referee?.email, 'email', 'maxlength="150"')}</div>
+          <p class="td-card-label mt-4"><i class="ti ti-user-circle"></i> Contacto del organizador</p>
+          <div class="mt-4">${field('cfg-org-name', 'Nombre de contacto', t.organizer?.name, 'text', 'maxlength="150"')}</div>
+          <div class="td-ep-row2">${field('cfg-org-phone', 'Teléfono de contacto', t.organizer?.phone, 'tel', 'maxlength="20"')}${field('cfg-org-email', 'Correo de contacto', t.organizer?.email, 'email', 'maxlength="150"')}</div>
+          <button class="td-btn-primary" data-action="save-contacts"><i class="ti ti-device-floppy"></i> Guardar árbitro y contacto</button>
         </div>
       </div>
       <div class="td-config-side">
@@ -496,10 +514,18 @@ const ACTIONS = {
     },
     'save-costs': async () => {
         const body = {
-            costs: { entryFee: parseFloat(val('cfg-fee')) || 0, fieldCost: parseFloat(val('cfg-field')) || 0, refereeCost: parseFloat(val('cfg-ref')) || 0 },
+            costs: { currency: val('cfg-currency') || 'UYU', entryFee: parseFloat(val('cfg-fee')) || 0, fieldCost: parseFloat(val('cfg-field')) || 0, refereeCost: parseFloat(val('cfg-ref')) || 0 },
             prizesText: val('cfg-prizes'),
         };
         if (await call('update', { method: 'POST', params: tid(), body }, 'Costos y premios guardados ✓')) { await reload(); rerender(); }
+    },
+
+    'save-contacts': async () => {
+        const body = {
+            referee: { name: val('cfg-ref-name'), phone: val('cfg-ref-phone'), email: val('cfg-ref-email') },
+            contact: { name: val('cfg-org-name'), phone: val('cfg-org-phone'), email: val('cfg-org-email') },
+        };
+        if (await call('update', { method: 'POST', params: tid(), body }, 'Árbitro y contacto guardados ✓')) { await reload(); rerender(); }
     },
 
     'add-match': async () => {

@@ -11,6 +11,7 @@
  *   POST ?action=avatar           multipart/form-data, campo "avatar" (JPG o PNG, máx. 5 MB)
  *   POST ?action=avatar_delete
  *   POST ?action=delete_account   {password, confirm:"ELIMINAR"}
+ *   POST ?action=honor            {matchId}  dar honor al rival de un partido jugado
  */
 
 require_once __DIR__ . '/bootstrap.php';
@@ -33,6 +34,7 @@ try {
         case 'avatar':         requireMethod('POST'); respond(uploadAvatar($pdo, $ci));
         case 'avatar_delete':  requireMethod('POST'); respond(deleteAvatar($pdo, $ci));
         case 'delete_account': requireMethod('POST'); respond(deleteAccount($pdo, $ci, bodyJson()));
+        case 'honor':          requireMethod('POST'); respond(giveHonor($pdo, $ci, bodyJson()));
         default:               respond(['success' => false, 'error' => 'Acción no reconocida.'], 400);
     }
 } catch (Throwable $e) {
@@ -288,6 +290,10 @@ function deleteAccount(PDO $pdo, string $ci, array $d): array {
     $foto->execute([$ci]);
     $archivo = $foto->fetchColumn() ?: null;
 
+    try {                                   // sus notificaciones (si la tabla existe)
+        $pdo->prepare("DELETE FROM notificacion WHERE usuario_ci_fk = ?")->execute([$ci]);
+    } catch (Throwable $e) { /* tabla ausente: nada que borrar */ }
+
     $pdo->beginTransaction();
     // Participaciones: los equipos y resultados de los torneos se conservan,
     // pero se desvinculan de la persona.
@@ -410,9 +416,24 @@ function activity(PDO $pdo, string $ci): array {
     $rivales = count(array_unique(array_map(fn($p) => $p['rival'], $jugados)));
     $titulos = count(array_filter($torneos, fn($t) => $t['rol'] === 'participante' && $t['puesto'] === 1));
 
+    // Honores: partidos en los que ya di honor y cuántos recibieron mis equipos
+    $honores = ['dados' => [], 'recibidos' => 0];
+    try {
+        $h = $pdo->prepare("SELECT enfrentamiento_id_fk FROM honor WHERE de_usuario_ci_fk = ?");
+        $h->execute([$ci]);
+        $honores['dados'] = array_map('intval', $h->fetchAll(PDO::FETCH_COLUMN));
+        if ($misEquipos) {
+            $ids = array_keys($misEquipos);
+            $h = $pdo->prepare("SELECT COUNT(*) FROM honor WHERE a_equipo_id_fk IN (" . implode(',', array_fill(0, count($ids), '?')) . ")");
+            $h->execute($ids);
+            $honores['recibidos'] = (int)$h->fetchColumn();
+        }
+    } catch (Throwable $e) { /* tabla honor todavía no creada */ }
+
     return [
         'torneos'  => $torneos,
         'partidos' => $partidos,
+        'honores'  => $honores,
         'stats'    => [
             'partidos'     => count($jugados),
             'victorias'    => $v,
@@ -447,4 +468,36 @@ function torneoRow(array $t, string $rol, ?int $puesto): array {
 
 function fmtNum(float $n): string {
     return floor($n) == $n ? (string)(int)$n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+}
+
+/** Dar honor al equipo rival de un partido que jugó uno de mis equipos (y que ya tiene resultado). */
+function giveHonor(PDO $pdo, string $ci, array $d): array {
+    $id = (int)($d['matchId'] ?? 0);
+    $s = $pdo->prepare("
+        SELECT ee.equipo_id_fk AS mio, e.torneo_id_fk,
+               (SELECT x.equipo_id_fk FROM enfrentamiento_equipo x
+                 WHERE x.enfrentamiento_id_fk = e.enfrentamiento_id AND x.equipo_id_fk <> ee.equipo_id_fk LIMIT 1) AS rival
+        FROM participante p
+        JOIN equipo_participante ep ON ep.participante_id_fk = p.participante_id
+        JOIN enfrentamiento_equipo ee ON ee.equipo_id_fk = ep.equipo_id_fk
+        JOIN enfrentamiento e ON e.enfrentamiento_id = ee.enfrentamiento_id_fk
+        WHERE p.usuario_ci_fk = ? AND e.enfrentamiento_id = ?
+          AND EXISTS (SELECT 1 FROM resultado r WHERE r.enfrentamiento_id_fk = e.enfrentamiento_id AND r.estado IN ('finalizado','empate'))
+        LIMIT 1");
+    $s->execute([$ci, $id]);
+    $m = $s->fetch();
+    if (!$m || $m['rival'] === null) fail('Solo podés dar honor en partidos que jugaste y ya tienen resultado.', 404);
+
+    $ins = $pdo->prepare("INSERT IGNORE INTO honor (enfrentamiento_id_fk, de_usuario_ci_fk, a_equipo_id_fk) VALUES (?, ?, ?)");
+    $ins->execute([$id, $ci, (int)$m['rival']]);
+    if ($ins->rowCount() > 0) {
+        $u = $pdo->prepare("SELECT CONCAT(nombre, ' ', apellido) FROM usuario WHERE ci = ?");
+        $u->execute([$ci]);
+        $quien = $u->fetchColumn() ?: 'Un rival';
+        $equipo = nombreEquipo($pdo, (int)$m['mio']);
+        foreach (usuariosDeEquipo($pdo, (int)$m['rival']) as $dest) {
+            notificar($pdo, $dest, 'honor', "{$quien} ({$equipo}) le dio honor a tu equipo por el juego limpio.", (int)$m['torneo_id_fk'], $id);
+        }
+    }
+    return ['success' => true];
 }

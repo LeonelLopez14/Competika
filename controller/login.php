@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Login correcto: se descarta todo lo de la sesión anterior (otra cuenta
-    // o modo invitado) y se emite un id de sesión nuevo.
+    // Login correcto: se descarta todo lo de la sesión anterior
+    // (por ejemplo, de otra cuenta) y se emite un id de sesión nuevo.
     $_SESSION = [];
     session_regenerate_id(true);
     $_SESSION['usuario_ci'] = $usuarioData['ci'];

@@ -33,7 +33,6 @@ const SPORT = {
 const sportIcon = d => SPORT[d] || ['ti-trophy', 'rgba(95,31,197,0.1)', 'var(--blue-violet-dark)'];
 
 let data = { torneos: [], partidos: [], stats: {} };
-let userKey = 'anon';
 
 function fecha(iso) {
     if (!iso) return '—';
@@ -174,16 +173,15 @@ function renderTournamentHistory() {
     }).join('');
 }
 
-/* ── Historial de partidos + honores ──
-   Los honores no tienen tabla en la base: se recuerdan en este navegador, por cuenta. */
-const honorsKey = () => `competika_honors_given_${userKey}`;
-function honors() { try { return JSON.parse(localStorage.getItem(honorsKey()) || '[]'); } catch (e) { return []; } }
-function saveHonors(list) { try { localStorage.setItem(honorsKey(), JSON.stringify(list)); } catch (e) { /* sin almacenamiento */ } }
+/* ── Historial de partidos + honores (guardados en la base) ── */
+const honors = () => data.honores?.dados || [];
 
 function renderMatches() {
     const tbody = $('pf-match-history-body');
     const jugados = data.partidos.filter(p => p.jugado);
     $('pf-honor-given-count').textContent = honors().length;
+    const rec = $('pf-honor-received-count');
+    if (rec) rec.textContent = data.honores?.recibidos || 0;
     if (!jugados.length) { tbody.innerHTML = '<tr><td colspan="6" class="pf-empty">Todavía no jugaste partidos con resultado cargado.</td></tr>'; return; }
     const given = honors();
     const label = { win: ['ti-circle-check', 'Victoria'], loss: ['ti-circle-x', 'Derrota'], draw: ['ti-circle-minus', 'Empate'] };
@@ -200,10 +198,19 @@ function renderMatches() {
                 <i class="ti ${g ? 'ti-heart-filled' : 'ti-heart-handshake'}"></i>${g ? 'Enviado' : 'Dar honor'}</button></td>
         </tr>`;
     }).join('');
-    tbody.querySelectorAll('.pf-honor-btn:not([disabled])').forEach(btn => btn.addEventListener('click', () => {
-        const list = honors();
+    tbody.querySelectorAll('.pf-honor-btn:not([disabled])').forEach(btn => btn.addEventListener('click', async () => {
         const id = Number(btn.dataset.matchId);
-        if (!list.includes(id)) { list.push(id); saveHonors(list); }
+        btn.disabled = true;
+        try {
+            const res = await fetch(`${API}?action=honor`, {
+                method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: id }),
+            });
+            const r = await res.json();
+            if (!r.success) { btn.disabled = false; alert(r.error || 'No se pudo dar honor.'); return; }
+        } catch (e) { btn.disabled = false; return; }
+        data.honores = data.honores || { dados: [], recibidos: 0 };
+        if (!data.honores.dados.includes(id)) data.honores.dados.push(id);
         renderMatches();
     }));
 }
@@ -313,7 +320,7 @@ document.querySelectorAll('.pf-tab-btn').forEach(btn => btn.addEventListener('cl
 (window.competikaSessionReady || Promise.resolve({ logged: true })).then(async s => {
     if (!s || !s.logged) return;                       // navbar-user.js ya redirige al login
     const [me, act] = await Promise.all([api('me'), api('activity')]);
-    if (me.success) { renderIdentity(me.user); userKey = (me.user.email || 'anon').toLowerCase(); }
+    if (me.success) { renderIdentity(me.user) }
     if (act.success) data = act;
     eventos = {};
     data.partidos.forEach(p => { if (p.fecha) (eventos[p.fecha] ||= []).push(p); });

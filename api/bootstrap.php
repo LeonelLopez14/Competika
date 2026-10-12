@@ -87,3 +87,60 @@ function fotoUrl(?string $archivo): ?string {
         ? 'uploads/avatars/' . $archivo
         : null;
 }
+
+// =====================================================
+// Notificaciones (tabla notificacion, ver database/ajustes.sql)
+// =====================================================
+
+/** Crea una notificación. Si falla (por ejemplo, falta la tabla) se registra
+ *  en el log y NO interrumpe la acción principal. */
+function notificar(PDO $pdo, string $ci, string $tipo, string $mensaje, ?int $torneoId = null, ?int $refId = null): void {
+    try {
+        $pdo->prepare("INSERT INTO notificacion (usuario_ci_fk, tipo, mensaje, torneo_id_fk, ref_id) VALUES (?, ?, ?, ?, ?)")
+            ->execute([$ci, $tipo, mb_substr($mensaje, 0, 255), $torneoId, $refId]);
+    } catch (Throwable $e) {
+        error_log('[competika] notificación no guardada: ' . $e->getMessage());
+    }
+}
+
+/** Cédulas de las personas que juegan en un equipo. */
+function usuariosDeEquipo(PDO $pdo, ?int $equipoId): array {
+    if ($equipoId === null) return [];
+    $s = $pdo->prepare("SELECT DISTINCT p.usuario_ci_fk FROM equipo_participante ep
+                        JOIN participante p ON p.participante_id = ep.participante_id_fk WHERE ep.equipo_id_fk = ?");
+    $s->execute([$equipoId]);
+    return $s->fetchAll(PDO::FETCH_COLUMN);
+}
+
+/** Cédulas de todas las personas inscriptas en un torneo. */
+function usuariosDeTorneo(PDO $pdo, int $torneoId): array {
+    $s = $pdo->prepare("SELECT DISTINCT p.usuario_ci_fk FROM tabla_posiciones tp
+                        JOIN equipo_participante ep ON ep.equipo_id_fk = tp.equipo_id_fk
+                        JOIN participante p ON p.participante_id = ep.participante_id_fk
+                        WHERE tp.torneo_id_fk = ?");
+    $s->execute([$torneoId]);
+    return $s->fetchAll(PDO::FETCH_COLUMN);
+}
+
+function nombreTorneo(PDO $pdo, int $torneoId): string {
+    $s = $pdo->prepare("SELECT nombre FROM torneo WHERE torneo_id = ?");
+    $s->execute([$torneoId]);
+    return (string)($s->fetchColumn() ?: 'el torneo');
+}
+
+function nombreEquipo(PDO $pdo, ?int $equipoId): string {
+    if ($equipoId === null) return 'un rival por definir';
+    $s = $pdo->prepare("SELECT nombre FROM equipo WHERE equipo_id = ?");
+    $s->execute([$equipoId]);
+    return (string)($s->fetchColumn() ?: 'un rival');
+}
+
+/** '2026-10-18 18:30:00' -> 'sáb 18/10 18:30 h' (sin hora si es 00:00). */
+function fechaCorta(?string $dt): string {
+    if (!$dt) return 'fecha a confirmar';
+    $ts = strtotime($dt);
+    $dias = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    $txt = $dias[(int)date('w', $ts)] . ' ' . date('d/m', $ts);
+    $hora = date('H:i', $ts);
+    return $hora === '00:00' ? $txt : "$txt $hora h";
+}
