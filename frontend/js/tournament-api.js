@@ -84,6 +84,14 @@ async function competikaInscribirse(torneoId, teamName = '') {
     const form = document.getElementById('tf-form');
     if (!form) return;
 
+    // Monedas desde la base (tabla moneda); las opciones del HTML quedan si la API no responde
+    competikaApi('catalogs').then(r => {
+        const sel = document.getElementById('tf-currency');
+        if (!r.success || !sel || !r.currencies.length) return;
+        const actual = sel.value;
+        sel.replaceChildren(...r.currencies.map(m => new Option(`${m.code} — ${m.name}`, m.code, false, m.code === actual)));
+    });
+
     // Contacto del organizador: se precarga con los datos de su cuenta (editable)
     competikaSession().then(user => {
         if (!user) {

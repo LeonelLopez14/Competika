@@ -16,8 +16,10 @@ let tdEditMatchId = null;   // partido abierto en el panel de edición
 // ── Utilidades ────────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = id => document.getElementById(id);
-const SIMBOLO = { UYU: '$', USD: 'US$', ARS: 'AR$', BRL: 'R$', EUR: '€' };
-const money = n => `${SIMBOLO[tdData?.costs?.currency] || '$'} ${Number(n).toLocaleString('es-UY')}`;
+const money = n => `${tdData?.costs?.currencySymbol || '$'} ${Number(n).toLocaleString('es-UY')}`;
+// Monedas habilitadas (tabla moneda): se cargan una vez desde la API
+let tdMonedas = [['UYU', 'UYU — Peso uruguayo']];
+competikaApi('catalogs').then(r => { if (r.success) tdMonedas = r.currencies.map(m => [m.code, `${m.code} — ${m.name}`]); });
 const FL = 'style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)"';
 const PHASES = ['Fase de Grupos', 'Fecha 1', 'Fecha 2', 'Cuartos de Final', 'Semifinal', 'Gran Final'];
 
@@ -112,9 +114,12 @@ document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.addEvent
     if (li.dataset.section === 'selector') { tdData = null; updateSidebar(); history.replaceState(null, '', location.pathname); }
     show(li.dataset.section);
 }));
+// Compartir = link a la página pública del torneo (la que ven participantes e invitados)
 ['td-share-sidebar', 'td-share-top'].forEach(id => $(id)?.addEventListener('click', () => {
-    navigator.clipboard?.writeText(location.href);
-    toast('¡Link copiado al portapapeles!');
+    if (!tdData) { toast('Elegí un torneo primero', 'warn'); return; }
+    const url = new URL(`../tournament_view/tournament_view.html?t=${encodeURIComponent(tdData.id)}`, location.href).href;
+    navigator.clipboard?.writeText(url);
+    toast('¡Link público del torneo copiado!');
 }));
 
 const content = () => $('td-section-content');
@@ -160,7 +165,7 @@ async function renderSelector() {
 async function openTournament(id) {
     tdData = await competikaGetTournament(id);
     if (!tdData) { toast('Torneo no encontrado', 'warn'); show('selector'); return; }
-    if (!tdData.isOwner) { tdData = null; toast('Solo el organizador puede gestionar este torneo.', 'warn'); show('selector'); return; }
+    if (!tdData.isOwner) { location.replace(`../tournament_view/tournament_view.html?t=${encodeURIComponent(tdData.id)}`); return; }   // no es el organizador: ve la página pública
     updateSidebar();
     history.replaceState(null, '', `?t=${encodeURIComponent(id)}`);
     show('overview');
@@ -324,7 +329,7 @@ function renderConfig() {
         </div>
         <div class="td-card">
           <p class="td-card-label"><i class="ti ti-cash"></i> Costos y premios</p>
-          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt([['UYU', 'UYU — Peso uruguayo'], ['USD', 'USD — Dólar'], ['ARS', 'ARS — Peso argentino'], ['BRL', 'BRL — Real'], ['EUR', 'EUR — Euro']], t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
+          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt(tdMonedas, t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
           <div class="td-ep-row2">${field('cfg-fee', 'Costo de inscripción', t.costs.entryFee, 'number', 'min="0" step="0.01"')}${field('cfg-field', 'Alquiler del lugar', t.costs.fieldCost, 'number', 'min="0" step="0.01"')}</div>
           ${field('cfg-ref', 'Costo de árbitro', t.costs.refereeCost, 'number', 'min="0" step="0.01"')}
           <div class="input-group"><textarea id="cfg-prizes" class="input-field" style="height:auto;min-height:72px;padding-top:16px" maxlength="255" placeholder=" ">${esc(t.prizesText || '')}</textarea><label for="cfg-prizes" class="floating-label" ${FL}>Premios (máx. 255 caracteres)</label></div>

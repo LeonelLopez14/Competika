@@ -914,7 +914,7 @@ function tsFromApi(t) {
         participantes: t.teamCount,
         maxParticipantes: t.maxTeams,
         premio: t.prizesText || 'Sin premios definidos',
-        inscripcion: t.entryFee > 0 ? `${({ UYU: '$', USD: 'US$', ARS: 'AR$', BRL: 'R$', EUR: '€' })[t.currency] || '$'} ${t.entryFee}` : 'Gratis',
+        inscripcion: t.entryFee > 0 ? `${t.currencySymbol || '$'} ${t.entryFee}` : 'Gratis',
         esMio: !!t.isOwner,
         inscripto: !!t.joined,
     };
@@ -1098,7 +1098,7 @@ function renderTournaments(lista) {
                     <div class="torneo-deporte-icono">
                         <i class="ti ${sport.icon}"></i>
                     </div>
-                    <span class="torneo-nombre">${tsEsc(t.nombre)}</span>
+                    <a class="torneo-nombre" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}" title="Ver el torneo">${tsEsc(t.nombre)}</a>
                 </div>
                 <span class="estado-badge ${estadoClase[t.estado]}">
                     ${estadoLabel[t.estado]}
@@ -1144,7 +1144,7 @@ function renderTournaments(lista) {
                     ? `<button class="btn-completo" disabled><i class="ti ti-circle-check"></i> Inscripto</button>`
                     : isFull
                     ? `<button class="btn-completo" disabled><i class="ti ti-lock"></i> ${t.cerrado ? 'Cerrado' : 'Completo'}</button>
-                    <button class="btn-seguir"><i class="ti ti-eye"></i> Seguir</button>`
+                    <a class="btn-seguir" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}"><i class="ti ti-eye"></i> Ver torneo</a>`
                     : `<button class="btn-inscribirse" data-id="${t.id}"><i class="ti ti-door-enter"></i> Inscribirme</button>`
                 }
             </div>

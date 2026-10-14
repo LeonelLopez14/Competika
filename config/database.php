@@ -39,4 +39,12 @@ class Database {
         }
         return self::$instance;
     }
+
+    /**
+     * Suelta la conexión compartida (la cierra si nadie más la usa).
+     * Lo usa el stream de notificaciones para no ocupar una conexión mientras espera.
+     */
+    public static function cerrar(): void {
+        self::$instance = null;
+    }
 }

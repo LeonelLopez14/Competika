@@ -59,6 +59,7 @@
     const PROFILE = siteRoot + '/frontend/paginas/profile/profile.html';
     const SETTINGS = siteRoot + '/frontend/paginas/profile_configuration/profile_configuration.html';
     const DASHBOARD = siteRoot + '/frontend/paginas/tournament_dashboard/tournament_dashboard.html';
+    const VIEW = siteRoot + '/frontend/paginas/tournament_view/tournament_view.html';
 
     [navUser, ...guestItems, ...memberItems].forEach(el => { if (el) el.style.visibility = 'hidden'; });
 
@@ -155,6 +156,7 @@
 
     function linkDe(n) {
         if (n.tipo === 'nuevo_inscripto' && n.torneoId) return `${DASHBOARD}?t=${encodeURIComponent(n.torneoId)}`;
+        if (n.torneoId) return `${VIEW}?t=${encodeURIComponent(n.torneoId)}`;     // página pública del torneo
         return PROFILE;
     }
 

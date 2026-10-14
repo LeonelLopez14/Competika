@@ -87,7 +87,7 @@ function renderActive() {
     list.innerHTML = activos.map(t => {
         const [icon, bg, color] = sportIcon(t.deporte);
         const curso = t.estado === 'activo';
-        const link = t.rol === 'organizador' ? `../tournament_dashboard/tournament_dashboard.html?t=${t.id}` : '../tournament_search/tournament_search.html';
+        const link = t.rol === 'organizador' ? `../tournament_dashboard/tournament_dashboard.html?t=${t.id}` : `../tournament_view/tournament_view.html?t=${t.id}`;
         return `
         <a class="pf-tournament-item" href="${link}" style="text-decoration:none;color:inherit">
             <div class="pf-t-icon" style="background:${bg};color:${color};"><i class="ti ${icon}"></i></div>

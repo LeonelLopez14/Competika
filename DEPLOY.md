@@ -1,18 +1,39 @@
 # Competika — Despliegue
 
-Arquitectura: navegador → Apache + PHP (`frontend/` + `api/` + `controller/`) → MariaDB.
-La base se crea con tres archivos, siempre en este orden:
+Arquitectura: navegador → Apache (`.htaccess` + VirtualHost de `apache/`) → PHP → MariaDB.
 
-1. `database/schema.sql`
-2. `database/ajustes.sql` (admin_id_fk opcional; columnas de perfil `nombre_usuario`, `biografia`, `foto_perfil`; `es_local` en `enfrentamiento_equipo`; moneda, árbitro principal y contacto en `configuracion_torneo`; tablas nuevas `notificacion` y `honor`). Se puede correr más de una vez.
-3. `database/usuarios.sql` (usuario `competika_app` con permisos mínimos)
+```
+frontend/      HTML, CSS y JS (sin lógica de datos: todo sale de la API)
+api/*.php      rutas de la API JSON: asocian ?action= con un método del controlador
+controller/    TorneoController, PerfilController, NotificacionController, SesionController,
+               CuentaController (login/registro/logout de los formularios)
+service/       reglas compartidas: Notificador, TablaPosiciones, Avatar
+repository/    TODO el SQL (PDO, sentencias preparadas): TorneoRepository, EquipoRepository, ...
+model/         entidades: Torneo, ConfiguracionTorneo, Equipo, Partido, Resultado, Persona,
+               Moneda, TipoTorneo, Notificacion, Usuario
+core/          Request, Response, Router, Auth, Validar, Formato, autoload
+config/        conexión (Database, singleton) y sesión
+```
 
-Si ya tenías la base creada, alcanza con volver a ejecutar `database/ajustes.sql` y después `database/usuarios.sql`
-(este último da los permisos sobre las tablas nuevas `notificacion` y `honor`).
+## Base de datos
+
+- **Base nueva:** `database/schema.sql` y después `database/usuarios.sql`.
+- **Base creada con una versión anterior:** `database/ajustes.sql` (la migra sin perder datos) y después `database/usuarios.sql`.
+  Se pueden correr más de una vez.
+
+El esquema está en 3FN: el árbitro principal y el contacto de un torneo son filas de `persona`
+(referenciadas por FK desde `configuracion_torneo`), la moneda es FK a `moneda` y el formato es FK a
+`tipo_torneo`. Si el contacto es el mismo que el de la cuenta del organizador no se guarda: se toma de `usuario`.
+
+`usuarios.sql` crea `competika_app` con GRANT por tabla, REVOKE explícitos y límites de recursos.
+Los límites cuentan para todo el sitio (todos los visitantes usan esa cuenta y cada pedido a la API
+abre una conexión): si el sitio crece, subirlos.
 
 Las notificaciones de la campana llegan en tiempo real con Server-Sent Events (`api/notifications.php?action=stream`).
 Si hay un proxy delante (Nginx, Proxmox con reverse proxy), tiene que dejar pasar la respuesta sin buffer
 (`proxy_buffering off;`) y sin comprimirla. Si no, el sitio cae solo a consultar cada 30 s.
+Mientras espera, el stream NO ocupa una conexión de MariaDB: revisa un archivo de señal en el
+directorio temporal de PHP y solo consulta la base cuando llegó algo nuevo.
 
 Las fotos de perfil se guardan en `uploads/avatars/`. Apache tiene que poder escribir ahí
 y PHP necesita la extensión **GD** (XAMPP la trae; en Ubuntu: `php-gd`) y
@@ -24,12 +45,25 @@ Sin ellas usa los valores locales de `config/database.php`. Con `APP_ENV=product
 ## Local (XAMPP / LAMPP)
 
 1. Iniciar Apache y MySQL.
-2. phpMyAdmin → pestaña SQL: ejecutar los tres archivos de arriba, en orden (eliminar antes una `competika_db` vieja si existe).
-3. Apache necesita `mod_rewrite` y `AllowOverride All` en la carpeta del proyecto (lo usa `.htaccess`).
+2. phpMyAdmin → pestaña SQL: ejecutar `schema.sql` y `usuarios.sql` (o `ajustes.sql` + `usuarios.sql` si ya tenías la base).
+3. Apache necesita `mod_rewrite`, `mod_headers` y `AllowOverride All` en la carpeta del proyecto.
+   Opcional: VirtualHost `competika.local` con `apache/competika-xampp.conf` (instrucciones adentro).
 4. Permiso de escritura para las fotos (LAMPP corre Apache como usuario `daemon`):
    `sudo chgrp daemon uploads/avatars && chmod 775 uploads/avatars`
 5. Probar la conexión por consola: `php test_conexion.php` (por navegador da 403 a propósito).
-6. Entrar SIEMPRE por `http://localhost/<carpeta>/frontend/index.html`, nunca con doble clic (`file://`).
+6. Entrar por `http://localhost/<carpeta>/` (o `http://competika.local`), nunca con doble clic (`file://`).
+
+## URLs amigables (`.htaccess`)
+
+| URL | Va a |
+|---|---|
+| `/torneos`, `/torneos/5` | búsqueda, página pública del torneo 5 |
+| `/crear-torneo`, `/dashboard`, `/perfil`, `/configuracion`, `/login`, `/registro` | la página correspondiente |
+| `GET /api/torneos`, `/api/torneos/5`, `/api/notificaciones`, `/api/sesion` | la API (reescritura interna) |
+
+Funcionan igual si el sitio está en la raíz o en una subcarpeta (`localhost/Competika`).
+Las carpetas `config/ core/ model/ repository/ service/ database/ apache/ docker/` y las clases
+`controller/*_controller.php` devuelven 403.
 
 ## Servidor Linux con Apache (sin Docker)
 
@@ -39,7 +73,8 @@ sudo a2enmod rewrite headers
 sudo git clone https://github.com/LeonelLopez14/competika /var/www/competika && cd /var/www/competika
 sudo mysql < database/schema.sql && sudo mysql < database/ajustes.sql && sudo mysql < database/usuarios.sql
 sudo mysql -e "ALTER USER 'competika_app'@'localhost' IDENTIFIED BY 'UNA_CLAVE_LARGA';"
-sed 's#/var/www/html#/var/www/competika#g' docker/apache.conf | sudo tee /etc/apache2/sites-available/competika.conf
+sudo a2enmod ssl
+sudo cp apache/competika.conf /etc/apache2/sites-available/competika.conf   # editar ServerName y certificados
 sudo a2dissite 000-default && sudo a2ensite competika
 printf 'SetEnv APP_ENV production\nSetEnv DB_PASS UNA_CLAVE_LARGA\n' | sudo tee /etc/apache2/conf-available/competika-env.conf
 sudo chmod 640 /etc/apache2/conf-available/competika-env.conf && sudo a2enconf competika-env
@@ -58,8 +93,9 @@ docker compose up -d --build  # http://localhost:8080
   (los permisos de `usuarios.sql` para el host `'%'`, con la clave de `.env`).
 - La base no publica puertos; solo el contenedor `web` llega a ella.
 - Las fotos de perfil quedan en el volumen `avatars` (sobreviven a un `--build`).
-- Si la base ya existía antes de esta versión, aplicá los ajustes nuevos a mano:
+- Si la base ya existía antes de esta versión, migrala a mano (y volvé a aplicar los permisos):
   `docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < database/ajustes.sql`
+  `sed "s/'competika_app'@'localhost'/'competika_app'@'%'/g" database/usuarios.sql | docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"'`
 - Recrear la base desde cero (borra datos): `docker compose down -v && docker compose up -d`.
 - phpMyAdmin solo en desarrollo: `docker compose --profile dev up -d` → `http://localhost:8081`.
 - Backup: `docker compose exec db sh -c 'mariadb-dump -uroot -p"$MARIADB_ROOT_PASSWORD" competika_db' > backup.sql`.
