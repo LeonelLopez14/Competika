@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Equipos de varios integrantes (api/teams.php). Quien inscribe el equipo es
- * el capitán: invita por correo, cancela invitaciones y quita integrantes.
- */
+/** Equipos de varios integrantes e invitaciones. */
 class EquipoController {
     private EquipoRepository $equipos;
     private TorneoRepository $torneos;

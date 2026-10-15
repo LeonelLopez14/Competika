@@ -2,9 +2,7 @@ USE competika_db;
 
 CREATE USER IF NOT EXISTS 'competika_app'@'localhost' IDENTIFIED BY 'Jacaranda';
 
--- Límites de recursos: valen para toda la aplicación (todos los visitantes
--- usan esta cuenta). MAX_USER_CONNECTIONS debe cubrir los procesos de Apache
--- simultáneos y ser menor que max_connections del servidor (151 por defecto).
+-- Límites de recursos de la cuenta de la aplicación.
 ALTER USER 'competika_app'@'localhost' WITH
     MAX_QUERIES_PER_HOUR 100000
     MAX_UPDATES_PER_HOUR 20000
@@ -46,9 +44,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.avance_llave               
 GRANT SELECT, INSERT, UPDATE         ON competika_db.invitacion_equipo            TO 'competika_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.mensaje_contacto             TO 'competika_app'@'localhost';
 
--- Catálogos: la aplicación solo los lee
-GRANT SELECT ON competika_db.tipo_torneo TO 'competika_app'@'localhost';
-GRANT SELECT ON competika_db.moneda      TO 'competika_app'@'localhost';
+-- Catálogos: monedas sin DELETE; de los formatos solo se edita la etiqueta y si está activo
+GRANT SELECT, INSERT, UPDATE          ON competika_db.moneda      TO 'competika_app'@'localhost';
+GRANT SELECT, UPDATE (etiqueta, activo) ON competika_db.tipo_torneo TO 'competika_app'@'localhost';
 
 REVOKE UPDATE, DELETE ON competika_db.registro_de_actividad FROM 'competika_app'@'localhost';
 REVOKE DELETE ON competika_db.resultado FROM 'competika_app'@'localhost';

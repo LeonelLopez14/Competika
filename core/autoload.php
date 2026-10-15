@@ -1,13 +1,5 @@
 <?php
-/**
- * Carga automática de clases (sin Composer).
- * Cada clase vive en un archivo con su nombre en snake_case dentro de su capa:
- *   model/       entidades (Torneo, Equipo, Partido, ...)
- *   repository/  acceso a datos (TorneoRepository, ...)
- *   service/     reglas de negocio compartidas (Notificador, ...)
- *   controller/  controladores de la API (TorneoController, ...)
- *   core/        infraestructura (Request, Auth, ApiException, ...)
- */
+/** Carga automática de clases por capa (model, repository, service, controller, core). */
 require_once __DIR__ . '/../config/database.php';
 
 spl_autoload_register(function (string $clase): void {

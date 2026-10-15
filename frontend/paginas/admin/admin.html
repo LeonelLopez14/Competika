@@ -8,12 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261014">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261014">
-    <link rel="stylesheet" href="../tournament_view/tournament_view.css?v=20261014">
-    <link rel="stylesheet" href="admin.css?v=20261014">
-    <link rel="stylesheet" href="../../css/style..css?v=20261014">
-    <link rel="stylesheet" href="../../css/forms.css?v=20261014">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261015">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261015">
+    <link rel="stylesheet" href="../tournament_view/tournament_view.css?v=20261015">
+    <link rel="stylesheet" href="admin.css?v=20261015">
+    <link rel="stylesheet" href="../../css/style..css?v=20261015">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261015">
     <title>Administración — Competika</title>
 </head>
 <body>
@@ -120,6 +120,7 @@
                 <button class="adm-tab" role="tab" data-tab="torneos" aria-selected="false"><i class="ti ti-tournament"></i> Torneos</button>
                 <button class="adm-tab" role="tab" data-tab="mensajes" aria-selected="false"><i class="ti ti-mail"></i> Mensajes <span class="adm-badge" id="adm-badge-msg"></span></button>
                 <button class="adm-tab" role="tab" data-tab="anuncios" aria-selected="false"><i class="ti ti-speakerphone"></i> Anuncios</button>
+                <button class="adm-tab" role="tab" data-tab="catalogos" aria-selected="false"><i class="ti ti-list-details"></i> Catálogos</button>
                 <button class="adm-tab" role="tab" data-tab="actividad" aria-selected="false"><i class="ti ti-history"></i> Registro de actividad</button>
             </nav>
             <section class="adm-seccion tv-card" id="adm-solicitudes">
@@ -171,6 +172,18 @@
                     </div>
                     <button type="submit" class="tv-btn tv-btn--primary"><i class="ti ti-send"></i> Enviar anuncio</button>
                 </form>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-catalogos" hidden>
+                <h2 class="adm-subtitulo"><i class="ti ti-coin"></i> Monedas</h2>
+                <ul class="adm-lista" id="adm-lista-monedas"></ul>
+                <form class="adm-fila-form" id="adm-moneda-nueva">
+                    <input class="adm-input adm-input--codigo" id="adm-mn-codigo" maxlength="3" placeholder="Código" aria-label="Código ISO" required>
+                    <input class="adm-input" id="adm-mn-nombre" maxlength="50" placeholder="Nombre" aria-label="Nombre" required>
+                    <input class="adm-input adm-input--simbolo" id="adm-mn-simbolo" maxlength="5" placeholder="Símbolo" aria-label="Símbolo" required>
+                    <button type="submit" class="tv-btn tv-btn--primary"><i class="ti ti-plus"></i> Agregar</button>
+                </form>
+                <h2 class="adm-subtitulo"><i class="ti ti-tournament"></i> Formatos de torneo</h2>
+                <ul class="adm-lista" id="adm-lista-formatos"></ul>
             </section>
             <section class="adm-seccion tv-card" id="adm-actividad" hidden>
                 <ul class="adm-log" id="adm-lista-actividad"></ul>
@@ -257,9 +270,9 @@
             </p>
         </div>
     </footer>
-    <script src="../../js/main.js?v=20261014"></script>
-    <script src="../../js/navbar-user.js?v=20261014"></script>
-    <script src="../../js/tournament-api.js?v=20261014"></script>
-    <script src="../../js/admin.js?v=20261014"></script>
+    <script src="../../js/main.js?v=20261015"></script>
+    <script src="../../js/navbar-user.js?v=20261015"></script>
+    <script src="../../js/tournament-api.js?v=20261015"></script>
+    <script src="../../js/admin.js?v=20261015"></script>
 </body>
 </html>

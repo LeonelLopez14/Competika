@@ -1,12 +1,5 @@
 <?php
-/**
- * Aviso liviano de "hay notificaciones nuevas" para el tiempo real.
- *
- * Al crear una notificación se escribe en un archivo (uno por usuario) el
- * id de la última. El stream de notificaciones revisa ese archivo cada
- * segundo SIN usar la base de datos y solo se conecta cuando cambió. Así
- * una pestaña abierta no ocupa una conexión de MariaDB todo el tiempo.
- */
+/** Señal de notificaciones nuevas por usuario (sin consultar la base). */
 final class SenalNotificaciones {
     private static function archivo(string $ci): string {
         $dir = sys_get_temp_dir() . '/competika_notif';

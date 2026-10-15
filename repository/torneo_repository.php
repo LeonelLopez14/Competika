@@ -34,11 +34,7 @@ class TorneoRepository extends BaseRepository {
         return $t;
     }
 
-    /**
-     * Torneos para los listados, con cantidad de equipos/partidos y si el
-     * usuario $ci es el dueño o está inscripto.
-     * @return Torneo[]
-     */
+    /** Torneos para los listados. @return Torneo[] */
     public function listar(?string $ci, ?int $soloOrganizador = null): array {
         // Agrega al SELECT común las columnas de resumen
         $sql = str_replace("FROM torneo t", ",

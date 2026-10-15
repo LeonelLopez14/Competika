@@ -4,11 +4,7 @@ class TablaPosiciones {
     public const PUNTOS_VICTORIA = 3;
     public const PUNTOS_EMPATE = 1;
 
-    /**
-     * @param int[]     $equipoIds equipos del torneo
-     * @param Partido[] $jugados   partidos con resultado
-     * @return array<int, array{pj:int,pg:int,pe:int,pp:int,pts:int}>
-     */
+    /** @return array<int, array{pj:int,pg:int,pe:int,pp:int,pts:int}> */
     public static function calcular(array $equipoIds, array $jugados): array {
         $st = [];
         foreach ($equipoIds as $e) $st[$e] = ['pj' => 0, 'pg' => 0, 'pe' => 0, 'pp' => 0, 'pts' => 0];

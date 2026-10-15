@@ -1,10 +1,5 @@
 <?php
-/**
- * Reglas de negocio de los partidos, compartidas por el organizador
- * (TorneoController) y el juez (JuezController): guardar resultados,
- * recalcular la tabla, hacer avanzar al ganador en una llave de
- * eliminación y mandar los avisos.
- */
+/** Reglas de negocio de los partidos (organizador y juez). */
 class GestorPartidos {
     private PartidoRepository $partidos;
     private EquipoRepository $equipos;
@@ -27,10 +22,7 @@ class GestorPartidos {
         return $id;
     }
 
-    /**
-     * Carga el marcador en $p (o lo deja sin resultado si $jugado es false).
-     * En una llave de eliminación no se permite empate.
-     */
+    /** Carga el marcador; en una llave no se permite empate. */
     public function aplicarMarcador(Partido $p, bool $jugado, $local, $visitante): void {
         if (!$jugado) { $p->setResultado(null); return; }
         if ($p->getLocalId() === null || $p->getVisitanteId() === null) {
@@ -39,7 +31,7 @@ class GestorPartidos {
         $hs = ($local ?? '') !== '' ? (float)$local : null;
         $as = ($visitante ?? '') !== '' ? (float)$visitante : null;
         if ($hs === null || $as === null) throw new ApiException('Ingresá el marcador de ambos equipos.');
-        if ($hs == $as && $this->partidos->avancesDesde((int)$p->getId())) {
+        if ($hs == $as && $this->esEliminatorio($p)) {
             throw new ApiException('En una llave de eliminación no puede haber empate: cargá el resultado final (por ejemplo, después de los penales).');
         }
         $p->setResultado(Resultado::jugado($p->getLocalId(), $p->getVisitanteId(), $hs, $as));
@@ -50,6 +42,7 @@ class GestorPartidos {
         $this->partidos->transaccion(function () use ($p) {
             $this->partidos->actualizar($p);
             $this->avanzar($p);
+            $this->desempate($p);
             $this->recalcular($p->getTorneoId());
         });
 
@@ -75,11 +68,7 @@ class GestorPartidos {
         $this->equipos->guardarEstadisticas($torneoId, $stats);
     }
 
-    /**
-     * Llaves de eliminación: pasa el ganador (o el perdedor) al partido que
-     * indica avance_llave. Si se borra el resultado, el lugar queda vacío.
-     * No se puede cambiar un resultado si el partido siguiente ya se jugó.
-     */
+    /** Pasa el ganador (o perdedor) al partido siguiente de la llave. */
     private function avanzar(Partido $p): void {
         $r = $p->getResultado();
         foreach ($this->partidos->avancesDesde((int)$p->getId()) as $a) {
@@ -97,6 +86,34 @@ class GestorPartidos {
             }
             if ($a['lado'] === 'local') $destino->setLocalId($equipo); else $destino->setVisitanteId($equipo);
             $this->partidos->actualizar($destino);
+        }
+    }
+
+    /** Partido de llave: alimenta a otro, sale de otro o es la gran final. */
+    private function esEliminatorio(Partido $p): bool {
+        $id = (int)$p->getId();
+        return (bool)$this->partidos->avancesDesde($id) || $this->partidos->tieneOrigenes($id)
+            || in_array($p->getFase(), [Fixture::GRAN_FINAL, Fixture::DESEMPATE], true);
+    }
+
+    /** Doble eliminación: si el campeón de perdedores gana la gran final, se juega un desempate. */
+    private function desempate(Partido $p): void {
+        if ($p->getFase() !== Fixture::GRAN_FINAL) return;
+        $t = $this->torneos->buscar($p->getTorneoId());
+        if ($t === null || $t->getTipo()?->getClave() !== 'eliminacion-doble') return;
+
+        $existente = null;
+        foreach ($this->partidos->delTorneo($t->getId()) as $x) if ($x->getFase() === Fixture::DESEMPATE) $existente = $x;
+        $hace = $p->estaJugado() && $p->getResultado()->getGanadorEquipoId() === $p->getVisitanteId();
+
+        if ($hace && $existente === null) {
+            $fecha = $p->getFecha() ? date('Y-m-d H:i:s', strtotime($p->getFecha() . ' +1 hour')) : null;
+            $nuevo = new Partido(null, $t->getId(), $p->getLocalId(), $p->getVisitanteId(), $fecha, $p->getUbicacion(),
+                Fixture::DESEMPATE, null, $p->getJuezId());
+            $this->partidos->crear($nuevo, $t->getOrganizadorId());
+        } elseif (!$hace && $existente !== null) {
+            if ($existente->estaJugado()) throw new ApiException('No se puede cambiar este resultado: el desempate de la final ya se jugó.');
+            $this->partidos->eliminar((int)$existente->getId());
         }
     }
 

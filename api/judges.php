@@ -1,12 +1,5 @@
 <?php
-/**
- * API del rol juez — rutas.  Lógica en controller/juez_controller.php
- *
- *   GET  ?action=status                 ¿soy juez? + mi última solicitud
- *   POST ?action=request {certificado, deportes, experiencia}
- *   GET  ?action=matches                partidos que tengo asignados
- *   POST ?action=result {matchId, homeScore, awayScore}
- */
+/** Rutas del rol juez (controller/juez_controller.php). */
 require_once __DIR__ . '/bootstrap.php';
 
 (new Router(fn() => new JuezController()))

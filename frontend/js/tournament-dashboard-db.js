@@ -1,9 +1,4 @@
-/* =====================================================
-   COMPETIKA — tournament-dashboard-db.js
-   Dashboard del organizador (tournament_dashboard.html)
-
-   Requiere, en este orden: main.js, navbar-user.js, tournament-api.js, este archivo.
-   ===================================================== */
+/* COMPETIKA — tournament-dashboard-db.js: dashboard del organizador. */
 (function () {
 const root = document.getElementById('td-dashboard');
 if (!root) return;
@@ -20,7 +15,12 @@ const $ = id => document.getElementById(id);
 const money = n => `${tdData?.costs?.currencySymbol || '$'} ${Number(n).toLocaleString('es-UY')}`;
 // Monedas habilitadas (tabla moneda): se cargan una vez desde la API
 let tdMonedas = [['UYU', 'UYU — Peso uruguayo']];
-competikaApi('catalogs').then(r => { if (r.success) tdMonedas = r.currencies.map(m => [m.code, `${m.code} — ${m.name}`]); });
+let tdFormatosActivos = null;
+competikaApi('catalogs').then(r => {
+    if (!r.success) return;
+    tdMonedas = r.currencies.map(m => [m.code, `${m.code} — ${m.name}`]);
+    tdFormatosActivos = new Set(r.formats.map(f => f.id));
+});
 competikaApi('judges').then(r => { if (r.success) tdJueces = r.judges; });
 const FL = 'style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)"';
 const PHASES = ['Fase de Grupos', 'Fecha 1', 'Fecha 2', 'Cuartos de Final', 'Semifinal', 'Gran Final'];
@@ -331,7 +331,8 @@ function renderConfig() {
     const t = tdData;
     const sports = (typeof cardData !== 'undefined' ? cardData.map(s => s.title) : []);
     if (t.sport && !sports.includes(t.sport)) sports.unshift(t.sport);
-    const formats = typeof tournamentTypes !== 'undefined' ? tournamentTypes.flatMap(tt => tt.subtipos.map(s => [s.id, s.title])) : [];
+    const formats = typeof tournamentTypes !== 'undefined' ? tournamentTypes.flatMap(tt => tt.subtipos
+        .filter(s => !tdFormatosActivos || tdFormatosActivos.has(s.id) || s.id === t.formatSubId).map(s => [s.id, s.title])) : [];
     const deps = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida','Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha','Salto','San José','Soriano','Tacuarembó','Treinta y Tres'];
     const opt = (list, sel) => list.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`; }).join('');
     const field = (id, label, value, type = 'text', extra = '') =>
@@ -359,7 +360,8 @@ function renderConfig() {
         </div>
         <div class="td-card">
           <p class="td-card-label"><i class="ti ti-cash"></i> Costos y premios</p>
-          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt(tdMonedas, t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
+          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt(t.costs.currency && !tdMonedas.some(([c]) => c === t.costs.currency)
+              ? [[t.costs.currency, t.costs.currency], ...tdMonedas] : tdMonedas, t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
           <div class="td-ep-row2">${field('cfg-fee', 'Costo de inscripción', t.costs.entryFee, 'number', 'min="0" step="0.01"')}${field('cfg-field', 'Alquiler del lugar', t.costs.fieldCost, 'number', 'min="0" step="0.01"')}</div>
           ${field('cfg-ref', 'Costo de árbitro', t.costs.refereeCost, 'number', 'min="0" step="0.01"')}
           ${[1, 2, 3].map(n => field('cfg-prize-' + n, 'Premio ' + prizeLabel(n), t.prizes?.find(p => p.place === n)?.description, 'text', 'maxlength="255"')).join('')}

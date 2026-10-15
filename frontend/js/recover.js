@@ -1,7 +1,4 @@
-/* =====================================================
-   COMPETIKA — recover.js  (paginas/recover/recover.html)
-   Paso 1: pedir el enlace por correo.  Paso 2 (?token=): contraseña nueva.
-   ===================================================== */
+/* COMPETIKA — recover.js: recuperar contraseña. */
 (function () {
 const $ = id => document.getElementById(id);
 const API = (window.competikaSiteRoot || '../../..') + '/api/password.php';

@@ -1,7 +1,4 @@
-/* =====================================================
-   COMPETIKA — judge.js  (paginas/judge/judge.html)
-   Partidos asignados al juez y carga de resultados.
-   ===================================================== */
+/* COMPETIKA — judge.js: partidos asignados al juez. */
 (function () {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

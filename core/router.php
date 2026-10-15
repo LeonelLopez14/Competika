@@ -1,16 +1,5 @@
 <?php
-/**
- * Enrutador de la API: asocia cada ?action= a un método del controlador,
- * controla el método HTTP y convierte las excepciones en respuestas JSON.
- * El controlador se crea recién al despachar (dentro del try), así un error
- * de conexión a la base también se responde como JSON. Si algo falla en
- * medio de una transacción, la deshace.
- *
- *   (new Router(fn() => new TorneoController()))
- *       ->get('list', 'listar')
- *       ->post('create', 'crear')
- *       ->despachar(new Request());
- */
+/** Enrutador de la API: asocia cada ?action= con un método del controlador. */
 class Router {
     /** @var callable */
     private $fabrica;

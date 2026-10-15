@@ -161,10 +161,7 @@ class UsuarioRepository extends BaseRepository {
         $this->ejecutar("UPDATE usuario SET foto_perfil = ? WHERE ci = ?", [$archivo, $ci]);
     }
 
-    /**
-     * Borra la cuenta. Los equipos y resultados de los torneos se conservan,
-     * pero se desvinculan de la persona.
-     */
+    /** Borra la cuenta y la desvincula de equipos y resultados. */
     public function eliminarCuenta(string $ci): void {
         $this->transaccion(function () use ($ci) {
             $this->ejecutar("DELETE FROM notificacion WHERE usuario_ci_fk = ?", [$ci]);

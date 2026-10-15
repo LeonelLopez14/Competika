@@ -1,9 +1,4 @@
-/* =====================================================
-   COMPETIKA — profile_settings.js  (profile_configuration.html)
-   Todos los cambios se guardan en la base de datos vía api/profile.php.
-   Requiere navbar-user.js cargado antes (define competikaSiteRoot y
-   competikaRefreshSession).
-   ===================================================== */
+/* COMPETIKA — profile_settings.js: configuración de la cuenta. */
 (function () {
 const API = (window.competikaSiteRoot || '../../..') + '/api/profile.php';
 const $ = id => document.getElementById(id);

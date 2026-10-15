@@ -1,19 +1,15 @@
 <?php
-/**
- * Conexión PDO singleton.
- *
- * Las credenciales se toman de variables de entorno (Docker, o SetEnv en Apache).
- * Si no están definidas, se usan los valores de desarrollo local de siempre,
- * así en XAMPP/LAMPP sigue funcionando sin configurar nada.
- *
- * Variables: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS
- */
+/** Conexión PDO singleton (variables DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS). */
 
 if (!function_exists('env')) {
+    /** Variable de entorno, SetEnv de Apache o config/local.php (en ese orden). */
     function env(string $key, ?string $default = null): ?string {
+        static $local = null;
         $v = getenv($key);
-        if ($v === false || $v === '') {
-            $v = $_SERVER[$key] ?? null;   // Apache SetEnv
+        if ($v === false || $v === '') $v = $_SERVER[$key] ?? null;
+        if ($v === null || $v === '') {
+            $local ??= is_file(__DIR__ . '/local.php') ? (array)(include __DIR__ . '/local.php') : [];
+            $v = $local[$key] ?? null;
         }
         return ($v === null || $v === '') ? $default : (string)$v;
     }
@@ -40,10 +36,7 @@ class Database {
         return self::$instance;
     }
 
-    /**
-     * Suelta la conexión compartida (la cierra si nadie más la usa).
-     * Lo usa el stream de notificaciones para no ocupar una conexión mientras espera.
-     */
+    /** Cierra la conexión compartida. */
     public static function cerrar(): void {
         self::$instance = null;
     }

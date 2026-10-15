@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Rol juez (api/judges.php): pedir ser juez, ver los partidos asignados y
- * cargar su resultado. Un juez solo puede tocar el marcador de SUS partidos.
- */
+/** Rol juez: solicitud, partidos asignados y carga de resultados. */
 class JuezController {
     private JuezRepository $jueces;
     private PartidoRepository $partidos;

@@ -14,10 +14,7 @@ class HonorRepository extends BaseRepository {
         return (int)$this->valor("SELECT COUNT(*) FROM honor WHERE a_equipo_id_fk IN (" . self::marcas($equipoIds) . ")", array_values($equipoIds));
     }
 
-    /**
-     * Partido jugado (con resultado) en el que participó un equipo de $ci:
-     * devuelve [miEquipo, rival, torneoId] o null.
-     */
+    /** [miEquipo, rival, torneoId] de un partido jugado por un equipo de $ci, o null. */
     public function partidoJugadoPor(string $ci, int $partidoId): ?array {
         $f = $this->fila("
             SELECT ee.equipo_id_fk AS mio, e.torneo_id_fk,

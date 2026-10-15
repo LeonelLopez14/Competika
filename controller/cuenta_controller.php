@@ -2,10 +2,7 @@
 require_once __DIR__ . '/../core/autoload.php';
 require_once __DIR__ . '/../config/session.php';
 
-/**
- * Login, registro y cierre de sesión (formularios HTML clásicos: responden
- * con redirecciones, no JSON). Lo usan controller/login.php, registrar.php y logout.php.
- */
+/** Login, registro y cierre de sesión. */
 class CuentaController {
     private const LOGIN    = '../frontend/paginas/login/login.html';
     private const REGISTRO = '../frontend/paginas/register/register.html';
@@ -49,8 +46,7 @@ class CuentaController {
 
         self::iniciarSesion($u);
         if (!empty($_POST['remember-me'])) Recordarme::crear($u['ci']);
-        // Volver a la página desde donde se pidió el login. Solo páginas propias
-        // del sitio (evita redirecciones abiertas a otros dominios).
+        // Regreso a la página de origen (solo rutas del sitio).
         $next = (string)($_POST['next'] ?? '');
         if (preg_match('#^frontend/paginas/[a-z_]+/[a-z_]+\.html(\?t=\d+)?$#', $next)) self::ir('../' . $next);
         self::ir(self::INICIO);

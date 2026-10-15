@@ -1,10 +1,5 @@
 <?php
-/**
- * "Recordarme": mantiene la sesión iniciada 30 días aunque se cierre el
- * navegador. La cookie lleva selector:validador; en la base se guarda el
- * hash del validador. Cada vez que se usa, el token se cambia (rotación),
- * así una cookie robada deja de servir en cuanto el dueño vuelve a entrar.
- */
+/** "Recordarme": sesión de 30 días con token rotativo. */
 final class Recordarme {
     public const COOKIE = 'competika_rec';
     private const DIAS = 30;

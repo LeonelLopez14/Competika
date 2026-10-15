@@ -1,14 +1,6 @@
--- =====================================================
--- COMPETIKA — Migración de bases creadas con versiones anteriores
---
--- Si creaste la base con el schema.sql actual NO hace falta: ya tiene todo.
--- Si tu base es anterior, ejecutá este
--- archivo una vez y después usuarios.sql. Deja la base igual que schema.sql
--- sin perder datos. Se puede correr más de una vez.
--- Requiere MariaDB 10.2+ (XAMPP/LAMPP y la imagen de Docker lo cumplen).
--- =====================================================
+-- COMPETIKA — Migración de una base anterior al esquema actual.
 USE competika_db;
--- Los datos de este archivo (tildes, €) están en UTF-8: que el cliente los lea así
+-- Cliente en UTF-8 (tildes y símbolos).
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 1) Columnas agregadas al esquema original
@@ -40,7 +32,7 @@ INSERT INTO tipo_torneo (nombre, clave, etiqueta, categoria) VALUES
     ('torneo_relampago',   'blitz',              'Torneo relámpago',       'especial'),
     ('gran_premio',        'gran-premio',        'Gran premio',            'especial'),
     ('copa_desafio',       'copa-desafio',       'Copa desafío',           'especial')
-ON DUPLICATE KEY UPDATE clave = VALUES(clave), etiqueta = VALUES(etiqueta), categoria = VALUES(categoria);
+ON DUPLICATE KEY UPDATE clave = VALUES(clave), etiqueta = COALESCE(etiqueta, VALUES(etiqueta)), categoria = VALUES(categoria);
 
 CREATE TABLE IF NOT EXISTS moneda (
     codigo CHAR(3) PRIMARY KEY,
@@ -51,7 +43,7 @@ CREATE TABLE IF NOT EXISTS moneda (
 INSERT INTO moneda (codigo, nombre, simbolo) VALUES
     ('UYU', 'Peso uruguayo', '$'), ('USD', 'Dólar', 'US$'), ('ARS', 'Peso argentino', 'AR$'),
     ('BRL', 'Real', 'R$'), ('EUR', 'Euro', '€')
-ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), simbolo = VALUES(simbolo);
+ON DUPLICATE KEY UPDATE codigo = codigo;
 
 CREATE TABLE IF NOT EXISTS persona (
     persona_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -101,8 +93,7 @@ ALTER TABLE configuracion_torneo
     ADD CONSTRAINT fk_config_arbitro  FOREIGN KEY IF NOT EXISTS (arbitro_persona_fk)  REFERENCES persona(persona_id),
     ADD CONSTRAINT fk_config_contacto FOREIGN KEY IF NOT EXISTS (contacto_persona_fk) REFERENCES persona(persona_id);
 
--- 4) Pasar los datos de las columnas que rompían la 3FN a sus entidades y
---    borrarlas. Cada paso se ejecuta solo si la columna existe (si no, "DO 0").
+-- 4) Columnas que rompían la 3FN -> entidades.
 
 -- 4a) torneo.tipo_torneo (texto) -> torneo.tipo_torneo_id_fk
 SET @hay = (SELECT COUNT(*) FROM information_schema.COLUMNS
@@ -121,7 +112,6 @@ PREPARE paso FROM @sql; EXECUTE paso; DEALLOCATE PREPARE paso;
 ALTER TABLE configuracion_torneo DROP COLUMN IF EXISTS moneda;
 
 -- 4c) arbitro_nombre/telefono/email -> persona
---     (_cfg es una columna auxiliar para enganchar cada persona con su configuración)
 ALTER TABLE persona ADD COLUMN IF NOT EXISTS _cfg INT NULL;
 SET @hay = (SELECT COUNT(*) FROM information_schema.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion_torneo' AND COLUMN_NAME = 'arbitro_nombre');
@@ -134,8 +124,7 @@ UPDATE persona SET _cfg = NULL;
 ALTER TABLE configuracion_torneo
     DROP COLUMN IF EXISTS arbitro_nombre, DROP COLUMN IF EXISTS arbitro_telefono, DROP COLUMN IF EXISTS arbitro_email;
 
--- 4d) contacto_nombre/telefono/email -> persona, solo si es distinto de la
---     cuenta del organizador (si es igual queda NULL = datos de la cuenta)
+-- 4d) contacto_nombre/telefono/email -> persona
 SET @hay = (SELECT COUNT(*) FROM information_schema.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion_torneo' AND COLUMN_NAME = 'contacto_nombre');
 SET @sql = IF(@hay > 0, 'INSERT INTO persona (nombre, telefono, email, _cfg)
@@ -155,8 +144,7 @@ ALTER TABLE configuracion_torneo
 
 -- 5) Tablas de juez, seguimiento de torneos, "Recordarme" y recuperación de contraseña
 
--- Solicitudes para ser juez: el usuario completa el formulario y un
--- administrador la aprueba (se crea la fila en juez) o la rechaza.
+-- Solicitudes para ser juez.
 CREATE TABLE IF NOT EXISTS solicitud_juez (
     solicitud_id          INT AUTO_INCREMENT PRIMARY KEY,
     usuario_ci_fk         VARCHAR(20)  NOT NULL,
@@ -183,8 +171,7 @@ CREATE TABLE IF NOT EXISTS seguimiento (
     FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- "Recordarme": token persistente (selector público + validador guardado
--- como hash SHA-256; si roban la base, los tokens no sirven).
+-- Tokens de "Recordarme" (hash del validador).
 CREATE TABLE IF NOT EXISTS sesion_recordada (
     selector        CHAR(24)    PRIMARY KEY,
     validador_hash  CHAR(64)    NOT NULL,
@@ -193,8 +180,7 @@ CREATE TABLE IF NOT EXISTS sesion_recordada (
     FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- "¿Olvidaste tu contraseña?": enlaces de un solo uso que vencen en 1 hora
--- (se guarda solo el hash del token).
+-- Enlaces de recuperación de contraseña (hash del token).
 CREATE TABLE IF NOT EXISTS recuperacion_clave (
     token_hash     CHAR(64)    PRIMARY KEY,
     usuario_ci_fk  VARCHAR(20) NOT NULL,
@@ -203,9 +189,10 @@ CREATE TABLE IF NOT EXISTS recuperacion_clave (
     FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6) Competitivo, equipos de varios integrantes, grupos, premios por puesto,
---    llaves de eliminación, contacto y bloqueo de cuentas
+-- 6) Competitivo, equipos, grupos, premios, llaves, contacto y bloqueo de cuentas
 ALTER TABLE admin ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE tipo_torneo ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE moneda ADD COLUMN IF NOT EXISTS activa BOOLEAN NOT NULL DEFAULT TRUE;
 
 ALTER TABLE usuario
     ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN NOT NULL DEFAULT FALSE,
@@ -238,8 +225,7 @@ CREATE TABLE IF NOT EXISTS premio (
     FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Llaves de eliminación: a qué partido pasa el ganador (o el perdedor, en
--- doble eliminación) y de qué lado juega.
+-- Avance en llaves de eliminación.
 CREATE TABLE IF NOT EXISTS avance_llave (
     origen_fk   INT NOT NULL,
     resultado   ENUM('ganador','perdedor') NOT NULL,

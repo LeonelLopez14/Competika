@@ -51,8 +51,7 @@ textarea.input-field {
     transition: all 0.3s ease;
 }
 
-/* Etiqueta arriba: al enfocar, con contenido, y siempre en selects y fechas
-   (esos campos muestran su propio texto y la etiqueta lo taparía). */
+/* Etiqueta arriba al enfocar, con contenido, y en selects y fechas. */
 .input-field:focus ~ .floating-label,
 .input-field:not(:placeholder-shown) ~ .floating-label,
 select.input-field ~ .floating-label,

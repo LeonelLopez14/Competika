@@ -26,7 +26,9 @@ El esquema está en 3FN: el árbitro principal y el contacto de un torneo son fi
 `tipo_torneo`. Si el contacto es el mismo que el de la cuenta del organizador no se guarda: se toma de `usuario`.
 
 **Primer administrador:** registrate en el sitio, cambiá el correo dentro de `database/admin.sql` y
-ejecutalo como root (phpMyAdmin). Al volver a entrar aparece "Administración" en el menú.
+ejecutalo como root (phpMyAdmin), no con `competika_app`. Al recargar el sitio aparece "Admin" en la
+barra de navegación (y "Administración" en el menú de la cuenta). La consulta final del archivo tiene que
+mostrar una fila con `activo = 1`; si no muestra nada, el correo no coincide con ninguna cuenta.
 
 `usuarios.sql` crea `competika_app` con GRANT por tabla, REVOKE explícitos y límites de recursos.
 Los límites cuentan para todo el sitio (todos los visitantes usan esa cuenta y cada pedido a la API
@@ -51,7 +53,10 @@ Sin ellas usa los valores locales de `config/database.php`. Con `APP_ENV=product
 1. Iniciar Apache y MySQL.
 2. phpMyAdmin → pestaña SQL: ejecutar `schema.sql` y `usuarios.sql` (o `ajustes.sql` + `usuarios.sql` si ya tenías la base).
 3. Apache necesita `mod_rewrite`, `mod_headers` y `AllowOverride All` en la carpeta del proyecto.
-   Opcional: VirtualHost `competika.local` con `apache/competika-xampp.conf` (instrucciones adentro).
+   Opcional: VirtualHost `competika.local` con `apache/competika-xampp.conf`:
+   pegarlo al final de `/opt/lampp/etc/extra/httpd-vhosts.conf` (Windows: `C:\xampp\apache\conf\extra\httpd-vhosts.conf`),
+   verificar en `httpd.conf` el `Include` de ese archivo y los módulos `rewrite` y `headers`,
+   agregar `127.0.0.1 competika.local` al archivo hosts y reiniciar Apache.
 4. Permiso de escritura para las fotos (LAMPP corre Apache como usuario `daemon`):
    `sudo chgrp daemon uploads/avatars && chmod 775 uploads/avatars`
 5. Probar la conexión por consola: `php test_conexion.php` (por navegador da 403 a propósito).
@@ -96,6 +101,9 @@ docker compose up -d --build  # http://localhost:8080
 - La base se inicializa sola la primera vez: `schema.sql`, `ajustes.sql` y `docker/db-init.sh`
   (los permisos de `usuarios.sql` para el host `'%'`, con la clave de `.env`).
 - La base no publica puertos; solo el contenedor `web` llega a ella.
+- Primer administrador: registrarse en el sitio, poner el correo en `database/admin.sql` y ejecutar
+  `docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < database/admin.sql`.
+- Correo: completar `APP_URL`, `MAIL_ENABLED` y `SMTP_*` en `.env` y reiniciar con `docker compose up -d`.
 - Las fotos de perfil quedan en el volumen `avatars` (sobreviven a un `--build`).
 - Si la base ya existía antes de esta versión, migrala a mano (y volvé a aplicar los permisos):
   `docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < database/ajustes.sql`
@@ -130,15 +138,22 @@ docker compose up -d --build  # http://localhost:8080
 - **Fixture automático:** todos los formatos. Suizo, vidas, copa desafío y grupos + eliminación se
   generan por rondas desde el Calendario del dashboard.
 - **Panel de administración:** solicitudes de juez, usuarios (roles, suspender, eliminar), torneos
-  (estado, transferir, eliminar, editar desde el dashboard), mensajes de Contacto y anuncios.
+  (estado, transferir, eliminar, editar desde el dashboard), mensajes de Contacto, anuncios y catálogos
+  (monedas: agregar, editar y deshabilitar; formatos: nombre y habilitado).
+- **Doble eliminación:** si el campeón de la llave de perdedores gana la gran final, se crea solo el
+  partido "Gran final · Desempate".
 - **Redes del pie de página:** se configuran en `frontend/js/navbar-user.js` (objeto `REDES`);
   las que quedan vacías no se muestran.
 
 ## Correos (recuperar contraseña)
 
-- `MAIL_ENABLED=1` activa el envío con `mail()` de PHP; el servidor necesita sendmail/SMTP configurado
-  (en Ubuntu, por ejemplo, `msmtp-mta` con una cuenta SMTP). `MAIL_FROM` es el remitente y `APP_URL`
-  la dirección pública del sitio (ej. `https://competika.ejemplo.uy`) para armar el enlace.
-- Sin correo configurado (XAMPP), en desarrollo y **solo desde la misma máquina** la página muestra el
+- La configuración va en variables de entorno o, en XAMPP, en `config/local.php`
+  (copiar `config/local.example.php`; ese archivo no se sube a git y Apache no lo sirve).
+- `MAIL_ENABLED=1` activa el envío. Con `SMTP_HOST` se usa SMTP directo (sin sendmail):
+  para Gmail, `smtp.gmail.com`, puerto `587`, `SMTP_USER` = la cuenta y `SMTP_PASS` = una
+  **contraseña de aplicación** (Cuenta de Google → Seguridad → Verificación en 2 pasos → Contraseñas de aplicaciones).
+  `SMTP_SECURE` admite `tls` (587, por defecto), `ssl` (465) o `none`. Sin `SMTP_HOST` se usa `mail()` de PHP.
+- `MAIL_FROM` es el remitente y `APP_URL` la dirección pública del sitio (ej. `http://localhost/Competika`) para armar el enlace.
+- Sin correo configurado, en desarrollo y **solo desde la misma máquina** la página muestra el
   enlace en pantalla ("modo prueba"); siempre queda también en el log de errores de PHP.
 - En producción (`APP_ENV=production`) el enlace nunca se muestra en pantalla.

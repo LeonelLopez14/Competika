@@ -1,11 +1,7 @@
 <?php
 require_once __DIR__ . '/base_repository.php';
 
-/**
- * Partidos (enfrentamiento), sus equipos (enfrentamiento_equipo, es_local
- * marca al local) y su resultado. La app no tiene DELETE sobre resultado:
- * un resultado "deshecho" vuelve a estado pendiente.
- */
+/** Partidos, sus equipos y su resultado. */
 class PartidoRepository extends BaseRepository {
 
     private const SELECT = "

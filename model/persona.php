@@ -1,8 +1,5 @@
 <?php
-/**
- * Persona externa sin cuenta en el sitio (tabla persona): el árbitro
- * principal o el contacto de un torneo. Los torneos la referencian por FK.
- */
+/** Persona externa sin cuenta: árbitro o contacto de un torneo. */
 class Persona {
     public function __construct(
         private ?int $id,
@@ -15,10 +12,7 @@ class Persona {
         return new self(isset($f['persona_id']) ? (int)$f['persona_id'] : null, $f['nombre'], $f['telefono'] ?? null, $f['email'] ?? null);
     }
 
-    /**
-     * Arma una persona con lo que mandó el formulario ({name, phone, email}).
-     * Devuelve null si vino todo vacío; si hay teléfono o correo, el nombre es obligatorio.
-     */
+    /** Persona desde el formulario; null si vino vacía. */
     public static function desdeFormulario(array $d, string $quien): ?self {
         $nombre = Validar::texto($d['name'] ?? null, 150);
         $tel    = Validar::telefono($d['phone'] ?? null, "El teléfono $quien no es válido.");

@@ -1,18 +1,10 @@
--- =====================================================
--- COMPETIKA — Esquema completo (3FN)
--- Base nueva: ejecutar este archivo y después usuarios.sql.
--- Base creada con una versión anterior: ejecutar ajustes.sql (la migra).
---
--- Entidades de catálogo (moneda, tipo_torneo) y de personas externas
--- (persona: árbitros y contactos sin cuenta) se referencian por FK en
--- lugar de repetir sus datos en cada torneo.
--- =====================================================
+-- COMPETIKA — Esquema completo (3FN).
 CREATE DATABASE IF NOT EXISTS competika_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
 USE competika_db;
--- Los datos de este archivo (tildes, €) están en UTF-8: que el cliente los lea así
+-- Cliente en UTF-8 (tildes y símbolos).
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS usuario (
@@ -71,7 +63,8 @@ CREATE TABLE IF NOT EXISTS tipo_torneo (
     nombre VARCHAR(100) NOT NULL UNIQUE,
     clave VARCHAR(50) NULL UNIQUE,
     etiqueta VARCHAR(100) NULL,
-    categoria VARCHAR(30) NULL
+    categoria VARCHAR(30) NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO tipo_torneo (nombre, clave, etiqueta, categoria) VALUES
@@ -86,22 +79,22 @@ INSERT INTO tipo_torneo (nombre, clave, etiqueta, categoria) VALUES
     ('torneo_relampago',   'blitz',              'Torneo relámpago',       'especial'),
     ('gran_premio',        'gran-premio',        'Gran premio',            'especial'),
     ('copa_desafio',       'copa-desafio',       'Copa desafío',           'especial')
-ON DUPLICATE KEY UPDATE clave = VALUES(clave), etiqueta = VALUES(etiqueta), categoria = VALUES(categoria);
+ON DUPLICATE KEY UPDATE clave = VALUES(clave), etiqueta = COALESCE(etiqueta, VALUES(etiqueta)), categoria = VALUES(categoria);
 
 -- Catálogo de monedas (ISO 4217).
 CREATE TABLE IF NOT EXISTS moneda (
     codigo CHAR(3) PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
-    simbolo VARCHAR(5) NOT NULL
+    simbolo VARCHAR(5) NOT NULL,
+    activa BOOLEAN NOT NULL DEFAULT TRUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO moneda (codigo, nombre, simbolo) VALUES
     ('UYU', 'Peso uruguayo', '$'), ('USD', 'Dólar', 'US$'), ('ARS', 'Peso argentino', 'AR$'),
     ('BRL', 'Real', 'R$'), ('EUR', 'Euro', '€')
-ON DUPLICATE KEY UPDATE nombre = VALUES(nombre), simbolo = VALUES(simbolo);
+ON DUPLICATE KEY UPDATE codigo = codigo;
 
--- Personas externas sin cuenta en el sitio: árbitros principales y
--- contactos de torneo. Un torneo las referencia por FK (no copia sus datos).
+-- Personas externas: árbitros y contactos de torneo.
 CREATE TABLE IF NOT EXISTS persona (
     persona_id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
@@ -256,9 +249,7 @@ CREATE TABLE IF NOT EXISTS registro_de_actividad (
     FOREIGN KEY (admin_id_fk) REFERENCES admin(admin_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Notificaciones (la campana del menú). Se generan cuando pasa algo que
---    le importa al usuario: alguien se inscribe en su torneo, le programan
---    o le cargan el resultado de un partido, el torneo empieza o termina, etc.
+-- Notificaciones de la campana.
 CREATE TABLE IF NOT EXISTS notificacion (
     notificacion_id  INT AUTO_INCREMENT PRIMARY KEY,
     usuario_ci_fk    VARCHAR(20)  NOT NULL,
@@ -273,8 +264,7 @@ CREATE TABLE IF NOT EXISTS notificacion (
     FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Honores (perfil → historial de partidos): un jugador le da "honor" al
---    equipo rival después de un partido jugado. Uno por persona y partido.
+-- Honores al equipo rival después de un partido.
 CREATE TABLE IF NOT EXISTS honor (
     honor_id              INT AUTO_INCREMENT PRIMARY KEY,
     enfrentamiento_id_fk  INT          NOT NULL,
@@ -288,8 +278,7 @@ CREATE TABLE IF NOT EXISTS honor (
     FOREIGN KEY (a_equipo_id_fk)       REFERENCES equipo(equipo_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Solicitudes para ser juez: el usuario completa el formulario y un
--- administrador la aprueba (se crea la fila en juez) o la rechaza.
+-- Solicitudes para ser juez.
 CREATE TABLE IF NOT EXISTS solicitud_juez (
     solicitud_id          INT AUTO_INCREMENT PRIMARY KEY,
     usuario_ci_fk         VARCHAR(20)  NOT NULL,
@@ -316,8 +305,7 @@ CREATE TABLE IF NOT EXISTS seguimiento (
     FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- "Recordarme": token persistente (selector público + validador guardado
--- como hash SHA-256; si roban la base, los tokens no sirven).
+-- Tokens de "Recordarme" (hash del validador).
 CREATE TABLE IF NOT EXISTS sesion_recordada (
     selector        CHAR(24)    PRIMARY KEY,
     validador_hash  CHAR(64)    NOT NULL,
@@ -326,8 +314,7 @@ CREATE TABLE IF NOT EXISTS sesion_recordada (
     FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- "¿Olvidaste tu contraseña?": enlaces de un solo uso que vencen en 1 hora
--- (se guarda solo el hash del token).
+-- Enlaces de recuperación de contraseña (hash del token).
 CREATE TABLE IF NOT EXISTS recuperacion_clave (
     token_hash     CHAR(64)    PRIMARY KEY,
     usuario_ci_fk  VARCHAR(20) NOT NULL,
@@ -346,8 +333,7 @@ CREATE TABLE IF NOT EXISTS premio (
     FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Llaves de eliminación: a qué partido pasa el ganador (o el perdedor, en
--- doble eliminación) y de qué lado juega.
+-- Avance en llaves de eliminación.
 CREATE TABLE IF NOT EXISTS avance_llave (
     origen_fk   INT NOT NULL,
     resultado   ENUM('ganador','perdedor') NOT NULL,

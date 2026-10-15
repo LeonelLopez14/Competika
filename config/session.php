@@ -1,9 +1,5 @@
 <?php
-/**
- * Arranque de sesión común a controladores y API.
- * Cookie HttpOnly (JS no puede leerla), SameSite=Lax (mitiga CSRF)
- * y Secure cuando el sitio se sirve por HTTPS (también detrás de un proxy).
- */
+/** Sesión con cookie HttpOnly, SameSite=Lax y Secure bajo HTTPS. */
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');

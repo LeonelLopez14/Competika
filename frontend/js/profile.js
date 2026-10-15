@@ -1,9 +1,4 @@
-/* =====================================================
-   COMPETIKA — profile.js  (profile.html)
-   Muestra los datos reales de la cuenta logueada: identidad (api/profile.php?action=me)
-   y torneos, partidos y estadísticas (api/profile.php?action=activity).
-   Requiere navbar-user.js cargado antes.
-   ===================================================== */
+/* COMPETIKA — profile.js: página de perfil. */
 (function () {
 const ROOT = window.competikaSiteRoot || '../../..';
 const API = ROOT + '/api/profile.php';

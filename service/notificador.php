@@ -1,8 +1,5 @@
 <?php
-/**
- * Arma y guarda los avisos de la campana. Un aviso que no se puede guardar
- * se registra en el log y NUNCA interrumpe la acción principal.
- */
+/** Avisos de la campana (un fallo nunca corta la acción principal). */
 class Notificador {
     private NotificacionRepository $notificaciones;
     private EquipoRepository $equipos;

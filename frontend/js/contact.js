@@ -1,7 +1,4 @@
-/* =====================================================
-   COMPETIKA — contact.js
-   Formulario de contacto: el mensaje llega al panel de administración.
-   ===================================================== */
+/* COMPETIKA — contact.js: formulario de contacto. */
 (function () {
 const form = document.getElementById('contacto-form');
 if (!form) return;

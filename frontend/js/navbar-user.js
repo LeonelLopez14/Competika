@@ -45,10 +45,7 @@
         }
     });
 
-    /* ── Sesión: siempre desde el servidor (api/session.php) ──
-       Sin sesión el sitio muestra "Invitado" y los enlaces Iniciar sesión /
-       Registrarse; con sesión, esos enlaces desaparecen y se ven los datos
-       reales de la cuenta. Nada de la cuenta se guarda en el navegador. */
+    /* ── Sesión (api/session.php) ── */
     const siteRoot = scriptSrc.replace(/\/frontend\/js\/navbar-user\.js.*$/, '');
     const navUser = document.querySelector('.navbar-user');
     const guestItems = Array.from(document.querySelectorAll('.navbar-list a[href$="login/login.html"], .navbar-list a[href$="register/register.html"], .mobile-menu-list a[href$="login/login.html"], .mobile-menu-list a[href$="register/register.html"]')).map(a => a.closest('li'));
@@ -90,6 +87,30 @@
         });
     }
 
+    /** Enlaces de la barra y del menú móvil según el rol (juez, admin). */
+    function setRoleLinks(links) {
+        document.querySelectorAll('[data-role-link]').forEach(li => li.remove());
+        const lists = [
+            [document.querySelector('.navbar-list'), 'nav-links'],
+            [document.querySelector('.mobile-menu-list'), ''],
+        ];
+        lists.forEach(([ul, cls]) => {
+            if (!ul) return;
+            const ref = Array.from(ul.children).find(li => li.querySelector('a[href$="login/login.html"]'));
+            links.forEach(l => {
+                const li = document.createElement('li');
+                li.dataset.roleLink = '';
+                if (cls) li.className = cls;
+                const a = document.createElement('a');
+                a.href = l.href;
+                a.textContent = l.text;
+                if (location.pathname.endsWith(new URL(l.href, location.href).pathname)) a.setAttribute('aria-current', 'page');
+                li.appendChild(a);
+                ul.insertBefore(li, ref || null);
+            });
+        });
+    }
+
     function renderSession(s) {
         const logged = !!(s && s.logged);
         guestItems.forEach(li => { if (li) { li.style.display = logged ? 'none' : ''; li.style.visibility = ''; } });
@@ -98,6 +119,7 @@
         const bell = document.getElementById('notif-wrap');
 
         if (!logged) {
+            setRoleLinks([]);
             if (/\/frontend\/paginas\/(profile|profile_configuration|judge|admin)\//.test(location.pathname)) {
                 location.replace(LOGIN);
                 return;
@@ -131,16 +153,17 @@
             ...(roles.admin ? [{ href: ADMIN, icon: 'ti-shield-lock', text: 'Administración' }] : []),
             { href: siteRoot + '/controller/logout.php', icon: 'ti-logout', text: 'Cerrar sesión', danger: true },
         ]);
+        setRoleLinks([
+            ...(roles.juez ? [{ href: JUDGE, text: 'Arbitrajes' }] : []),
+            ...(roles.admin ? [{ href: ADMIN, text: 'Admin' }] : []),
+        ]);
         [['organizador', roles.organizador], ['participante', roles.participante], ['juez', roles.juez]].forEach(([rol, on]) => {
             document.querySelectorAll('.pf-role--' + rol).forEach(el => { el.style.display = on ? '' : 'none'; });
         });
         startNotifications();
     }
 
-    /* ── Notificaciones reales (api/notifications.php) ──
-       Se cargan al entrar y después llegan en tiempo real por Server-Sent
-       Events; si el navegador o el servidor no lo permiten, se consulta
-       cada 30 s. */
+    /* ── Notificaciones (tiempo real con SSE, o cada 30 s) ── */
     const NOTIF_API = siteRoot + '/api/notifications.php';
     const ICONS = {
         nuevo_inscripto: 'ti-user-plus', inscripcion: 'ti-door-enter', partido: 'ti-calendar-event',

@@ -1,8 +1,5 @@
 <?php
-/**
- * Guarda en la base el plan de Fixture, genera la siguiente ronda de los
- * formatos por rondas y calcula el campeón.
- */
+/** Guarda el fixture, genera rondas siguientes y calcula el campeón. */
 class GeneradorFixture {
     private PartidoRepository $partidos;
     private EquipoRepository $equipos;
@@ -12,11 +9,7 @@ class GeneradorFixture {
         $this->equipos = $e ?? new EquipoRepository();
     }
 
-    /**
-     * Primer fixture del torneo, o la siguiente ronda en los formatos por rondas.
-     * @param array $opc inicio, hora, dias, minutos, lugar, grupos, etapas
-     * @return int partidos creados
-     */
+    /** Primer fixture o siguiente ronda; devuelve los partidos creados. */
     public function generar(Torneo $t, array $opc): int {
         $formato = $t->getTipo()?->getClave();
         if (!Fixture::soporta($formato)) throw new ApiException('Elegí el formato del torneo en Configuración para generar el fixture.');

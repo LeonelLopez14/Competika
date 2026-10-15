@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/base_repository.php';
 
-/**
- * Equipos. Un equipo pertenece a un torneo a través de su fila en
- * tabla_posiciones (que además guarda sus estadísticas).
- */
+/** Equipos y su fila en tabla_posiciones. */
 class EquipoRepository extends BaseRepository {
 
     /** @return Equipo[] en orden de inscripción */

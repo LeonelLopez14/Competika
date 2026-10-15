@@ -1,11 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Torneos (api/tournaments.php): valida permisos y datos, usa los
- * repositorios y servicios, y devuelve arreglos listos para JSON.
- * Puede modificar un torneo su organizador o un administrador.
- */
+/** Torneos, equipos, partidos y fixture. */
 class TorneoController {
     private TorneoRepository $torneos;
     private EquipoRepository $equipos;
@@ -77,8 +73,8 @@ class TorneoController {
     public function catalogos(): array {
         return [
             'success'    => true,
-            'formats'    => array_map(fn(TipoTorneo $x) => $x->toArray(), $this->catalogos->tiposTorneo()),
-            'currencies' => array_map(fn(Moneda $m) => $m->toArray(), $this->catalogos->monedas()),
+            'formats'    => array_map(fn(TipoTorneo $x) => $x->toArray(), $this->catalogos->tiposTorneo(true)),
+            'currencies' => array_map(fn(Moneda $m) => $m->toArray(), $this->catalogos->monedas(true)),
         ];
     }
 
@@ -294,6 +290,9 @@ class TorneoController {
             $clave = Validar::texto($d['formatSubId'] ?? null, 50);
             $tipo = $clave === null ? null : $this->catalogos->tipoPorClave($clave);
             if ($clave !== null && $tipo === null) throw new ApiException('Formato de torneo inválido.');
+            if ($tipo !== null && !$tipo->estaActivo() && $tipo->getId() !== $t->getTipo()?->getId()) {
+                throw new ApiException('Ese formato no está habilitado.');
+            }
             if ($parcial && $tipo?->getId() !== $t->getTipo()?->getId() && $this->partidos->cantidadDelTorneo((int)$t->getId()) > 0) {
                 throw new ApiException('No se puede cambiar el formato de un torneo que ya tiene partidos.');
             }
@@ -327,6 +326,9 @@ class TorneoController {
             $codigo = strtoupper(trim((string)$costos['currency']));
             $moneda = $codigo === '' ? null : $this->catalogos->monedaPorCodigo($codigo);
             if ($codigo !== '' && $moneda === null) throw new ApiException('Moneda inválida.');
+            if ($moneda !== null && !$moneda->estaActiva() && $moneda->getCodigo() !== $c->getMoneda()?->getCodigo()) {
+                throw new ApiException('Esa moneda no está habilitada.');
+            }
             $c->setMoneda($moneda);
         }
         if (is_array($d['referee'] ?? null)) $c->setArbitro(Persona::desdeFormulario($d['referee'], 'del árbitro'));
@@ -354,10 +356,15 @@ class TorneoController {
             if (!$this->equipos->estaEnTorneo((int)$raw, $t->getId())) throw new ApiException('Uno de los equipos no pertenece a este torneo.');
             return (int)$raw;
         };
-        $local = $equipo($d['home'] ?? null);
-        $visitante = $equipo($d['away'] ?? null);
+        $hay = fn(string $k) => $antes === null || array_key_exists($k, $d);
+        $local = $hay('home') ? $equipo($d['home'] ?? null) : $antes->getLocalId();
+        $visitante = $hay('away') ? $equipo($d['away'] ?? null) : $antes->getVisitanteId();
         if ($local !== null && $local === $visitante) throw new ApiException('Local y visitante no pueden ser el mismo equipo.');
-        $fecha = Partido::fechaDesde(Validar::texto($d['date'] ?? null, 10), Validar::texto($d['time'] ?? null, 8));
+        $fecha = $hay('date') || $hay('time')
+            ? Partido::fechaDesde(Validar::texto($d['date'] ?? null, 10), Validar::texto($d['time'] ?? null, 8))
+            : $antes->getFecha();
+        $lugar = $hay('venue') ? Validar::texto($d['venue'] ?? null, 150) : $antes->getUbicacion();
+        $fase = $hay('phase') ? (Validar::texto($d['phase'] ?? null, 100) ?? Partido::FASE_POR_DEFECTO) : $antes->getFase();
 
         $juez = array_key_exists('judge', $d) ? (($d['judge'] ?? '') !== '' ? (int)$d['judge'] : null) : $antes?->getJuezId();
         if ($juez !== null && !$this->jueces->existe($juez)) throw new ApiException('El juez elegido no existe.');
@@ -365,8 +372,7 @@ class TorneoController {
             $juez ??= $t->getConfiguracion()->getJuezPrincipalId();
             if ($juez === null) throw new ApiException('En un torneo competitivo cada partido necesita un juez.');
         }
-        return new Partido($id, $t->getId(), $local, $visitante, $fecha, Validar::texto($d['venue'] ?? null, 150),
-            Validar::texto($d['phase'] ?? null, 100) ?? Partido::FASE_POR_DEFECTO, null, $juez);
+        return new Partido($id, $t->getId(), $local, $visitante, $fecha, $lugar, $fase, null, $juez);
     }
 
     /** Fecha para la siguiente ronda: una semana después del último partido (o la de inicio). */

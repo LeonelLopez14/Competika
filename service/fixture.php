@@ -1,20 +1,8 @@
 <?php
-/**
- * Planificación del fixture de cada formato (sin acceso a la base).
- *
- * Un plan es una lista de rondas; cada ronda tiene un nombre de fase y sus
- * partidos. Cada lado de un partido ("slot") puede ser:
- *   ['t', equipoId]        un equipo conocido
- *   ['g', clave]           el ganador del partido planificado con esa clave
- *   ['p', clave]           el perdedor de ese partido (doble eliminación)
- * GeneradorFixture guarda el plan y convierte 'g'/'p' en filas de avance_llave.
- *
- * Formatos que se generan completos: liga, liga doble vuelta, sistema de
- * puntos, gran premio, eliminación simple, relámpago y doble eliminación.
- * Formatos por rondas (la siguiente se genera cuando termina la anterior):
- * suizo, vidas, copa desafío y grupos + eliminación (grupos y después llave).
- */
+/** Planificación del fixture de cada formato (sin acceso a la base). */
 final class Fixture {
+    public const GRAN_FINAL = 'Gran final';
+    public const DESEMPATE = 'Gran final · Desempate';
     public const COMPLETOS = ['liga-simple', 'liga-doble', 'sistema-puntos', 'gran-premio', 'eliminacion-simple', 'blitz', 'eliminacion-doble'];
     public const POR_RONDAS = ['suizo', 'vidas', 'copa-desafio', 'grupos'];
 
@@ -99,11 +87,7 @@ final class Fixture {
         return count($this->rondas) - 1;
     }
 
-    /**
-     * Agrega un partido a la ronda y devuelve su clave. Si falta uno de los dos
-     * lados (pase libre) no se crea partido: devuelve el lado presente.
-     * @return array{0: ?array, 1: ?array}  [slot del ganador, slot del perdedor]
-     */
+    /** Agrega un partido y devuelve [slot del ganador, slot del perdedor]. */
     private function partido(int $ronda, ?array $a, ?array $b): array {
         if ($a === null || $b === null) return [$a ?? $b, null];
         $clave = $this->siguienteClave++;
@@ -169,7 +153,7 @@ final class Fixture {
                 }
             }
         }
-        $r = $f->ronda('Gran final');
+        $r = $f->ronda(self::GRAN_FINAL);
         $f->partido($r, $campeonG, $llaveP[0] ?? null);
         $f->rondas = array_values(array_filter($f->rondas, fn($x) => $x['partidos']));
         $nro = 1;
@@ -180,11 +164,7 @@ final class Fixture {
         return $f->rondas;
     }
 
-    /**
-     * Eliminatoria después de los grupos: los dos primeros de cada grupo.
-     * El 1.º de un grupo se cruza con el 2.º del grupo siguiente.
-     * @param array<string, int[]> $clasificados  nombre del grupo => [1.º, 2.º]
-     */
+    /** Eliminatoria con los dos primeros de cada grupo. */
     public static function eliminatoriaDeGrupos(array $clasificados): array {
         $grupos = array_values($clasificados);
         $g = count($grupos);
@@ -250,11 +230,7 @@ final class Fixture {
 
     // ── Por rondas ──────────────────────────────────────────
 
-    /**
-     * Sistema suizo: empareja por puntaje parecido sin repetir rivales.
-     * @param int[] $tabla  equipos ordenados del mejor al peor
-     * @param array<string, bool> $jugados  "a-b" (a < b) de los cruces que ya hubo
-     */
+    /** Sistema suizo: empareja por puntaje sin repetir rivales. */
     public static function rondaSuiza(array $tabla, array $jugados, int $nro): array {
         $libres = array_values($tabla);
         if (count($libres) % 2 === 1) array_pop($libres);              // el último queda libre esta ronda

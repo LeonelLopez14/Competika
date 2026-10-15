@@ -1,14 +1,4 @@
-/* =====================================================
-   COMPETIKA — tournament-api.js
-   Acceso a la API (api/*.php) y a la sesión.
-
-   Cargar DESPUÉS de main.js:
-     <script src="../../js/main.js"></script>
-     <script src="../../js/navbar-user.js"></script>
-     <script src="../../js/tournament-api.js"></script>
-     <!-- solo en el dashboard: -->
-     <script src="../../js/tournament-dashboard-db.js"></script>
-   ===================================================== */
+/* COMPETIKA — tournament-api.js: acceso a la API y formulario de creación. */
 
 const COMPETIKA_BASE = document.currentScript ? document.currentScript.src : window.location.href;
 const COMPETIKA_SESSION_URL = new URL('../../api/session.php', COMPETIKA_BASE).href;
@@ -85,6 +75,7 @@ async function competikaInscribirse(torneoId, teamName = '') {
 
     // Monedas desde la base (tabla moneda); las opciones del HTML quedan si la API no responde
     competikaApi('catalogs').then(r => {
+        if (r.success) document.dispatchEvent(new CustomEvent('competika:formatos', { detail: r.formats.map(f => f.id) }));
         const sel = document.getElementById('tf-currency');
         if (!r.success || !sel || !r.currencies.length) return;
         const actual = sel.value;

@@ -31,12 +31,7 @@ class NotificacionController {
         return ['success' => true];
     }
 
-    /**
-     * Tiempo real con Server-Sent Events. La conexión HTTP queda abierta ~25 s;
-     * cada segundo se mira la señal de SenalNotificaciones (sin base de datos)
-     * y solo si cambió se consulta MariaDB y se envían las nuevas. Después el
-     * navegador se reconecta solo, mandando Last-Event-ID para no repetir.
-     */
+    /** Notificaciones en tiempo real (Server-Sent Events). */
     public function stream(Request $req): void {
         $ci = Auth::exigirLogin();
         session_write_close();                       // no bloquear las demás peticiones de este usuario

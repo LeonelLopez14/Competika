@@ -3,10 +3,7 @@ require_once __DIR__ . '/base_repository.php';
 
 /** Personas externas (árbitros y contactos). */
 class PersonaRepository extends BaseRepository {
-    /**
-     * Devuelve el id de una persona con exactamente esos datos; si no existe la crea.
-     * Así el mismo árbitro en varios torneos es una sola fila.
-     */
+    /** Id de la persona con esos datos (la crea si no existe). */
     public function guardar(Persona $p): int {
         $id = $this->valor("SELECT persona_id FROM persona WHERE nombre = ? AND telefono <=> ? AND email <=> ? LIMIT 1",
             [$p->getNombre(), $p->getTelefono(), $p->getEmail()]);

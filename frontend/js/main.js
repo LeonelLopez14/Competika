@@ -408,8 +408,7 @@ const ttSubPrev        = document.getElementById('tt-sub-prev');
 const ttSubNext        = document.getElementById('tt-sub-next');
 const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
 
-// ── Diagramas de estructura de cada formato ("diagram" de cada subtipo) ──
-// Los usan el formulario de creación y la página Características.
+// ── Diagramas de cada formato ──
 const competikaDiagrams = {
     roundrobin: `
         <svg viewBox="0 0 240 140" class="h-full w-full">
@@ -723,15 +722,7 @@ if (subArrows.length > 0) {
     subArrows.forEach(arrow => obsSubArrows.observe(arrow));
 }
 
-// =====================================================================
-// TOURNAMENT FORM — wizard de creación de torneo (tournament_form.html)
-// -----------------------------------------------------------------------
-// Usa el array `tournamentTypes` (definido más arriba, compartido con
-// tournament_details.html) como única fuente de verdad. Para agregar,
-// quitar o renombrar un formato de torneo alcanza con editar ese array:
-// este bloque genera las tarjetas del Paso 1, los chips de subtipo del
-// Paso 2 y el diagrama de estructura automáticamente a partir de él.
-// =====================================================================
+// TOURNAMENT FORM — asistente de creación de torneo
  
 const tfForm = document.getElementById('tf-form');
  
@@ -763,11 +754,19 @@ if (tfForm) {
     };
  
     let tfSelectedTypeId = null;
+    let tfActivos = null;
+    const tfTipos = () => tournamentTypes
+        .map(t => ({ ...t, subtipos: t.subtipos.filter(s => !tfActivos || tfActivos.has(s.id)) }))
+        .filter(t => t.subtipos.length);
+    document.addEventListener('competika:formatos', e => {
+        tfActivos = new Set(e.detail);
+        if (!tfSelectedTypeId) tfRenderFormatCards();
+    });
  
     // ── Paso 1: tarjetas de formato (data-driven desde tournamentTypes) ───
     function tfRenderFormatCards() {
         if (!tfFormatGrid) return;
-        tfFormatGrid.innerHTML = tournamentTypes.map(type => `
+        tfFormatGrid.innerHTML = tfTipos().map(type => `
             <label class="tf-card group relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-violet/40 hover:shadow-[0_18px_40px_rgba(95,31,197,0.12)] has-[:checked]:border-sun-glare-dark has-[:checked]:bg-sun-glare/10 has-[:checked]:shadow-[0_18px_40px_rgba(67,197,158,0.18)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-violet-dark has-[:focus-visible]:ring-offset-2">
                 <input type="radio" name="tf-format" id="tf-format-${type.id}" value="${type.id}" class="peer sr-only" required>
                 ${type.badge ? `<span class="absolute right-5 top-5 rounded-full bg-blue-violet-dark px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-cloud-dancer">${type.badge}</span>` : ''}
@@ -793,7 +792,7 @@ if (tfForm) {
     // ── Paso 2: chips de subtipo + ficha + diagrama de estructura ─────────
     function tfRenderSubtypeChips(typeId) {
         if (!tfSubtypeGrid) return;
-        const type = tournamentTypes.find(t => t.id === typeId);
+        const type = tfTipos().find(t => t.id === typeId);
         if (!type) return;
  
         tfSubtypeGrid.innerHTML = type.subtipos.map((sub, i) => `
@@ -868,9 +867,7 @@ if (tfForm) {
         tfStartDate.min = new Date().toISOString().split('T')[0];
     }
  
-    // ── Envío del formulario ──────────────────────────────────────────────
-    // Lo maneja tournament-api.js: guarda el torneo en la base de datos
-    // (api/tournaments.php) y recién entonces muestra el panel de éxito.
+    // Envío del formulario: tournament-api.js
 
     // ── Crear otro torneo (reset) ──────────────────────────────────────────
     document.getElementById('tf-reset-btn')?.addEventListener('click', () => {
@@ -1231,7 +1228,4 @@ window.addEventListener("DOMContentLoaded", tsCargarTorneos);
 
 } // fin if (document.getElementById("buscador"))
 
-// ====================================================================
-// TOURNAMENT DASHBOARD → frontend/js/tournament-dashboard-db.js
-// (lee y escribe en la base de datos a través de api/tournaments.php)
-// ====================================================================
+// TOURNAMENT DASHBOARD: tournament-dashboard-db.js

@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Panel de administración (api/admin.php). Solo cuentas activas de la tabla
- * admin. Cada acción queda en registro_de_actividad.
- */
+/** Panel de administración: cada acción queda en registro_de_actividad. */
 class AdminController {
     private const ROLES = ['admin', 'organizador', 'participante', 'juez', 'observador'];
     private const DESTINOS = ['todos', 'organizador', 'participante', 'juez', 'observador'];
@@ -14,6 +11,7 @@ class AdminController {
     private UsuarioRepository $usuarios;
     private TorneoRepository $torneos;
     private ContactoRepository $contacto;
+    private CatalogoRepository $catalogos;
     private Notificador $avisos;
 
     public function __construct() {
@@ -22,6 +20,7 @@ class AdminController {
         $this->usuarios = new UsuarioRepository();
         $this->torneos  = new TorneoRepository();
         $this->contacto = new ContactoRepository();
+        $this->catalogos = new CatalogoRepository();
         $this->avisos   = new Notificador(null, null, $this->torneos);
     }
 
@@ -211,6 +210,45 @@ class AdminController {
         $this->admins->transferirTorneo($t->getId(), $this->usuarios->asegurarOrganizador($ci));
         $this->admins->registrar($admin, 'Transfirió un torneo', "«{$t->getNombre()}» ahora lo organiza {$nombre}.");
         $this->avisos->enviar($ci, 'torneo_estado', "Ahora organizás el torneo «{$t->getNombre()}».", $t->getId());
+        return ['success' => true];
+    }
+
+    // ── Catálogos ───────────────────────────────────────────
+
+    public function catalogos(): array {
+        $this->adminActual();
+        return [
+            'success'    => true,
+            'formats'    => array_map(fn(TipoTorneo $x) => $x->toArray(), $this->catalogos->tiposTorneo()),
+            'currencies' => array_map(fn(Moneda $m) => $m->toArray(), $this->catalogos->monedas()),
+        ];
+    }
+
+    public function guardarMoneda(Request $req): array {
+        $admin = $this->adminActual();
+        $m = Moneda::desdeFormulario($req->json());
+        $antes = $this->catalogos->monedaPorCodigo($m->getCodigo());
+        if (!$m->estaActiva() && ($antes === null || $antes->estaActiva()) && $this->catalogos->monedasActivas() <= ($antes ? 1 : 0)) {
+            throw new ApiException('Tiene que quedar al menos una moneda habilitada.');
+        }
+        $this->catalogos->guardarMoneda($m);
+        $this->admins->registrar($admin, $antes ? 'Editó una moneda' : 'Agregó una moneda',
+            "{$m->getCodigo()} — {$m->getNombre()} ({$m->getSimbolo()})" . ($m->estaActiva() ? '.' : ', deshabilitada.'));
+        return ['success' => true];
+    }
+
+    public function guardarFormato(Request $req): array {
+        $admin = $this->adminActual();
+        $d = $req->json();
+        $tipo = $this->catalogos->tipoPorClave((string)($d['id'] ?? ''));
+        if ($tipo === null) throw ApiException::noEncontrado('Formato');
+        $etiqueta = Validar::obligatorio($d['label'] ?? null, 100, 'Escribí el nombre del formato (máx. 100 caracteres).');
+        $activo = !empty($d['active']);
+        if (!$activo && $tipo->estaActivo() && $this->catalogos->tiposActivos() <= 1) {
+            throw new ApiException('Tiene que quedar al menos un formato habilitado.');
+        }
+        $this->catalogos->actualizarTipo((string)$tipo->getClave(), $etiqueta, $activo);
+        $this->admins->registrar($admin, 'Editó un formato', "«{$etiqueta}»" . ($activo ? '.' : ', deshabilitado.'));
         return ['success' => true];
     }
 

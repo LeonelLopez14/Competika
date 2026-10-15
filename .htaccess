@@ -1,9 +1,4 @@
-# =====================================================================
-# COMPETIKA — reglas de Apache del proyecto (requiere mod_rewrite y
-# mod_headers, y AllowOverride All en el VirtualHost: ver apache/).
-# Sirve igual en la raíz (competika.local) o en una subcarpeta
-# (localhost/Competika), por eso las reglas usan rutas relativas.
-# =====================================================================
+# COMPETIKA — Reglas de Apache del proyecto.
 Options -Indexes -MultiViews
 ServerSignature Off
 DirectoryIndex frontend/index.html index.php index.html
@@ -18,8 +13,7 @@ DirectoryIndex frontend/index.html index.php index.html
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 
-    # Páginas, estilos y scripts: el navegador siempre pregunta si cambiaron
-    # (evita que quede mostrando una versión vieja después de actualizar el sitio).
+    # Páginas, estilos y scripts: el navegador revalida siempre.
     <FilesMatch "\.(html|css|js)$">
         Header set Cache-Control "no-cache"
     </FilesMatch>
@@ -33,8 +27,7 @@ DirectoryIndex frontend/index.html index.php index.html
     RewriteRule ^controller/[a-z_]+_controller\.php$ - [F,NC,L]
     RewriteRule ^uploads/.*\.(php\d?|phtml|phar)$ - [F,NC,L]
 
-    # Carpeta donde está instalado el sitio ("/" o "/Competika/"), calculada
-    # sola: así las redirecciones funcionan en la raíz o en una subcarpeta.
+    # Carpeta base del sitio ("/" o "/Competika/").
     RewriteCond %{REQUEST_URI}::$1 ^(.*?/)(.*)::\2$
     RewriteRule ^(.*)$ - [E=BASE:%1]
 
@@ -57,9 +50,7 @@ DirectoryIndex frontend/index.html index.php index.html
     RewriteRule ^terminos/?$       %{ENV:BASE}frontend/paginas/terms/terms.html [R=302,L]
     RewriteRule ^privacidad/?$     %{ENV:BASE}frontend/paginas/privacy/privacy.html [R=302,L]
 
-    # 4) API REST con URLs limpias (reescritura interna, sin redirección)
-    #    GET /api/torneos           -> lista      GET /api/torneos/5 -> un torneo
-    #    GET /api/notificaciones    -> lista      GET /api/sesion    -> sesión actual
+    # 4) API REST con URLs limpias (reescritura interna).
     RewriteRule ^api/torneos/?$            api/tournaments.php?action=list [L,QSA]
     RewriteRule ^api/torneos/([0-9]+)/?$   api/tournaments.php?action=get&id=$1 [L,QSA]
     RewriteRule ^api/notificaciones/?$     api/notifications.php?action=list [L,QSA]

@@ -64,3 +64,11 @@
 .adm-solicitud h3 a { color: inherit; }
 .adm-anuncio { display: flex; flex-direction: column; gap: 16px; max-width: 620px; }
 .adm-anuncio textarea.input-field { min-height: 96px; }
+.adm-subtitulo { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.adm-subtitulo:not(:first-child) { margin-top: 28px; }
+.adm-fila-form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: rgba(240,238,233,0.7); border: 1px solid rgba(33,33,33,0.06); }
+form.adm-fila-form { margin-top: 12px; }
+.adm-input { flex: 1 1 160px; min-width: 0; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(33,33,33,0.15); background: var(--cloud-dancer); font: inherit; font-size: 14px; }
+.adm-input--codigo { flex: 0 0 90px; text-transform: uppercase; }
+.adm-input--simbolo { flex: 0 0 90px; }
+.adm-codigo { flex: 0 0 90px; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--blue-violet-dark); }

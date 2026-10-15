@@ -1,21 +1,5 @@
 <?php
-/**
- * Arranque común de la API JSON. No se llama por HTTP (.htaccess lo bloquea).
- *
- * Arquitectura (MVC + Repository):
- *   api/*.php        -> solo rutas: asocian ?action= con un método del controlador
- *   controller/      -> TorneoController, PerfilController, ... (permisos y validación)
- *   service/         -> reglas compartidas (Notificador, TablaPosiciones, Avatar)
- *   repository/      -> todo el SQL (PDO + sentencias preparadas)
- *   model/           -> entidades (Torneo, Equipo, Partido, Resultado, Persona, ...)
- *   core/            -> Request, Response, Router, Auth, Validar
- *
- * Seguridad:
- * - Sin cabeceras CORS: front y API salen del mismo origen.
- * - Protección CSRF además de SameSite=Lax: todo POST tiene que venir de
- *   este mismo sitio (cabecera Origin); si no, 403.
- * - En producción (APP_ENV=production) los errores internos no se muestran.
- */
+/** Arranque común de la API JSON: sesión, protección CSRF y autoload. */
 
 require_once __DIR__ . '/../core/autoload.php';
 require_once __DIR__ . '/../config/session.php';

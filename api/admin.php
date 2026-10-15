@@ -1,8 +1,5 @@
 <?php
-/**
- * Panel de administración — rutas.  Lógica en controller/admin_controller.php
- * Todas exigen una cuenta de administrador.
- */
+/** Rutas del panel de administración (controller/admin_controller.php). */
 require_once __DIR__ . '/bootstrap.php';
 
 (new Router(fn() => new AdminController()))
@@ -23,4 +20,7 @@ require_once __DIR__ . '/bootstrap.php';
     ->post('message_read',      'leerMensaje')
     ->post('message_delete',    'borrarMensaje')
     ->post('announce',          'anunciar')
+    ->get('catalogs',           'catalogos')
+    ->post('currency_save',     'guardarMoneda')
+    ->post('format_save',       'guardarFormato')
     ->despachar(new Request());

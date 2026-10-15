@@ -1,11 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Estado de la sesión (api/session.php), leído siempre desde la base: así
- * el menú muestra la cuenta correcta después de cambiar de cuenta o de
- * editar el perfil.  { logged:false } -> el sitio muestra "Invitado".
- */
+/** Estado de la sesión actual. */
 class SesionController {
     private UsuarioRepository $usuarios;
 

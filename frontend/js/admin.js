@@ -1,9 +1,4 @@
-/* =====================================================
-   COMPETIKA — admin.js  (paginas/admin/admin.html)
-   Solicitudes de juez, usuarios, torneos, mensajes de contacto,
-   anuncios y registro de actividad.
-   Todo dato de la base se inserta con esc() o textContent.
-   ===================================================== */
+/* COMPETIKA — admin.js: panel de administración. */
 (function () {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -278,6 +273,43 @@ $('adm-anuncio-form').addEventListener('submit', async e => {
     toast(`Anuncio enviado a ${r.sent} cuenta${r.sent === 1 ? '' : 's'} ✓`);
 });
 
+// ── Catálogos ──
+const filaCatalogo = (tipo, clave, campos, activo) => `
+    <li class="adm-fila-form" data-${tipo}="${esc(clave)}">
+        ${campos}
+        <label class="adm-rol"><input type="checkbox" data-activo ${activo ? 'checked' : ''}> Habilitad${tipo === 'moneda' ? 'a' : 'o'}</label>
+        <button class="tv-btn tv-btn--ghost" data-guardar><i class="ti ti-device-floppy"></i> Guardar</button>
+    </li>`;
+
+async function cargarCatalogos() {
+    const r = await api('catalogs');
+    if (!r.success) { $('adm-lista-monedas').innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
+    $('adm-lista-monedas').innerHTML = r.currencies.map(m => filaCatalogo('moneda', m.code,
+        `<span class="adm-codigo">${esc(m.code)}</span>
+         <input class="adm-input" data-campo="name" value="${esc(m.name)}" maxlength="50" aria-label="Nombre de ${esc(m.code)}">
+         <input class="adm-input adm-input--simbolo" data-campo="symbol" value="${esc(m.symbol)}" maxlength="5" aria-label="Símbolo de ${esc(m.code)}">`, m.active)).join('');
+    $('adm-lista-formatos').innerHTML = r.formats.map(f => filaCatalogo('formato', f.id,
+        `<span class="adm-codigo">${esc(f.category)}</span>
+         <input class="adm-input" data-campo="label" value="${esc(f.label)}" maxlength="100" aria-label="Nombre del formato">`, f.active)).join('');
+}
+
+$('adm-catalogos').addEventListener('click', async e => {
+    if (!e.target.closest('[data-guardar]')) return;
+    const li = e.target.closest('li');
+    const campo = k => li.querySelector(`[data-campo="${k}"]`)?.value.trim() ?? '';
+    const active = li.querySelector('[data-activo]').checked;
+    if (li.dataset.moneda) {
+        await accion('currency_save', { code: li.dataset.moneda, name: campo('name'), symbol: campo('symbol'), active }, 'Moneda guardada ✓', cargarCatalogos);
+    } else {
+        await accion('format_save', { id: li.dataset.formato, label: campo('label'), active }, 'Formato guardado ✓', cargarCatalogos);
+    }
+});
+$('adm-moneda-nueva').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = { code: $('adm-mn-codigo').value.trim(), name: $('adm-mn-nombre').value.trim(), symbol: $('adm-mn-simbolo').value.trim(), active: true };
+    if (await accion('currency_save', body, 'Moneda agregada ✓', cargarCatalogos)) e.target.reset();
+});
+
 // ── Registro de actividad ──
 async function cargarActividad() {
     const r = await api('activity');
@@ -288,7 +320,7 @@ async function cargarActividad() {
 }
 
 // ── Pestañas ──
-const cargas = { solicitudes: cargarSolicitudes, usuarios: cargarUsuarios, torneos: cargarTorneos, mensajes: cargarMensajes, anuncios: () => {}, actividad: cargarActividad };
+const cargas = { solicitudes: cargarSolicitudes, usuarios: cargarUsuarios, torneos: cargarTorneos, mensajes: cargarMensajes, anuncios: () => {}, catalogos: cargarCatalogos, actividad: cargarActividad };
 function abrirPestania(nombre) {
     if (!cargas[nombre]) nombre = 'solicitudes';
     document.querySelectorAll('.adm-tab').forEach(t => {

@@ -1,11 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Controlador de la cuenta logueada (api/profile.php): datos, correo,
- * contraseña, foto, borrar cuenta, actividad del perfil y honores.
- * Todo actúa SOLO sobre la cuenta de la sesión (nunca recibe la cédula).
- */
+/** Cuenta logueada: datos, correo, contraseña, foto, actividad y honores. */
 class PerfilController {
     private UsuarioRepository $usuarios;
     private TorneoRepository $torneos;

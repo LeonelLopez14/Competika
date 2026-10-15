@@ -1,13 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Recuperación de contraseña (api/password.php).
- * 1. "Olvidé": se genera un enlace de un solo uso que vence en 1 hora.
- * 2. "Restablecer": con ese enlace se elige una contraseña nueva.
- * La respuesta del paso 1 es siempre la misma, exista o no la cuenta
- * (así nadie puede averiguar qué correos están registrados).
- */
+/** Recuperación de contraseña con enlace de un solo uso. */
 class ClaveController {
     private const MINUTOS = 60;
     private const MENSAJE = 'Si ese correo está registrado, te enviamos un enlace para elegir una contraseña nueva. Vence en 1 hora.';
@@ -29,8 +23,7 @@ class ClaveController {
 
         if (!$enviado) {
             error_log("[competika] enlace de recuperación para $email: $enlace");
-            // Modo prueba: sin servidor de correo, en desarrollo se muestra el enlace
-            // y solo si se pide desde la misma máquina (nunca en un servidor expuesto)
+            // Modo prueba: enlace en pantalla solo en desarrollo y desde la misma máquina.
             $local = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
             if ($local && env('APP_ENV', 'development') !== 'production') $respuesta['devLink'] = $enlace;
         }

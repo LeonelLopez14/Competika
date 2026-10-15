@@ -1,12 +1,4 @@
-/* =====================================================
-   COMPETIKA — tournament-view.js  (tournament_view.html?t=ID)
-   Página pública de un torneo: la ve cualquiera (con o sin cuenta).
-   Muestra tabla de posiciones, partidos, premios, organizador y equipos.
-   Desde acá se inscribe, se gestiona el equipo y se responden invitaciones.
-
-   Requiere, en este orden: main.js, navbar-user.js, tournament-api.js.
-   Todo dato que viene de la base se inserta con textContent o esc().
-   ===================================================== */
+/* COMPETIKA — tournament-view.js: página pública del torneo. */
 (function () {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

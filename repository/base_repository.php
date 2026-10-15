@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/**
- * Base de los repositorios: todos comparten la conexión PDO singleton
- * (Database::getInstance) y solo usan sentencias preparadas.
- */
+/** Base de los repositorios: conexión PDO compartida y sentencias preparadas. */
 abstract class BaseRepository {
     protected PDO $db;
 

@@ -1,9 +1,5 @@
 <?php
-/**
- * Fotos de perfil: valida la imagen por su contenido real, la recorta en
- * cuadrado y la vuelve a codificar (así el archivo guardado no conserva
- * metadatos ni contenido ajeno a la imagen). El nombre lo genera el servidor.
- */
+/** Fotos de perfil: validación, recorte y recodificación. */
 class Avatar {
     public const MAX_BYTES = 5 * 1024 * 1024;
     public const LADO = 400;          // px

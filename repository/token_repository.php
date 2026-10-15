@@ -1,11 +1,7 @@
 <?php
 require_once __DIR__ . '/base_repository.php';
 
-/**
- * Tokens de un solo dueño: "Recordarme" (sesion_recordada) y recuperación de
- * contraseña (recuperacion_clave). En la base solo se guarda el HASH SHA-256
- * del secreto: aunque alguien lea la tabla, no puede usar los tokens.
- */
+/** Tokens de "Recordarme" y de recuperación de contraseña (solo su hash). */
 class TokenRepository extends BaseRepository {
     // ── Recordarme ───────────────────────────────────────────
     public function guardarRecordada(string $selector, string $validadorHash, string $ci, int $dias): void {
