@@ -9,12 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
-    <link rel="stylesheet" href="profile_configuration.css?v=20261011">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
-    <link rel="stylesheet" href="../profile/profile.css?v=20261011">
-    <link rel="stylesheet" href="../../css/style..css?v=20261011">
-    <link rel="stylesheet" href="../../css/forms.css?v=20261011">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261015">
+    <link rel="stylesheet" href="profile_configuration.css?v=20261015">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261015">
+    <link rel="stylesheet" href="../profile/profile.css?v=20261015">
+    <link rel="stylesheet" href="../../css/style..css?v=20261015">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261015">
     <title>CONFIGURACIÓN DE CUENTA</title>
 </head>
 <body>
@@ -187,13 +187,20 @@
                                             <span class="settings-switch-track"></span>
                                         </label>
                                     </div>
+                                    <div class="settings-role-toggle" id="settings-carne-row">
+                                        <span class="settings-role-toggle-label"><i class="ti ti-id-badge-2"></i>Carné de deportista vigente</span>
+                                        <label class="settings-switch">
+                                            <input type="checkbox" id="settings-carne">
+                                            <span class="settings-switch-track"></span>
+                                        </label>
+                                    </div>
                                     <div class="settings-role-toggle settings-role-toggle--pending">
                                         <div class="settings-role-pending-top">
                                             <span class="settings-role-toggle-label"><i class="ti ti-gavel"></i>Juez</span>
-                                            <span class="settings-role-pending-badge">No solicitado</span>
+                                            <span class="settings-role-pending-badge" id="settings-juez-badge">No solicitado</span>
                                         </div>
-                                        <p class="settings-role-pending-text">El rol de Juez no se activa directamente: requiere completar un formulario de solicitud aparte. Esta sección estará disponible próximamente.</p>
-                                        <button type="button" class="settings-role-request-btn" disabled><i class="ti ti-file-description"></i>Solicitar rol de Juez</button>
+                                        <p class="settings-role-pending-text" id="settings-juez-text">El rol de Juez no se activa directamente: completá la solicitud y un administrador la revisa.</p>
+                                        <button type="button" class="settings-role-request-btn" id="settings-juez-btn"><i class="ti ti-file-description"></i>Solicitar rol de Juez</button>
                                     </div>
                                 </div>
 
@@ -295,6 +302,32 @@
     </main>
 
     <!-- ======== FOOTER ======== -->
+
+    <!-- Solicitud de rol de juez -->
+    <dialog id="juez-dialog" class="settings-dialog" aria-labelledby="juez-dialog-title">
+        <form id="juez-form" method="dialog">
+            <h2 id="juez-dialog-title"><i class="ti ti-gavel"></i> Solicitar rol de Juez</h2>
+            <p class="settings-dialog-sub">Un administrador revisa tu solicitud. Cuando la apruebe, los organizadores van a poder asignarte partidos y vas a cargar sus resultados.</p>
+            <label class="settings-dialog-check">
+                <input type="checkbox" id="juez-certificado">
+                <span>Tengo certificado o curso de juez / árbitro</span>
+            </label>
+            <div class="input-group">
+                <input type="text" id="juez-deportes" class="input-field" placeholder=" " maxlength="150" required>
+                <label for="juez-deportes" class="floating-label">Deportes en los que podés arbitrar</label>
+            </div>
+            <div class="input-group">
+                <textarea id="juez-experiencia" class="input-field" placeholder=" " maxlength="500" rows="4" required style="height:auto;min-height:110px;padding-top:16px;resize:vertical"></textarea>
+                <label for="juez-experiencia" class="floating-label">Tu experiencia (mín. 20 caracteres)</label>
+            </div>
+            <p class="settings-dialog-error" id="juez-error" role="alert"></p>
+            <div class="settings-dialog-actions">
+                <button type="button" class="settings-dialog-cancel" id="juez-cancel">Cancelar</button>
+                <button type="submit" class="settings-save-btn" id="juez-enviar"><i class="ti ti-send"></i>Enviar solicitud</button>
+            </div>
+        </form>
+    </dialog>
+
     <footer id="bottom">
         <div class="footer-inner">
             <div class="footer-col footer-col--brand">
@@ -340,7 +373,7 @@
                     <li><a href="../about/about.html">Sobre nosotros</a></li>
                     <li><a href="../contact/contact.html">Contacto</a></li>
                     <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
-                    <li><a href="#">Términos de uso</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
@@ -353,8 +386,8 @@
 
     <div class="settings-toast" id="settings-toast"></div>
 
-    <script src="../../js/main.js?v=20261011"></script>
-    <script src="../../js/navbar-user.js?v=20261011"></script>
-    <script src="../../js/profile_settings.js?v=20261011"></script>
+    <script src="../../js/main.js?v=20261015"></script>
+    <script src="../../js/navbar-user.js?v=20261015"></script>
+    <script src="../../js/profile_settings.js?v=20261015"></script>
 </body>
 </html>

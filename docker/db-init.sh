@@ -1,9 +1,5 @@
 #!/bin/bash
-# Se ejecuta UNA vez, cuando el volumen de MariaDB está vacío (después de
-# 01-schema.sql y 02-ajustes.sql). Crea el usuario de la aplicación con los
-# MISMOS permisos de database/usuarios.sql, pero:
-#   - para el host '%' (el contenedor web se conecta por red, no por localhost)
-#   - con la contraseña de APP_DB_PASS (del archivo .env), no la del repositorio
+# Crea el usuario de la aplicación para el contenedor (host %, clave de .env).
 set -eo pipefail   # sin -u: si MariaDB "sourcea" el script, no rompe su entrypoint
 
 : "${APP_DB_PASS:?Falta APP_DB_PASS}"

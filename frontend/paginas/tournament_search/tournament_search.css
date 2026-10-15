@@ -657,3 +657,7 @@ a.btn-seguir { text-decoration: none; }
     color: var(--darkest-hour);
     font-size: 26px;
 }
+
+/* El nombre del torneo lleva a su página pública */
+a.torneo-nombre { color: inherit; text-decoration: none; }
+a.torneo-nombre:hover { color: var(--blue-violet-dark); text-decoration: underline; text-underline-offset: 3px; }

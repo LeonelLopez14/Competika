@@ -1,25 +1,44 @@
-/* =====================================================
-   COMPETIKA — tournament-dashboard-db.js
-   Dashboard del organizador (tournament_dashboard.html)
-
-   Requiere, en este orden: main.js, navbar-user.js, tournament-api.js, este archivo.
-
-   ===================================================== */
+/* COMPETIKA — tournament-dashboard-db.js: dashboard del organizador. */
 (function () {
 const root = document.getElementById('td-dashboard');
 if (!root) return;
 
 // ── Estado ────────────────────────────────────────────────────────────
-let tdData = null;          // torneo activo 
+let tdData = null;          // torneo activo
+let tdJueces = [];          // jueces aprobados, para asignar a partidos
 let tdEditMatchId = null;   // partido abierto en el panel de edición
+let tdIsAdmin = false;
 
 // ── Utilidades ────────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = id => document.getElementById(id);
-const SIMBOLO = { UYU: '$', USD: 'US$', ARS: 'AR$', BRL: 'R$', EUR: '€' };
-const money = n => `${SIMBOLO[tdData?.costs?.currency] || '$'} ${Number(n).toLocaleString('es-UY')}`;
+const money = n => `${tdData?.costs?.currencySymbol || '$'} ${Number(n).toLocaleString('es-UY')}`;
+// Monedas habilitadas (tabla moneda): se cargan una vez desde la API
+let tdMonedas = [['UYU', 'UYU — Peso uruguayo']];
+let tdFormatosActivos = null;
+competikaApi('catalogs').then(r => {
+    if (!r.success) return;
+    tdMonedas = r.currencies.map(m => [m.code, `${m.code} — ${m.name}`]);
+    tdFormatosActivos = new Set(r.formats.map(f => f.id));
+});
+competikaApi('judges').then(r => { if (r.success) tdJueces = r.judges; });
 const FL = 'style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)"';
 const PHASES = ['Fase de Grupos', 'Fecha 1', 'Fecha 2', 'Cuartos de Final', 'Semifinal', 'Gran Final'];
+
+const FORMAT_HELP = {
+    'liga-simple':        'todos contra todos, una fecha por ronda.',
+    'liga-doble':         'todos contra todos a ida y vuelta.',
+    'sistema-puntos':     'todos contra todos; suma puntos por partido.',
+    'eliminacion-simple': 'llave de eliminación; el ganador pasa solo a la ronda siguiente.',
+    'eliminacion-doble':  'llave de ganadores y de perdedores; quedás afuera con dos derrotas.',
+    'blitz':              'llave de eliminación en el mismo día, con pocos minutos entre rondas.',
+    'gran-premio':        'varias etapas todos contra todos; gana quien más puntos acumula.',
+    'suizo':              'una ronda a la vez, emparejando equipos con puntaje parecido.',
+    'vidas':              'una ronda a la vez; cada derrota resta una vida.',
+    'copa-desafio':       'el campeón defiende el título ante un retador por desafío.',
+    'grupos':             'fase de grupos todos contra todos y luego eliminatorias con los dos primeros.',
+};
+const prizeLabel = n => `${n}.º puesto`;
 
 const team      = id => tdData?.teams.find(t => t.id === id);
 const teamLabel = id => { const t = team(id); return t ? `${t.emoji} ${esc(t.name)}` : '🏆 Por definir'; };
@@ -112,9 +131,12 @@ document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.addEvent
     if (li.dataset.section === 'selector') { tdData = null; updateSidebar(); history.replaceState(null, '', location.pathname); }
     show(li.dataset.section);
 }));
+// Compartir = link a la página pública del torneo (la que ven participantes e invitados)
 ['td-share-sidebar', 'td-share-top'].forEach(id => $(id)?.addEventListener('click', () => {
-    navigator.clipboard?.writeText(location.href);
-    toast('¡Link copiado al portapapeles!');
+    if (!tdData) { toast('Elegí un torneo primero', 'warn'); return; }
+    const url = new URL(`../tournament_view/tournament_view.html?t=${encodeURIComponent(tdData.id)}`, location.href).href;
+    navigator.clipboard?.writeText(url);
+    toast('¡Link público del torneo copiado!');
 }));
 
 const content = () => $('td-section-content');
@@ -160,7 +182,7 @@ async function renderSelector() {
 async function openTournament(id) {
     tdData = await competikaGetTournament(id);
     if (!tdData) { toast('Torneo no encontrado', 'warn'); show('selector'); return; }
-    if (!tdData.isOwner) { tdData = null; toast('Solo el organizador puede gestionar este torneo.', 'warn'); show('selector'); return; }
+    if (!tdData.isOwner) { location.replace(`../tournament_view/tournament_view.html?t=${encodeURIComponent(tdData.id)}`); return; }   // no es el organizador: ve la página pública
     updateSidebar();
     history.replaceState(null, '', `?t=${encodeURIComponent(id)}`);
     show('overview');
@@ -201,14 +223,18 @@ function renderOverview() {
             <div class="td-resumen-row"><span>Formato</span><span>${esc(t.formatLabel || '—')}</span></div>
             <div class="td-resumen-row"><span>Fechas</span><span>${fmtDate(t.startDate)}${t.endDate ? ' → ' + fmtDate(t.endDate) : ''}</span></div>
             <div class="td-resumen-row"><span>Lugar</span><span>${esc([t.venue, t.department].filter(Boolean).join(', ') || '—')}</span></div>
+            <div class="td-resumen-row"><span>Jugadores por equipo</span><span>${t.rules.playersPerTeam}</span></div>
+            <div class="td-resumen-row"><span>Competitivo</span><span>${t.rules.competitive ? 'Sí · juez ' + esc(t.rules.mainJudgeName || '—') : 'No'}</span></div>
             <div class="td-resumen-row"><span>Inscripción</span><span>${t.costs.entryFee > 0 ? money(t.costs.entryFee) : 'Gratis'}</span></div>
             ${t.costs.fieldCost > 0 ? `<div class="td-resumen-row"><span>Alquiler del lugar</span><span>${money(t.costs.fieldCost)}</span></div>` : ''}
             ${t.costs.refereeCost > 0 ? `<div class="td-resumen-row"><span>Costo de árbitro</span><span>${money(t.costs.refereeCost)}</span></div>` : ''}
           </div>
         </div>
       </div>
-      ${t.prizesText ? `<div class="td-card"><p class="td-card-label"><i class="ti ti-medal"></i> Premios</p>
-        <p style="margin-top:10px;font-size:14px;line-height:1.7;white-space:pre-wrap">${esc(t.prizesText)}</p></div>` : ''}
+      ${t.champion ? `<div class="td-card td-champion"><p class="td-card-label"><i class="ti ti-trophy"></i> Campeón</p>
+        <p class="td-champion-name">${teamLabel(t.champion)}</p></div>` : ''}
+      ${t.prizes?.length ? `<div class="td-card"><p class="td-card-label"><i class="ti ti-medal"></i> Premios</p>
+        <div class="td-resumen" style="margin-top:10px">${t.prizes.map(p => `<div class="td-resumen-row"><span>${prizeLabel(p.place)}</span><span>${esc(p.description)}</span></div>`).join('')}</div></div>` : ''}
       ${t.referee && (t.referee.name || t.referee.phone || t.referee.email) ? `<div class="td-card"><p class="td-card-label"><i class="ti ti-gavel"></i> Árbitro principal</p>
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
           ${t.referee.name ? `<span style="font-size:14px;font-weight:700">${esc(t.referee.name)}</span>` : ''}
@@ -261,21 +287,30 @@ function renderParticipantes() {
 }
 
 // ═════════════════════════════════════════ RESULTADOS + POSICIONES
-function renderResultados() {
-    const t = tdData;
-    const tabla = [...t.teams].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
-    const played = t.matches.filter(m => m.played);
-    content().innerHTML = `
-      <div class="td-card">
-        <p class="td-card-label"><i class="ti ti-list-numbers"></i> Tabla de posiciones</p>
-        ${tabla.length ? `<table class="td-table">
-          <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
+function standingsTable(teams, lives) {
+    const tabla = [...teams].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+    return `<table class="td-table">
+          <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th>${lives ? '<th>Vidas</th>' : ''}<th>Pts</th></tr></thead>
           <tbody>${tabla.map((e, i) => `<tr class="${i === 0 && e.points > 0 ? 'td-table-first' : ''}">
             <td class="td-table-pos">${i + 1}</td><td><span class="td-table-emoji">${e.emoji}</span>${esc(e.name)}</td>
             <td>${e.wins + e.draws + e.losses}</td><td>${e.wins}</td><td>${e.draws}</td><td>${e.losses}</td>
-            <td class="td-table-pts">${e.points}</td></tr>`).join('')}</tbody></table>`
-          : '<p class="td-no-data" style="margin-top:12px">Sin equipos todavía.</p>'}
-      </div>
+            ${lives ? `<td>${'❤'.repeat(e.livesLeft || 0) || '—'}</td>` : ''}
+            <td class="td-table-pts">${e.points}</td></tr>`).join('')}</tbody></table>`;
+}
+
+function renderResultados() {
+    const t = tdData;
+    const played = t.matches.filter(m => m.played);
+    const lives = t.formatSubId === 'vidas';
+    const groups = [...new Set(t.teams.map(e => e.group).filter(Boolean))].sort();
+    content().innerHTML = `
+      ${t.champion ? `<div class="td-card td-champion" style="margin-bottom:16px"><p class="td-card-label"><i class="ti ti-trophy"></i> Campeón</p>
+        <p class="td-champion-name">${teamLabel(t.champion)}</p></div>` : ''}
+      ${!t.teams.length ? '<div class="td-card"><p class="td-no-data">Sin equipos todavía.</p></div>'
+        : groups.length ? groups.map(g => `<div class="td-card" style="margin-bottom:16px">
+            <p class="td-card-label"><i class="ti ti-list-numbers"></i> Grupo ${esc(g)}</p>
+            ${standingsTable(t.teams.filter(e => e.group === g), lives)}</div>`).join('')
+        : `<div class="td-card"><p class="td-card-label"><i class="ti ti-list-numbers"></i> Tabla de posiciones</p>${standingsTable(t.teams, lives)}</div>`}
       <p class="td-section-label" style="margin-top:28px"><i class="ti ti-circle-check"></i> PARTIDOS JUGADOS</p>
       <div class="td-results-list">
         ${played.length ? played.map(m => `
@@ -296,7 +331,8 @@ function renderConfig() {
     const t = tdData;
     const sports = (typeof cardData !== 'undefined' ? cardData.map(s => s.title) : []);
     if (t.sport && !sports.includes(t.sport)) sports.unshift(t.sport);
-    const formats = typeof tournamentTypes !== 'undefined' ? tournamentTypes.flatMap(tt => tt.subtipos.map(s => [s.id, s.title])) : [];
+    const formats = typeof tournamentTypes !== 'undefined' ? tournamentTypes.flatMap(tt => tt.subtipos
+        .filter(s => !tdFormatosActivos || tdFormatosActivos.has(s.id) || s.id === t.formatSubId).map(s => [s.id, s.title])) : [];
     const deps = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida','Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha','Salto','San José','Soriano','Tacuarembó','Treinta y Tres'];
     const opt = (list, sel) => list.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`; }).join('');
     const field = (id, label, value, type = 'text', extra = '') =>
@@ -324,11 +360,31 @@ function renderConfig() {
         </div>
         <div class="td-card">
           <p class="td-card-label"><i class="ti ti-cash"></i> Costos y premios</p>
-          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt([['UYU', 'UYU — Peso uruguayo'], ['USD', 'USD — Dólar'], ['ARS', 'ARS — Peso argentino'], ['BRL', 'BRL — Real'], ['EUR', 'EUR — Euro']], t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
+          <div class="mt-4 input-group"><select id="cfg-currency" class="input-field">${opt(t.costs.currency && !tdMonedas.some(([c]) => c === t.costs.currency)
+              ? [[t.costs.currency, t.costs.currency], ...tdMonedas] : tdMonedas, t.costs.currency || 'UYU')}</select><label for="cfg-currency" class="floating-label" ${FL}>Moneda</label></div>
           <div class="td-ep-row2">${field('cfg-fee', 'Costo de inscripción', t.costs.entryFee, 'number', 'min="0" step="0.01"')}${field('cfg-field', 'Alquiler del lugar', t.costs.fieldCost, 'number', 'min="0" step="0.01"')}</div>
           ${field('cfg-ref', 'Costo de árbitro', t.costs.refereeCost, 'number', 'min="0" step="0.01"')}
-          <div class="input-group"><textarea id="cfg-prizes" class="input-field" style="height:auto;min-height:72px;padding-top:16px" maxlength="255" placeholder=" ">${esc(t.prizesText || '')}</textarea><label for="cfg-prizes" class="floating-label" ${FL}>Premios (máx. 255 caracteres)</label></div>
+          ${[1, 2, 3].map(n => field('cfg-prize-' + n, 'Premio ' + prizeLabel(n), t.prizes?.find(p => p.place === n)?.description, 'text', 'maxlength="255"')).join('')}
           <button class="td-btn-primary" data-action="save-costs"><i class="ti ti-device-floppy"></i> Guardar costos y premios</button>
+        </div>
+        <div class="td-card">
+          <p class="td-card-label"><i class="ti ti-adjustments"></i> Reglas</p>
+          <div class="td-ep-row2 mt-4">
+            ${field('cfg-players', 'Jugadores por equipo', t.rules.playersPerTeam, 'number', 'min="1" max="50"')}
+            ${t.formatSubId === 'vidas' ? field('cfg-lives', 'Vidas por participante', t.rules.lives, 'number', 'min="1" max="10"') : ''}
+            ${t.formatSubId === 'grupos' ? field('cfg-groups', 'Cantidad de grupos (vacío = automático)', t.rules.groups, 'number', 'min="1" max="16"') : ''}
+          </div>
+          <label class="td-ep-toggle-row"><span>Torneo competitivo <span class="td-meta-small" style="display:block;font-weight:400">Los resultados los carga el juez y los jugadores necesitan carné de deportista.</span></span>
+            <span class="relative inline-flex h-7 w-12 shrink-0 items-center">
+              <input type="checkbox" id="cfg-competitive" class="peer sr-only" ${t.rules.competitive ? 'checked' : ''}>
+              <span class="absolute inset-0 rounded-full bg-darkest-hour/15 transition-colors duration-300 peer-checked:bg-sun-glare-dark"></span>
+              <span class="absolute left-1 h-5 w-5 rounded-full bg-cloud-dancer shadow transition-transform duration-300 peer-checked:translate-x-5"></span>
+            </span></label>
+          <div class="input-group" id="cfg-judge-group" style="${t.rules.competitive ? '' : 'display:none'}">
+            <select id="cfg-main-judge" class="input-field"><option value="">Elegí un juez…</option>${tdJueces.map(j =>
+              `<option value="${esc(j.id)}"${j.id === t.rules.mainJudgeId ? ' selected' : ''}>${esc(j.name)}${j.certified ? ' · certificado' : ''}</option>`).join('')}</select>
+            <label for="cfg-main-judge" class="floating-label" ${FL}>Juez principal (obligatorio)</label></div>
+          <button class="td-btn-primary" data-action="save-rules"><i class="ti ti-device-floppy"></i> Guardar reglas</button>
         </div>
         <div class="td-card">
           <p class="td-card-label"><i class="ti ti-gavel"></i> Árbitro principal</p>
@@ -357,8 +413,36 @@ function teamOptions(selected) {
 }
 const phaseList = id => `<datalist id="${id}">${PHASES.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`;
 
+function fixtureCard(t, field) {
+    const fx = t.fixture || {};
+    if (!fx.action) return fx.reason && !t.matches.length ? `<p class="td-meta-small" style="margin-bottom:16px"><i class="ti ti-info-circle"></i> ${esc(fx.reason)}</p>` : '';
+    const first = fx.action === 'generar';
+    const sub = t.formatSubId;
+    const extra = [
+        first && sub === 'grupos' ? field('fx-groups', 'Cantidad de grupos (vacío = automático)', t.rules.groups ?? '', 'number', 'min="1" max="16"') : '',
+        first && sub === 'gran-premio' ? field('fx-stages', 'Cantidad de etapas', 3, 'number', 'min="1" max="10"') : '',
+        sub === 'blitz' ? field('fx-minutes', 'Minutos entre rondas', 60, 'number', 'min="10" max="600"') : '',
+    ].filter(Boolean).join('');
+    return `<div class="td-card" style="margin-bottom:16px">
+        <p class="td-card-label"><i class="ti ti-wand"></i> ${first ? 'Generar fixture automático' : 'Siguiente ronda'} · ${esc(t.formatLabel || '')}</p>
+        <p class="td-meta-small" style="margin-top:6px">${first ? `Arma los partidos con los ${t.teams.length} equipos inscriptos: ${FORMAT_HELP[sub] || ''}` : 'Arma los cruces de la próxima ronda según los resultados cargados.'}</p>
+        <div class="td-ep-row2" style="margin-top:14px">
+          <div class="input-group"><input type="date" id="fx-start" class="input-field" value="${esc(first ? (t.startDate || '') : '')}"><label class="floating-label" ${FL}>${first ? 'Primera fecha' : 'Fecha (vacío = siguiente)'}</label></div>
+          <div class="input-group"><input type="time" id="fx-time" class="input-field" value="18:00"><label class="floating-label" ${FL}>Hora</label></div>
+        </div>
+        <div class="td-ep-row2">
+          ${sub === 'blitz' ? '' : field('fx-days', 'Días entre fechas', 7, 'number', 'min="0" max="60"')}
+          ${field('fx-venue', 'Lugar', t.venue || '', 'text', 'maxlength="150"')}
+        </div>
+        ${extra ? `<div class="td-ep-row2">${extra}</div>` : ''}
+        <button class="td-btn-primary" data-action="generate-fixture" data-first="${first ? 1 : 0}"><i class="ti ti-wand"></i> ${esc(fx.label)}</button>
+      </div>`;
+}
+
 function renderCalendario() {
     const t = tdData;
+    const field = (id, label, value, type = 'text', extra = '') =>
+        `<div class="input-group"><input type="${type}" id="${id}" class="input-field" value="${esc(value ?? '')}" placeholder=" " ${extra}><label for="${id}" class="floating-label" ${FL}>${label}</label></div>`;
     const byDate = {};
     t.matches.forEach(m => (byDate[m.date || 'sin-fecha'] ||= []).push(m));
     const played = t.matches.filter(m => m.played).length;
@@ -371,7 +455,8 @@ function renderCalendario() {
       </div>
       <div>
         ${!t.matches.length ? `<div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-calendar"></i></span>
-          <p class="td-empty-sub">Todavía no hay partidos. Agregá el primero abajo.</p></div>` : ''}
+          <p class="td-empty-sub">Todavía no hay partidos. Generá el fixture automático o agregalos a mano.</p></div>` : ''}
+        ${fixtureCard(t, field)}
         ${Object.keys(byDate).sort().map(d => `
           <div class="td-date-group">
             <div class="td-date-header"><i class="ti ti-calendar-event"></i>${d === 'sin-fecha' ? 'SIN FECHA' : esc(fmtDate(d, true).toUpperCase())}</div>
@@ -412,6 +497,7 @@ function openMatch(id) {
     const m = tdData.matches.find(x => x.id === id);
     if (!m) return;
     tdEditMatchId = id;
+    const locked = tdData.rules.competitive && !tdIsAdmin;
     $('td-edit-panel-inner').innerHTML = `
       <div class="td-ep-header">
         <div><span class="td-phase-badge ${phaseClass(m.phase)}">${esc(m.phase)}</span>
@@ -435,18 +521,26 @@ function openMatch(id) {
         <div class="input-group"><input type="text" id="ep-phase" class="input-field" value="${esc(m.phase)}" list="ep-phases" maxlength="100"><label class="floating-label" ${FL}>Fase</label>${phaseList('ep-phases')}</div>
       </div>
       <div class="td-ep-section">
+        <p class="td-ep-section-title"><i class="ti ti-gavel"></i> Juez del partido</p>
+        <div class="input-group"><select id="ep-judge" class="input-field"><option value="">Sin juez asignado</option>${tdJueces.map(j =>
+          `<option value="${esc(j.id)}"${j.id === m.judgeId ? ' selected' : ''}>${esc(j.name)}${j.certified ? ' · certificado' : ''}</option>`).join('')}</select>
+          <label for="ep-judge" class="floating-label" ${FL}>Juez</label></div>
+        <p class="td-meta-small">${tdJueces.length ? 'El juez asignado puede cargar el resultado desde "Mis arbitrajes".' : 'Todavía no hay jueces aprobados en el sitio.'}</p>
+      </div>
+      <div class="td-ep-section">
         <p class="td-ep-section-title"><i class="ti ti-chart-bar"></i> Resultado</p>
         <label class="td-ep-toggle-row"><span>Partido jugado</span>
           <span class="relative inline-flex h-7 w-12 shrink-0 items-center">
-            <input type="checkbox" id="ep-played" class="peer sr-only" ${m.played ? 'checked' : ''}>
+            <input type="checkbox" id="ep-played" class="peer sr-only" ${m.played ? 'checked' : ''} ${locked ? 'disabled' : ''}>
             <span class="absolute inset-0 rounded-full bg-darkest-hour/15 transition-colors duration-300 peer-checked:bg-sun-glare-dark"></span>
             <span class="absolute left-1 h-5 w-5 rounded-full bg-cloud-dancer shadow transition-transform duration-300 peer-checked:translate-x-5"></span>
           </span></label>
         <div class="td-ep-score-row" id="ep-score-row" style="${m.played ? '' : 'display:none'}">
-          <div class="td-ep-score-team"><span class="td-ep-score-name">Local</span><input type="number" id="ep-home-score" class="td-score-input" value="${m.homeScore ?? ''}" min="0"></div>
+          <div class="td-ep-score-team"><span class="td-ep-score-name">Local</span><input type="number" id="ep-home-score" class="td-score-input" value="${m.homeScore ?? ''}" min="0" ${locked ? 'disabled' : ''}></div>
           <span class="td-ep-score-dash">—</span>
-          <div class="td-ep-score-team"><span class="td-ep-score-name">Visitante</span><input type="number" id="ep-away-score" class="td-score-input" value="${m.awayScore ?? ''}" min="0"></div>
+          <div class="td-ep-score-team"><span class="td-ep-score-name">Visitante</span><input type="number" id="ep-away-score" class="td-score-input" value="${m.awayScore ?? ''}" min="0" ${locked ? 'disabled' : ''}></div>
         </div>
+        ${locked ? '<p class="td-meta-small" style="color:var(--blue-violet-dark)"><i class="ti ti-lock"></i> Torneo competitivo: el resultado lo carga el juez del partido.</p>' : ''}
         <p class="td-meta-small">Los resultados quedan registrados de forma permanente: se pueden corregir, pero el partido ya no podrá eliminarse.</p>
       </div>
       <div class="td-ep-section">
@@ -515,9 +609,18 @@ const ACTIONS = {
     'save-costs': async () => {
         const body = {
             costs: { currency: val('cfg-currency') || 'UYU', entryFee: parseFloat(val('cfg-fee')) || 0, fieldCost: parseFloat(val('cfg-field')) || 0, refereeCost: parseFloat(val('cfg-ref')) || 0 },
-            prizesText: val('cfg-prizes'),
+            prizes: [1, 2, 3].map(place => ({ place, description: val('cfg-prize-' + place) })).filter(p => p.description),
         };
         if (await call('update', { method: 'POST', params: tid(), body }, 'Costos y premios guardados ✓')) { await reload(); rerender(); }
+    },
+
+    'save-rules': async () => {
+        const competitive = $('cfg-competitive').checked;
+        if (competitive && !val('cfg-main-judge')) { toast('Elegí el juez principal del torneo competitivo', 'warn'); return; }
+        const body = { playersPerTeam: parseInt(val('cfg-players'), 10) || 1, competitive, mainJudge: competitive ? val('cfg-main-judge') : '' };
+        if ($('cfg-lives')) body.lives = parseInt(val('cfg-lives'), 10) || 3;
+        if ($('cfg-groups')) body.groups = val('cfg-groups');
+        if (await call('update', { method: 'POST', params: tid(), body }, 'Reglas guardadas ✓')) { await reload(); rerender(); }
     },
 
     'save-contacts': async () => {
@@ -539,12 +642,25 @@ const ACTIONS = {
         const played = $('ep-played').checked;
         const body = {
             home: val('ep-home'), away: val('ep-away'), date: val('ep-date'), time: val('ep-time'),
-            venue: val('ep-venue'), phase: val('ep-phase'), played,
-            homeScore: played ? val('ep-home-score') : null, awayScore: played ? val('ep-away-score') : null,
+            venue: val('ep-venue'), phase: val('ep-phase'), judge: val('ep-judge'),
         };
+        if (!$('ep-played').disabled) Object.assign(body, {
+            played, homeScore: played ? val('ep-home-score') : null, awayScore: played ? val('ep-away-score') : null,
+        });
         if (await call('update_match', { method: 'POST', params: { match_id: tdEditMatchId }, body }, 'Partido actualizado ✓')) {
             closeMatch(); await reload(); rerender();
         }
+    },
+    'generate-fixture': async el => {
+        const first = el.dataset.first === '1';
+        if (first && !confirm('¿Generar los partidos del torneo? Después podés editarlos uno por uno.')) return;
+        const num = (id, def) => { const v = parseInt(val(id), 10); return Number.isNaN(v) ? def : v; };
+        const body = { time: val('fx-time'), venue: val('fx-venue'), daysBetween: num('fx-days', 7) };
+        if (val('fx-start')) body.startDate = val('fx-start');
+        if ($('fx-groups')) body.groups = val('fx-groups');
+        if ($('fx-stages')) body.stages = num('fx-stages', 3);
+        if ($('fx-minutes')) body.minutesBetween = num('fx-minutes', 60);
+        if (await call('generate_fixture', { method: 'POST', params: tid(), body }, first ? 'Fixture generado ✓' : 'Ronda generada ✓')) { await reload(); rerender(); }
     },
     'delete-match': async el => {
         if (!confirm('¿Eliminar este partido?')) return;
@@ -558,6 +674,9 @@ root.addEventListener('click', e => {
     const el = e.target.closest('[data-action]');
     if (el && root.contains(el) && ACTIONS[el.dataset.action] && !el.disabled) ACTIONS[el.dataset.action](el);
 });
+root.addEventListener('change', e => {
+    if (e.target.id === 'cfg-competitive') $('cfg-judge-group').style.display = e.target.checked ? '' : 'none';
+});
 root.addEventListener('keydown', e => {
     const el = e.target.closest('[data-action="edit-match"]');
     if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openMatch(el.dataset.id); }
@@ -568,6 +687,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && tdEditMatc
 (async () => {
     const user = await competikaSession();
     if (!user) { competikaGoLogin(); return; }
+    tdIsAdmin = !!user.roles?.admin;
     const id = new URLSearchParams(location.search).get('t');
     updateSidebar();
     if (id) await openTournament(id); else show('selector');

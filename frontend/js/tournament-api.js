@@ -1,22 +1,11 @@
-/* =====================================================
-   COMPETIKA — tournament-api.js
-   Acceso a api/tournaments.php y api/session.php.
-
-   Cargar DESPUÉS de main.js:
-     <script src="../../js/main.js"></script>
-     <script src="../../js/navbar-user.js"></script>
-     <script src="../../js/tournament-api.js"></script>
-     <!-- solo en el dashboard: -->
-     <script src="../../js/tournament-dashboard-db.js"></script>
-   ===================================================== */
+/* COMPETIKA — tournament-api.js: acceso a la API y formulario de creación. */
 
 const COMPETIKA_BASE = document.currentScript ? document.currentScript.src : window.location.href;
-const COMPETIKA_API_URL     = new URL('../../api/tournaments.php', COMPETIKA_BASE).href;
 const COMPETIKA_SESSION_URL = new URL('../../api/session.php', COMPETIKA_BASE).href;
 const COMPETIKA_LOGIN_URL   = new URL('../paginas/login/login.html', COMPETIKA_BASE).href;
 
-async function competikaApi(action, { method = 'GET', params = {}, body = null } = {}) {
-    const url = new URL(COMPETIKA_API_URL);
+async function competikaApi(action, { method = 'GET', params = {}, body = null, api = 'tournaments' } = {}) {
+    const url = new URL(`../../api/${api}.php`, COMPETIKA_BASE);
     url.searchParams.set('action', action);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
@@ -84,6 +73,39 @@ async function competikaInscribirse(torneoId, teamName = '') {
     const form = document.getElementById('tf-form');
     if (!form) return;
 
+    // Monedas desde la base (tabla moneda); las opciones del HTML quedan si la API no responde
+    competikaApi('catalogs').then(r => {
+        if (r.success) document.dispatchEvent(new CustomEvent('competika:formatos', { detail: r.formats.map(f => f.id) }));
+        const sel = document.getElementById('tf-currency');
+        if (!r.success || !sel || !r.currencies.length) return;
+        const actual = sel.value;
+        sel.replaceChildren(...r.currencies.map(m => new Option(`${m.code} — ${m.name}`, m.code, false, m.code === actual)));
+    });
+
+    const competitive = document.getElementById('tf-competitive');
+    const judgeSel    = document.getElementById('tf-main-judge');
+    const show = (id, on) => { const el = document.getElementById(id); if (el) el.hidden = !on; };
+
+    function syncRules() {
+        const sub = document.querySelector('input[name="tf-subtype"]:checked')?.value || '';
+        show('tf-lives-group', sub === 'vidas');
+        show('tf-groups-group', sub === 'grupos');
+        show('tf-judge-group', !!competitive?.checked);
+        if (judgeSel) judgeSel.required = !!competitive?.checked;
+    }
+    form.addEventListener('change', e => { if (e.target.name === 'tf-subtype' || e.target === competitive) syncRules(); });
+    syncRules();
+
+    competikaApi('judges').then(r => {
+        if (!judgeSel || !r.success) return;
+        const help = document.getElementById('tf-judge-help');
+        if (!r.judges.length) {
+            if (help) help.textContent = 'Todavía no hay jueces aprobados en el sitio; sin juez no se puede crear un torneo competitivo.';
+            return;
+        }
+        judgeSel.append(...r.judges.map(j => new Option(j.name + (j.certified ? ' (certificado)' : ''), j.id)));
+    });
+
     // Contacto del organizador: se precarga con los datos de su cuenta (editable)
     competikaSession().then(user => {
         if (!user) {
@@ -115,6 +137,23 @@ async function competikaInscribirse(torneoId, teamName = '') {
             }
         }
 
+        if (competitive?.checked && !val('tf-main-judge')) {
+            alert('Un torneo competitivo necesita un juez principal.');
+            judgeSel?.focus();
+            return;
+        }
+        const sub = document.querySelector('input[name="tf-subtype"]:checked')?.value || '';
+        const rules = {
+            playersPerTeam: parseInt(val('tf-players-per-team'), 10) || 1,
+            competitive:    !!competitive?.checked,
+            mainJudge:      competitive?.checked ? val('tf-main-judge') : '',
+        };
+        if (sub === 'vidas')  rules.lives  = parseInt(val('tf-lives'), 10) || 3;
+        if (sub === 'grupos') rules.groups = val('tf-groups');
+        const prizes = [1, 2, 3]
+            .map(place => ({ place, description: val('tf-prize-' + place) }))
+            .filter(p => p.description);
+
         const btn = document.getElementById('tf-submit-btn');
         const btnHtml = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.textContent = 'Creando…'; }
@@ -137,7 +176,8 @@ async function competikaInscribirse(torneoId, teamName = '') {
                     fieldCost:   parseFloat(val('tf-field-cost'))   || 0,
                     refereeCost: parseFloat(val('tf-referee-cost')) || 0,
                 },
-                prizesText: val('tf-prizes'),
+                ...rules,
+                prizes,
                 referee: {
                     name:  val('tf-referee-name'),
                     phone: val('tf-referee-phone'),
@@ -163,7 +203,6 @@ async function competikaInscribirse(torneoId, teamName = '') {
             return;
         }
 
-        // Guardado confirmado por el servidor: recién ahora se muestra el éxito
         const wizard  = document.getElementById('tf-wizard');
         const success = document.getElementById('tf-success');
         wizard?.classList.add('hidden');

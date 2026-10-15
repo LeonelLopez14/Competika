@@ -1,12 +1,4 @@
 <?php
-require_once __DIR__ . '/../config/session.php';
-$_SESSION = [];
-
-if (ini_get('session.use_cookies')) {
-    $p = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
-}
-
-session_destroy();
-header('Location: ../frontend/index.html');
-exit;
+/** Cerrar sesión. Lógica en controller/cuenta_controller.php */
+require_once __DIR__ . '/cuenta_controller.php';
+(new CuentaController())->logout();

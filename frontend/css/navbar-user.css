@@ -1,7 +1,4 @@
-/* =====================================================
-   COMPETIKA — navbar-user.css (MOBILE FIRST)
-   Campana de notificaciones + avatar de usuario en el navbar.
-   ===================================================== */
+/* COMPETIKA — navbar-user.css: campana y avatar del navbar. */
 
 .navbar-user {
     display: flex;

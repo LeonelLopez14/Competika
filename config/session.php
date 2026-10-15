@@ -1,9 +1,5 @@
 <?php
-/**
- * Arranque de sesión común a controladores y API.
- * Cookie HttpOnly (JS no puede leerla), SameSite=Lax (mitiga CSRF)
- * y Secure cuando el sitio se sirve por HTTPS (también detrás de un proxy).
- */
+/** Sesión con cookie HttpOnly, SameSite=Lax y Secure bajo HTTPS. */
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
@@ -16,6 +12,12 @@ if (session_status() === PHP_SESSION_NONE) {
         'samesite' => 'Lax',
     ]);
     session_start();
+
+    // "Recordarme": sin sesión activa pero con la cookie, se restaura la sesión
+    if (empty($_SESSION['usuario_ci']) && !empty($_COOKIE['competika_rec'])) {
+        require_once __DIR__ . '/../core/autoload.php';
+        Recordarme::restaurar();
+    }
 }
 
 /** En un POST, corta si la petición viene de otro sitio (protección CSRF). */

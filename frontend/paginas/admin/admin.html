@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="../../assets/img/logologito.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261015">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261015">
+    <link rel="stylesheet" href="../tournament_view/tournament_view.css?v=20261015">
+    <link rel="stylesheet" href="admin.css?v=20261015">
+    <link rel="stylesheet" href="../../css/style..css?v=20261015">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261015">
+    <title>Administración — Competika</title>
+</head>
+<body>
+    <header id="menu">
+        <nav class="navbar">
+            <a href="../../index.html" class="navbar-logo">
+                <img src="../../assets/img/competika.png" alt="Competika logo" class="logo">
+            </a>
+            <div class="navbar-right">
+                <ul class="navbar-list" id="navbar-list">
+                    <li class="nav-links"><a href="../../index.html">Inicio</a></li>
+                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="../tournament_details/tournament_details.html">Características</a></li>
+                    <li class="nav-links"><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                    <li class="nav-links"><a href="../login/login.html">Iniciar sesión</a></li>
+                    <li class="nav-links"><a href="../register/register.html">Registrarse</a></li>
+                </ul>
+
+                <div class="navbar-user">
+                    <div class="nav-notif-wrap nav-dropdown-wrap" id="notif-wrap">
+                        <button class="nav-bell" id="notif-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
+                            <i class="ti ti-bell"></i>
+                            <span class="nav-bell-badge" id="notif-badge" style="display:none">0</span>
+                        </button>
+
+                        <div class="nav-notif-dropdown">
+                            <div class="nnd-header">
+                                <span>Notificaciones</span>
+                                <button class="nnd-mark-all" id="notif-mark-all">Marcar todas como leídas</button>
+                            </div>
+                            <div class="nnd-list" id="notif-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="nav-avatar-wrap nav-dropdown-wrap" id="user-menu-wrap">
+
+                        <a href="../profile/profile.html" class="nav-avatar-link" aria-label="Ir a mi perfil">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23824cda'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%23F0EEE9'/%3E%3Cpath d='M18 92c4-24 26-34 32-34s28 10 32 34' fill='%23F0EEE9'/%3E%3C/svg%3E" alt="Foto de perfil" class="nav-avatar-img">
+                            <span class="nav-avatar-name">Invitado</span>
+                        </a>
+
+                        <button class="nav-avatar-caret" id="user-menu-btn" aria-haspopup="true" aria-expanded="false" aria-label="Abrir menú de cuenta">
+                            <i class="ti ti-chevron-down"></i>
+                        </button>
+
+                        <div class="nav-user-dropdown">
+                            <div class="nud-header">
+                                <span class="nud-name">Invitado</span>
+                                <span class="nud-email">Navegando sin cuenta</span>
+                            </div>
+                            <a href="../profile/profile.html" class="nud-item">
+                                <i class="ti ti-user"></i>Mi Perfil
+                            </a>
+                            <a href="../profile_configuration/profile_configuration.html" class="nud-item">
+                                <i class="ti ti-settings"></i>Configuración
+                            </a>
+                            <a href="../../index.html" class="nud-item nud-item--danger">
+                                <i class="ti ti-logout"></i>Cerrar sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
+                    <span class="ham-line"></span>
+                    <span class="ham-line"></span>
+                    <span class="ham-line"></span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="mobile-backdrop" id="mobile-backdrop"></div>
+        <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button class="mobile-close" id="mobile-close" aria-label="Cerrar menú">&#10005;</button>
+            <p class="mobile-menu-logo">COMPETIKA</p>
+            <ul class="mobile-menu-list">
+                <li><a href="../../index.html">Inicio</a></li>
+                <li><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                <li><a href="../tournament_details/tournament_details.html">Características</a></li>
+                <li><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                <li><a href="../login/login.html">Iniciar sesión</a></li>
+                <li><a href="../register/register.html">Registrarse</a></li>
+                <li><a href="../profile/profile.html">Mi Perfil</a></li>
+                <li><a href="../profile_configuration/profile_configuration.html">Configuración</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="content" class="tv-main">
+        <header class="tv-hero">
+            <p class="tv-eyebrow">Panel</p>
+            <div class="tv-title-row"><h1>Administración</h1></div>
+            <ul class="adm-totales" id="adm-totales"></ul>
+        </header>
+        <div id="adm-denegado" class="tv-state" hidden>
+            <i class="ti ti-shield-lock"></i>
+            <h1>Solo administradores</h1>
+            <p>Tu cuenta no tiene permisos de administración.</p>
+        </div>
+        <div id="adm-panel" hidden>
+            <nav class="adm-tabs" role="tablist">
+                <button class="adm-tab active" role="tab" data-tab="solicitudes" aria-selected="true"><i class="ti ti-gavel"></i> Solicitudes de juez <span class="adm-badge" id="adm-badge-pend"></span></button>
+                <button class="adm-tab" role="tab" data-tab="usuarios" aria-selected="false"><i class="ti ti-users"></i> Usuarios</button>
+                <button class="adm-tab" role="tab" data-tab="torneos" aria-selected="false"><i class="ti ti-tournament"></i> Torneos</button>
+                <button class="adm-tab" role="tab" data-tab="mensajes" aria-selected="false"><i class="ti ti-mail"></i> Mensajes <span class="adm-badge" id="adm-badge-msg"></span></button>
+                <button class="adm-tab" role="tab" data-tab="anuncios" aria-selected="false"><i class="ti ti-speakerphone"></i> Anuncios</button>
+                <button class="adm-tab" role="tab" data-tab="catalogos" aria-selected="false"><i class="ti ti-list-details"></i> Catálogos</button>
+                <button class="adm-tab" role="tab" data-tab="actividad" aria-selected="false"><i class="ti ti-history"></i> Registro de actividad</button>
+            </nav>
+            <section class="adm-seccion tv-card" id="adm-solicitudes">
+                <div class="adm-filtros" id="adm-filtro-estado">
+                    <button class="adm-chip active" data-estado="pendiente">Pendientes</button>
+                    <button class="adm-chip" data-estado="aprobada">Aprobadas</button>
+                    <button class="adm-chip" data-estado="rechazada">Rechazadas</button>
+                    <button class="adm-chip" data-estado="">Todas</button>
+                </div>
+                <ul class="adm-lista" id="adm-lista-solicitudes"></ul>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-usuarios" hidden>
+                <div class="input-group adm-buscar">
+                    <input type="search" id="adm-q" class="input-field" placeholder=" " autocomplete="off">
+                    <label for="adm-q" class="floating-label">Buscar por nombre, correo o cédula</label>
+                </div>
+                <ul class="adm-lista" id="adm-lista-usuarios"></ul>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-torneos" hidden>
+                <div class="input-group adm-buscar">
+                    <input type="search" id="adm-qt" class="input-field" placeholder=" " autocomplete="off">
+                    <label for="adm-qt" class="floating-label">Buscar por nombre u organizador</label>
+                </div>
+                <ul class="adm-lista" id="adm-lista-torneos"></ul>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-mensajes" hidden>
+                <div class="adm-filtros" id="adm-filtro-msg">
+                    <button class="adm-chip active" data-unread="1">Sin leer</button>
+                    <button class="adm-chip" data-unread="0">Todos</button>
+                </div>
+                <ul class="adm-lista" id="adm-lista-mensajes"></ul>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-anuncios" hidden>
+                <form id="adm-anuncio-form" class="adm-anuncio">
+                    <p class="adm-meta">El anuncio llega a la campana de notificaciones de cada cuenta elegida.</p>
+                    <div class="input-group">
+                        <select id="adm-anuncio-para" class="input-field">
+                            <option value="todos">Todas las cuentas</option>
+                            <option value="organizador">Organizadores</option>
+                            <option value="participante">Participantes</option>
+                            <option value="juez">Jueces</option>
+                            <option value="observador">Observadores</option>
+                        </select>
+                        <label for="adm-anuncio-para" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Destinatarios</label>
+                    </div>
+                    <div class="input-group">
+                        <textarea id="adm-anuncio-texto" class="input-field" placeholder=" " maxlength="255" rows="3" required></textarea>
+                        <label for="adm-anuncio-texto" class="floating-label">Mensaje (máx. 255 caracteres)</label>
+                    </div>
+                    <button type="submit" class="tv-btn tv-btn--primary"><i class="ti ti-send"></i> Enviar anuncio</button>
+                </form>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-catalogos" hidden>
+                <h2 class="adm-subtitulo"><i class="ti ti-coin"></i> Monedas</h2>
+                <ul class="adm-lista" id="adm-lista-monedas"></ul>
+                <form class="adm-fila-form" id="adm-moneda-nueva">
+                    <input class="adm-input adm-input--codigo" id="adm-mn-codigo" maxlength="3" placeholder="Código" aria-label="Código ISO" required>
+                    <input class="adm-input" id="adm-mn-nombre" maxlength="50" placeholder="Nombre" aria-label="Nombre" required>
+                    <input class="adm-input adm-input--simbolo" id="adm-mn-simbolo" maxlength="5" placeholder="Símbolo" aria-label="Símbolo" required>
+                    <button type="submit" class="tv-btn tv-btn--primary"><i class="ti ti-plus"></i> Agregar</button>
+                </form>
+                <h2 class="adm-subtitulo"><i class="ti ti-tournament"></i> Formatos de torneo</h2>
+                <ul class="adm-lista" id="adm-lista-formatos"></ul>
+            </section>
+            <section class="adm-seccion tv-card" id="adm-actividad" hidden>
+                <ul class="adm-log" id="adm-lista-actividad"></ul>
+            </section>
+        </div>
+
+        <dialog id="adm-dialog" class="tv-dialog" aria-labelledby="adm-dialog-title">
+            <form method="dialog" id="adm-form">
+                <h2 id="adm-dialog-title"></h2>
+                <p class="tv-dialog-sub" id="adm-dialog-sub"></p>
+                <div class="input-group">
+                    <input type="text" id="adm-campo" class="input-field" placeholder=" " maxlength="255" autocomplete="off">
+                    <label for="adm-campo" class="floating-label" id="adm-campo-label"></label>
+                </div>
+                <p class="tv-dialog-error" id="adm-error" role="alert"></p>
+                <div class="tv-dialog-actions">
+                    <button type="button" class="tv-btn tv-btn--ghost" id="adm-cancel">Cancelar</button>
+                    <button type="submit" class="tv-btn tv-btn--primary" id="adm-confirm"></button>
+                </div>
+            </form>
+        </dialog>
+        <div class="tv-toast" id="tv-toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <footer id="bottom">
+        <div class="footer-inner">
+            <div class="footer-col footer-col--brand">
+                <img src="../../assets/img/logologito.png" alt="Competika" class="footer-logo">
+                <p class="footer-brand-name">COMPETIKA</p>
+                <p class="footer-tagline">La estructura detrás de la competencia.</p>
+                <div class="footer-contact">
+                    <a href="mailto:hola@competika.com" class="footer-contact-link">
+                        <i class="ti ti-mail"></i> hola@competika.com
+                    </a>
+                    <a href="tel:+59899000000" class="footer-contact-link">
+                        <i class="ti ti-phone"></i> +598 99 000 000
+                    </a>
+                    <span class="footer-contact-link">
+                        <i class="ti ti-map-pin"></i> Montevideo, Uruguay
+                    </span>
+                </div>
+            </div>
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-heading">Plataforma</h4>
+                <ul class="footer-links">
+                    <li><a href="../../index.html">Inicio</a></li>
+                    <li><a href="../tournament_search/tournament_search.html">Buscar torneos</a></li>
+                    <li><a href="../tournament_details/tournament_details.html">Características</a></li>
+                    <li><a href="../login/login.html">Iniciar sesión</a></li>
+                    <li><a href="../register/register.html">Registrarse</a></li>
+                    <li><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                    <li><a href="../profile/profile.html">Perfil</a></li>
+                    <li><a href="../tournament_form/tournament_form.html">Formulario</a></li>
+                </ul>
+            </div>
+            <div class="footer-col footer-col--social">
+                <h4 class="footer-heading">Comunidad</h4>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-link" aria-label="Instagram">
+                        <i class="ti ti-brand-instagram"></i>
+                    </a>
+                    <a href="#" class="footer-social-link" aria-label="X / Twitter">
+                        <i class="ti ti-brand-x"></i>
+                    </a>
+                    <a href="#" class="footer-social-link" aria-label="TikTok">
+                        <i class="ti ti-brand-tiktok"></i>
+                    </a>
+                    <a href="#" class="footer-social-link" aria-label="Discord">
+                        <i class="ti ti-brand-discord"></i>
+                    </a>
+                </div>
+                <ul class="footer-links footer-links--legal">
+                    <li><a href="../about/about.html">Sobre nosotros</a></li>
+                    <li><a href="../contact/contact.html">Contacto</a></li>
+                    <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Competika. Todos los derechos reservados.</p>
+            <p class="footer-made">
+                Hecho con <span class="footer-heart">♥</span> en Uruguay
+            </p>
+        </div>
+    </footer>
+    <script src="../../js/main.js?v=20261015"></script>
+    <script src="../../js/navbar-user.js?v=20261015"></script>
+    <script src="../../js/tournament-api.js?v=20261015"></script>
+    <script src="../../js/admin.js?v=20261015"></script>
+</body>
+</html>

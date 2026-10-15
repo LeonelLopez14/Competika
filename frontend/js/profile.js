@@ -1,9 +1,4 @@
-/* =====================================================
-   COMPETIKA — profile.js  (profile.html)
-   Muestra los datos reales de la cuenta logueada: identidad (api/profile.php?action=me)
-   y torneos, partidos y estadísticas (api/profile.php?action=activity).
-   Requiere navbar-user.js cargado antes.
-   ===================================================== */
+/* COMPETIKA — profile.js: página de perfil. */
 (function () {
 const ROOT = window.competikaSiteRoot || '../../..';
 const API = ROOT + '/api/profile.php';
@@ -79,7 +74,9 @@ function renderTopStats() {
 function renderActive() {
     const list = $('pf-tournaments-list');
     if (!list) return;
-    const activos = data.torneos.filter(t => t.estado !== 'finalizado');
+    const propios = new Set(data.torneos.map(t => t.id));
+    const activos = data.torneos.filter(t => t.estado !== 'finalizado')
+        .concat((data.seguidos || []).filter(t => t.estado !== 'finalizado' && !propios.has(t.id)));
     if (!activos.length) {
         list.innerHTML = `<p class="pf-empty">No tenés torneos activos. <a href="../tournament_search/tournament_search.html">Buscá un torneo</a> o <a href="../tournament_form/tournament_form.html">creá uno</a>.</p>`;
         return;
@@ -87,7 +84,7 @@ function renderActive() {
     list.innerHTML = activos.map(t => {
         const [icon, bg, color] = sportIcon(t.deporte);
         const curso = t.estado === 'activo';
-        const link = t.rol === 'organizador' ? `../tournament_dashboard/tournament_dashboard.html?t=${t.id}` : '../tournament_search/tournament_search.html';
+        const link = t.rol === 'organizador' ? `../tournament_dashboard/tournament_dashboard.html?t=${t.id}` : `../tournament_view/tournament_view.html?t=${t.id}`;
         return `
         <a class="pf-tournament-item" href="${link}" style="text-decoration:none;color:inherit">
             <div class="pf-t-icon" style="background:${bg};color:${color};"><i class="ti ${icon}"></i></div>
@@ -103,7 +100,7 @@ function renderActive() {
                 </div>
             </div>
             <div class="pf-t-side">
-                <span class="pf-role-pill pf-role-pill--${t.rol}">${t.rol === 'organizador' ? 'Organizador' : 'Participante'}</span>
+                <span class="pf-role-pill pf-role-pill--${t.rol}">${{ organizador: 'Organizador', participante: 'Participante', seguido: 'Siguiendo' }[t.rol]}</span>
                 ${t.lugar ? `<span class="pf-t-location"><i class="ti ti-map-pin"></i>${esc(t.lugar)}</span>` : ''}
             </div>
         </a>`;

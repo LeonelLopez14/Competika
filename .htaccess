@@ -1,3 +1,4 @@
+# COMPETIKA — Reglas de Apache del proyecto.
 Options -Indexes -MultiViews
 ServerSignature Off
 DirectoryIndex frontend/index.html index.php index.html
@@ -12,8 +13,7 @@ DirectoryIndex frontend/index.html index.php index.html
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 
-    # Páginas, estilos y scripts: el navegador siempre pregunta si cambiaron
-    # (evita que quede mostrando una versión vieja después de actualizar el sitio).
+    # Páginas, estilos y scripts: el navegador revalida siempre.
     <FilesMatch "\.(html|css|js)$">
         Header set Cache-Control "no-cache"
     </FilesMatch>
@@ -22,10 +22,41 @@ DirectoryIndex frontend/index.html index.php index.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    RewriteRule ^(config|model|repository|database|apache|docker|\.git)(/|$) - [F,NC,L]
+    # 1) Seguridad: carpetas internas y clases PHP nunca se sirven por HTTP
+    RewriteRule ^(config|core|model|repository|service|database|apache|docker|\.git)(/|$) - [F,NC,L]
+    RewriteRule ^controller/[a-z_]+_controller\.php$ - [F,NC,L]
+    RewriteRule ^uploads/.*\.(php\d?|phtml|phar)$ - [F,NC,L]
 
-    RewriteRule ^$ /frontend/index.html [R=302,L]
+    # Carpeta base del sitio ("/" o "/Competika/").
+    RewriteCond %{REQUEST_URI}::$1 ^(.*?/)(.*)::\2$
+    RewriteRule ^(.*)$ - [E=BASE:%1]
 
+    # 2) Raíz del sitio -> página de inicio
+    RewriteRule ^$ %{ENV:BASE}frontend/index.html [R=302,L]
+
+    # 3) URLs amigables de las páginas (redirigen a la página real)
+    RewriteRule ^inicio/?$         %{ENV:BASE}frontend/index.html [R=302,L]
+    RewriteRule ^torneos/?$        %{ENV:BASE}frontend/paginas/tournament_search/tournament_search.html [R=302,L]
+    RewriteRule ^torneos/([0-9]+)/?$ %{ENV:BASE}frontend/paginas/tournament_view/tournament_view.html?t=$1 [R=302,L]
+    RewriteRule ^crear-torneo/?$   %{ENV:BASE}frontend/paginas/tournament_form/tournament_form.html [R=302,L]
+    RewriteRule ^dashboard/?$      %{ENV:BASE}frontend/paginas/tournament_dashboard/tournament_dashboard.html [R=302,L]
+    RewriteRule ^login/?$          %{ENV:BASE}frontend/paginas/login/login.html [R=302,L]
+    RewriteRule ^registro/?$       %{ENV:BASE}frontend/paginas/register/register.html [R=302,L]
+    RewriteRule ^perfil/?$         %{ENV:BASE}frontend/paginas/profile/profile.html [R=302,L]
+    RewriteRule ^configuracion/?$  %{ENV:BASE}frontend/paginas/profile_configuration/profile_configuration.html [R=302,L]
+    RewriteRule ^recuperar/?$      %{ENV:BASE}frontend/paginas/recover/recover.html [R=302,L]
+    RewriteRule ^arbitrajes/?$     %{ENV:BASE}frontend/paginas/judge/judge.html [R=302,L]
+    RewriteRule ^admin/?$          %{ENV:BASE}frontend/paginas/admin/admin.html [R=302,L]
+    RewriteRule ^terminos/?$       %{ENV:BASE}frontend/paginas/terms/terms.html [R=302,L]
+    RewriteRule ^privacidad/?$     %{ENV:BASE}frontend/paginas/privacy/privacy.html [R=302,L]
+
+    # 4) API REST con URLs limpias (reescritura interna).
+    RewriteRule ^api/torneos/?$            api/tournaments.php?action=list [L,QSA]
+    RewriteRule ^api/torneos/([0-9]+)/?$   api/tournaments.php?action=get&id=$1 [L,QSA]
+    RewriteRule ^api/notificaciones/?$     api/notifications.php?action=list [L,QSA]
+    RewriteRule ^api/sesion/?$             api/session.php [L,QSA]
+
+    # 5) Sin extensión: /api/tournaments -> api/tournaments.php, /controller/login -> login.php
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^((?:api|controller)/[A-Za-z0-9_]+)/?$ $1.php [L,QSA]
 </IfModule>

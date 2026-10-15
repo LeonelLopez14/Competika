@@ -9,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
-    <link rel="stylesheet" href="../../css/style..css?v=20261011">
-    <link rel="stylesheet" href="register.css?v=20261011">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261015">
+    <link rel="stylesheet" href="../../css/style..css?v=20261015">
+    <link rel="stylesheet" href="register.css?v=20261015">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261015">
     
     <title>REGISTRO</title>
 </head>
@@ -125,6 +125,10 @@
                                 <option value="observador">Observador</option>
                             </select>
                         </div>
+                        <div class="carne-row" id="carne-row" hidden>
+                            <input type="checkbox" id="carne" name="carne" value="1">
+                            <label for="carne">Tengo carné de deportista vigente <small>(obligatorio para torneos competitivos)</small></label>
+                        </div>
                         <div class="input-group">
                             <input type="text" id="name" name="name" class="input-field" placeholder="" required>
                             <label for="name" class="floating-label">Nombre</label>
@@ -157,32 +161,9 @@
                             <input type="password" id="confirm-password" name="confirm-password" class="input-field" placeholder="" required>
                             <label for="confirm-password" class="floating-label">Confirmar contraseña</label>
                         </div>
-                        <div class="input-group checkbox-group">
-                            <div class="form-col remember-me">
-                                <input type="checkbox" id="remember-me-checkbox" name="remember-me" class="checkbox-field">
-                                <label for="remember-me-checkbox" class="checkbox-label">Recordarme</label>
-                            </div>
-                            <div class="form-col">
-                                <a href="#" class="form-link">¿O sólo olvidaste tu contraseña?</a>
-                            </div>
-                        </div>
                         <button type="submit" class="form-btn form-btn--submit">Crear cuenta</button>
                     </form>
-                    <div class="form-divider">
-                        <p>O</p>
-                    </div>
-                    <!-- <div class="form-bottom">
-                        <div class="form-socials">
-                            <button class="form-btn form-btn--social">
-                                <i class="ti ti-brand-google btn-icon"></i>
-                            </button>
-                            <button class="form-btn form-btn--social">
-                                <i class="ti ti-brand-facebook btn-icon"></i>
-                            </button>
-                            <button class="form-btn form-btn--social">
-                                <i class="ti ti-brand-apple btn-icon"></i>
-                            </button>
-                        </div> -->
+                    <div class="form-bottom">
                         <p>¿Ya tenés una cuenta? <a href="../login/login.html" class="form-link">Inicia sesión aquí</a></p>
                     </div>
                 </div>
@@ -264,7 +245,7 @@
                     <li><a href="../about/about.html">Sobre nosotros</a></li>
                     <li><a href="../contact/contact.html">Contacto</a></li>
                     <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
-                    <li><a href="#">Términos de uso</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
@@ -275,8 +256,8 @@
         </div>
     </footer>
 
-    <script src="../../js/main.js?v=20261011"></script>
-    <script src="../../js/navbar-user.js?v=20261011"></script>
-    <script src="../../js/register.js?v=20261011"></script>
+    <script src="../../js/main.js?v=20261015"></script>
+    <script src="../../js/navbar-user.js?v=20261015"></script>
+    <script src="../../js/register.js?v=20261015"></script>
 </body>
 </html>

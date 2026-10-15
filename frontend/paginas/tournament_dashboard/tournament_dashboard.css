@@ -751,3 +751,6 @@
     border-radius: 0;
 }
 
+
+.td-champion { background: linear-gradient(135deg, rgba(255, 196, 0, 0.18), rgba(108, 92, 231, 0.10)); }
+.td-champion-name { margin-top: 8px; font-size: 22px; font-weight: 800; font-family: var(--font-display, inherit); }

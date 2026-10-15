@@ -408,6 +408,158 @@ const ttSubPrev        = document.getElementById('tt-sub-prev');
 const ttSubNext        = document.getElementById('tt-sub-next');
 const ttSubIndicatorEl = document.getElementById('tt-sub-indicator');
 
+// ── Diagramas de cada formato ──
+const competikaDiagrams = {
+    roundrobin: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <g class="stroke-blue-violet/25" stroke-width="1.5">
+                <line x1="50" y1="28" x2="190" y2="28"></line>
+                <line x1="50" y1="28" x2="50" y2="112"></line>
+                <line x1="190" y1="28" x2="190" y2="112"></line>
+                <line x1="50" y1="112" x2="190" y2="112"></line>
+                <line x1="50" y1="28" x2="190" y2="112"></line>
+                <line x1="190" y1="28" x2="50" y2="112"></line>
+            </g>
+            <circle cx="50" cy="28" r="9" class="fill-blue-violet"></circle>
+            <circle cx="190" cy="28" r="9" class="fill-blue-violet"></circle>
+            <circle cx="50" cy="112" r="9" class="fill-blue-violet"></circle>
+            <circle cx="190" cy="112" r="9" class="fill-sun-glare-dark"></circle>
+        </svg>`,
+    bracket: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <g class="stroke-blue-violet/30" stroke-width="1.5">
+                <line x1="20" y1="18" x2="80" y2="18"></line>
+                <line x1="20" y1="52" x2="80" y2="52"></line>
+                <line x1="80" y1="18" x2="80" y2="52"></line>
+                <line x1="80" y1="35" x2="140" y2="35"></line>
+                <line x1="20" y1="88" x2="80" y2="88"></line>
+                <line x1="20" y1="122" x2="80" y2="122"></line>
+                <line x1="80" y1="88" x2="80" y2="122"></line>
+                <line x1="80" y1="105" x2="140" y2="105"></line>
+                <line x1="140" y1="35" x2="140" y2="105"></line>
+                <line x1="140" y1="70" x2="205" y2="70"></line>
+            </g>
+            <circle cx="14" cy="18" r="6" class="fill-blue-violet/70"></circle>
+            <circle cx="14" cy="52" r="6" class="fill-blue-violet/70"></circle>
+            <circle cx="14" cy="88" r="6" class="fill-blue-violet/70"></circle>
+            <circle cx="14" cy="122" r="6" class="fill-blue-violet/70"></circle>
+            <circle cx="211" cy="70" r="10" class="fill-sun-glare-dark"></circle>
+        </svg>`,
+    doublebracket: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <g class="stroke-blue-violet/30" stroke-width="1.4">
+                <line x1="20" y1="14" x2="70" y2="14"></line>
+                <line x1="20" y1="40" x2="70" y2="40"></line>
+                <line x1="70" y1="14" x2="70" y2="40"></line>
+                <line x1="70" y1="27" x2="130" y2="27"></line>
+                <line x1="20" y1="100" x2="70" y2="100"></line>
+                <line x1="20" y1="126" x2="70" y2="126"></line>
+                <line x1="70" y1="100" x2="70" y2="126"></line>
+                <line x1="70" y1="113" x2="130" y2="113"></line>
+                <line x1="130" y1="27" x2="130" y2="113"></line>
+                <line x1="130" y1="70" x2="195" y2="70"></line>
+            </g>
+            <line x1="70" y1="40" x2="70" y2="100" class="stroke-blue-violet/35" stroke-width="1.4" stroke-dasharray="3 4"></line>
+            <circle cx="14" cy="14" r="5.5" class="fill-blue-violet/70"></circle>
+            <circle cx="14" cy="40" r="5.5" class="fill-blue-violet/70"></circle>
+            <circle cx="14" cy="100" r="5.5" class="fill-blue-violet/40"></circle>
+            <circle cx="14" cy="126" r="5.5" class="fill-blue-violet/40"></circle>
+            <circle cx="201" cy="70" r="10" class="fill-sun-glare-dark"></circle>
+        </svg>`,
+    leaderboard: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <circle cx="22" cy="24" r="11" class="fill-sun-glare-dark"></circle>
+            <text x="22" y="28" text-anchor="middle" class="fill-darkest-hour font-mono text-[10px] font-bold">1</text>
+            <rect x="42" y="16" width="172" height="16" rx="8" class="fill-sun-glare-dark"></rect>
+            <circle cx="22" cy="62" r="11" class="fill-blue-violet"></circle>
+            <text x="22" y="66" text-anchor="middle" class="fill-cloud-dancer font-mono text-[10px] font-bold">2</text>
+            <rect x="42" y="54" width="130" height="16" rx="8" class="fill-blue-violet"></rect>
+            <circle cx="22" cy="100" r="11" class="fill-blue-violet/35"></circle>
+            <text x="22" y="104" text-anchor="middle" class="fill-darkest-hour font-mono text-[10px] font-bold">3</text>
+            <rect x="42" y="92" width="95" height="16" rx="8" class="fill-blue-violet/35"></rect>
+        </svg>`,
+    swiss: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <g class="fill-blue-violet/10 stroke-blue-violet/45" stroke-width="1.3">
+                <rect x="14" y="24" width="46" height="18" rx="9"></rect>
+                <rect x="14" y="96" width="46" height="18" rx="9"></rect>
+                <rect x="97" y="24" width="46" height="18" rx="9"></rect>
+                <rect x="97" y="96" width="46" height="18" rx="9"></rect>
+                <rect x="180" y="24" width="46" height="18" rx="9"></rect>
+                <rect x="180" y="96" width="46" height="18" rx="9"></rect>
+            </g>
+            <g class="stroke-sun-glare-dark" stroke-width="1.6" stroke-dasharray="3 4" fill="none">
+                <path d="M60 33 C 75 33, 82 60, 97 33"></path>
+                <path d="M60 105 C 75 105, 82 78, 97 105"></path>
+                <path d="M143 33 C 158 33, 165 60, 180 33"></path>
+                <path d="M143 105 C 158 105, 165 78, 180 105"></path>
+            </g>
+        </svg>`,
+    groups: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <g class="stroke-blue-violet/25" stroke-width="1.4">
+                <line x1="26" y1="18" x2="26" y2="54"></line>
+                <line x1="26" y1="18" x2="60" y2="36"></line>
+                <line x1="26" y1="54" x2="60" y2="36"></line>
+                <line x1="26" y1="86" x2="26" y2="122"></line>
+                <line x1="26" y1="86" x2="60" y2="104"></line>
+                <line x1="26" y1="122" x2="60" y2="104"></line>
+                <line x1="60" y1="36" x2="130" y2="36"></line>
+                <line x1="60" y1="104" x2="130" y2="104"></line>
+                <line x1="130" y1="36" x2="130" y2="104"></line>
+                <line x1="130" y1="70" x2="200" y2="70"></line>
+            </g>
+            <circle cx="26" cy="18" r="6" class="fill-blue-violet/55"></circle>
+            <circle cx="26" cy="54" r="6" class="fill-blue-violet/55"></circle>
+            <circle cx="60" cy="36" r="7" class="fill-blue-violet"></circle>
+            <circle cx="26" cy="86" r="6" class="fill-blue-violet/55"></circle>
+            <circle cx="26" cy="122" r="6" class="fill-blue-violet/55"></circle>
+            <circle cx="60" cy="104" r="7" class="fill-blue-violet"></circle>
+            <circle cx="206" cy="70" r="10" class="fill-sun-glare-dark"></circle>
+        </svg>`,
+    blitz: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <rect x="16" y="10" width="208" height="120" rx="14" class="fill-blue-violet/[0.05] stroke-blue-violet/25" stroke-width="1.4"></rect>
+            <g class="stroke-blue-violet" stroke-width="2" fill="none">
+                <circle cx="40" cy="34" r="11"></circle>
+                <path d="M40 27 V34 L46 38"></path>
+            </g>
+            <rect x="64" y="24" width="60" height="14" rx="7" class="fill-blue-violet/10 stroke-blue-violet/30" stroke-width="1.1"></rect>
+            <rect x="140" y="24" width="60" height="14" rx="7" class="fill-blue-violet/10 stroke-blue-violet/30" stroke-width="1.1"></rect>
+            <rect x="40" y="60" width="160" height="14" rx="7" class="fill-blue-violet/10 stroke-blue-violet/30" stroke-width="1.1"></rect>
+            <rect x="40" y="94" width="160" height="14" rx="7" class="fill-sun-glare-dark/15 stroke-sun-glare-dark" stroke-width="1.1"></rect>
+        </svg>`,
+    timeline: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <line x1="30" y1="68" x2="195" y2="68" class="stroke-blue-violet/25" stroke-width="2"></line>
+            <circle cx="30" cy="68" r="8" class="fill-blue-violet"></circle>
+            <circle cx="85" cy="68" r="8" class="fill-blue-violet"></circle>
+            <circle cx="140" cy="68" r="8" class="fill-blue-violet"></circle>
+            <circle cx="195" cy="68" r="12" class="fill-sun-glare-dark"></circle>
+            <text x="30" y="98" text-anchor="middle" class="fill-darkest-hour/45 font-mono text-[9px] font-bold">E1</text>
+            <text x="85" y="98" text-anchor="middle" class="fill-darkest-hour/45 font-mono text-[9px] font-bold">E2</text>
+            <text x="140" y="98" text-anchor="middle" class="fill-darkest-hour/45 font-mono text-[9px] font-bold">E3</text>
+            <text x="195" y="98" text-anchor="middle" class="fill-darkest-hour/70 font-mono text-[9px] font-bold">FINAL</text>
+        </svg>`,
+    cup: `
+        <svg viewBox="0 0 240 140" class="h-full w-full">
+            <circle cx="120" cy="34" r="16" class="fill-sun-glare-dark"></circle>
+            <path d="M112 30 L120 20 L128 30 L124 40 L116 40 Z" class="fill-darkest-hour/55"></path>
+            <g class="stroke-blue-violet/40" stroke-width="1.8">
+                <line x1="60" y1="118" x2="106" y2="52"></line>
+                <line x1="120" y1="122" x2="120" y2="58"></line>
+                <line x1="180" y1="118" x2="134" y2="52"></line>
+            </g>
+            <circle cx="60" cy="118" r="7" class="fill-blue-violet/55"></circle>
+            <circle cx="120" cy="122" r="7" class="fill-blue-violet/55"></circle>
+            <circle cx="180" cy="118" r="7" class="fill-blue-violet/55"></circle>
+        </svg>`,
+};
+
+function competikaDiagramFor(key) {
+    return competikaDiagrams[key] || competikaDiagrams.bracket;
+}
+
 // ── Actualiza el contenido ────────────────────────────
 
 const sportNames = {
@@ -428,6 +580,10 @@ const sportNames = {
 };
 
 function ttUpdateContent(sub) {
+    if (ttImage && ttImage.tagName !== 'IMG') {     // diagrama del formato
+        ttImage.innerHTML = competikaDiagramFor(sub.diagram);
+        ttImage.setAttribute('aria-label', `Diagrama: cómo se estructura ${sub.title}`);
+    }
     if (ttTitle)        ttTitle.textContent       = sub.title;
     if (ttSubtitleEl)   ttSubtitleEl.textContent  = sub.subtitle;
     if (ttDescriptionEl) ttDescriptionEl.textContent = sub.description;
@@ -566,171 +722,13 @@ if (subArrows.length > 0) {
     subArrows.forEach(arrow => obsSubArrows.observe(arrow));
 }
 
-// =====================================================================
-// TOURNAMENT FORM — wizard de creación de torneo (tournament_form.html)
-// -----------------------------------------------------------------------
-// Usa el array `tournamentTypes` (definido más arriba, compartido con
-// tournament_details.html) como única fuente de verdad. Para agregar,
-// quitar o renombrar un formato de torneo alcanza con editar ese array:
-// este bloque genera las tarjetas del Paso 1, los chips de subtipo del
-// Paso 2 y el diagrama de estructura automáticamente a partir de él.
-// =====================================================================
+// TOURNAMENT FORM — asistente de creación de torneo
  
 const tfForm = document.getElementById('tf-form');
  
 if (tfForm) {
  
-    // ── Diagramas de estructura (uno por cada "diagram" de subtipo) ──────
-    const tfDiagrams = {
-        roundrobin: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <g class="stroke-blue-violet/25" stroke-width="1.5">
-                    <line x1="50" y1="28" x2="190" y2="28"></line>
-                    <line x1="50" y1="28" x2="50" y2="112"></line>
-                    <line x1="190" y1="28" x2="190" y2="112"></line>
-                    <line x1="50" y1="112" x2="190" y2="112"></line>
-                    <line x1="50" y1="28" x2="190" y2="112"></line>
-                    <line x1="190" y1="28" x2="50" y2="112"></line>
-                </g>
-                <circle cx="50" cy="28" r="9" class="fill-blue-violet"></circle>
-                <circle cx="190" cy="28" r="9" class="fill-blue-violet"></circle>
-                <circle cx="50" cy="112" r="9" class="fill-blue-violet"></circle>
-                <circle cx="190" cy="112" r="9" class="fill-sun-glare-dark"></circle>
-            </svg>`,
-        bracket: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <g class="stroke-blue-violet/30" stroke-width="1.5">
-                    <line x1="20" y1="18" x2="80" y2="18"></line>
-                    <line x1="20" y1="52" x2="80" y2="52"></line>
-                    <line x1="80" y1="18" x2="80" y2="52"></line>
-                    <line x1="80" y1="35" x2="140" y2="35"></line>
-                    <line x1="20" y1="88" x2="80" y2="88"></line>
-                    <line x1="20" y1="122" x2="80" y2="122"></line>
-                    <line x1="80" y1="88" x2="80" y2="122"></line>
-                    <line x1="80" y1="105" x2="140" y2="105"></line>
-                    <line x1="140" y1="35" x2="140" y2="105"></line>
-                    <line x1="140" y1="70" x2="205" y2="70"></line>
-                </g>
-                <circle cx="14" cy="18" r="6" class="fill-blue-violet/70"></circle>
-                <circle cx="14" cy="52" r="6" class="fill-blue-violet/70"></circle>
-                <circle cx="14" cy="88" r="6" class="fill-blue-violet/70"></circle>
-                <circle cx="14" cy="122" r="6" class="fill-blue-violet/70"></circle>
-                <circle cx="211" cy="70" r="10" class="fill-sun-glare-dark"></circle>
-            </svg>`,
-        doublebracket: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <g class="stroke-blue-violet/30" stroke-width="1.4">
-                    <line x1="20" y1="14" x2="70" y2="14"></line>
-                    <line x1="20" y1="40" x2="70" y2="40"></line>
-                    <line x1="70" y1="14" x2="70" y2="40"></line>
-                    <line x1="70" y1="27" x2="130" y2="27"></line>
-                    <line x1="20" y1="100" x2="70" y2="100"></line>
-                    <line x1="20" y1="126" x2="70" y2="126"></line>
-                    <line x1="70" y1="100" x2="70" y2="126"></line>
-                    <line x1="70" y1="113" x2="130" y2="113"></line>
-                    <line x1="130" y1="27" x2="130" y2="113"></line>
-                    <line x1="130" y1="70" x2="195" y2="70"></line>
-                </g>
-                <line x1="70" y1="40" x2="70" y2="100" class="stroke-blue-violet/35" stroke-width="1.4" stroke-dasharray="3 4"></line>
-                <circle cx="14" cy="14" r="5.5" class="fill-blue-violet/70"></circle>
-                <circle cx="14" cy="40" r="5.5" class="fill-blue-violet/70"></circle>
-                <circle cx="14" cy="100" r="5.5" class="fill-blue-violet/40"></circle>
-                <circle cx="14" cy="126" r="5.5" class="fill-blue-violet/40"></circle>
-                <circle cx="201" cy="70" r="10" class="fill-sun-glare-dark"></circle>
-            </svg>`,
-        leaderboard: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <circle cx="22" cy="24" r="11" class="fill-sun-glare-dark"></circle>
-                <text x="22" y="28" text-anchor="middle" class="fill-darkest-hour font-mono text-[10px] font-bold">1</text>
-                <rect x="42" y="16" width="172" height="16" rx="8" class="fill-sun-glare-dark"></rect>
-                <circle cx="22" cy="62" r="11" class="fill-blue-violet"></circle>
-                <text x="22" y="66" text-anchor="middle" class="fill-cloud-dancer font-mono text-[10px] font-bold">2</text>
-                <rect x="42" y="54" width="130" height="16" rx="8" class="fill-blue-violet"></rect>
-                <circle cx="22" cy="100" r="11" class="fill-blue-violet/35"></circle>
-                <text x="22" y="104" text-anchor="middle" class="fill-darkest-hour font-mono text-[10px] font-bold">3</text>
-                <rect x="42" y="92" width="95" height="16" rx="8" class="fill-blue-violet/35"></rect>
-            </svg>`,
-        swiss: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <g class="fill-blue-violet/10 stroke-blue-violet/45" stroke-width="1.3">
-                    <rect x="14" y="24" width="46" height="18" rx="9"></rect>
-                    <rect x="14" y="96" width="46" height="18" rx="9"></rect>
-                    <rect x="97" y="24" width="46" height="18" rx="9"></rect>
-                    <rect x="97" y="96" width="46" height="18" rx="9"></rect>
-                    <rect x="180" y="24" width="46" height="18" rx="9"></rect>
-                    <rect x="180" y="96" width="46" height="18" rx="9"></rect>
-                </g>
-                <g class="stroke-sun-glare-dark" stroke-width="1.6" stroke-dasharray="3 4" fill="none">
-                    <path d="M60 33 C 75 33, 82 60, 97 33"></path>
-                    <path d="M60 105 C 75 105, 82 78, 97 105"></path>
-                    <path d="M143 33 C 158 33, 165 60, 180 33"></path>
-                    <path d="M143 105 C 158 105, 165 78, 180 105"></path>
-                </g>
-            </svg>`,
-        groups: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <g class="stroke-blue-violet/25" stroke-width="1.4">
-                    <line x1="26" y1="18" x2="26" y2="54"></line>
-                    <line x1="26" y1="18" x2="60" y2="36"></line>
-                    <line x1="26" y1="54" x2="60" y2="36"></line>
-                    <line x1="26" y1="86" x2="26" y2="122"></line>
-                    <line x1="26" y1="86" x2="60" y2="104"></line>
-                    <line x1="26" y1="122" x2="60" y2="104"></line>
-                    <line x1="60" y1="36" x2="130" y2="36"></line>
-                    <line x1="60" y1="104" x2="130" y2="104"></line>
-                    <line x1="130" y1="36" x2="130" y2="104"></line>
-                    <line x1="130" y1="70" x2="200" y2="70"></line>
-                </g>
-                <circle cx="26" cy="18" r="6" class="fill-blue-violet/55"></circle>
-                <circle cx="26" cy="54" r="6" class="fill-blue-violet/55"></circle>
-                <circle cx="60" cy="36" r="7" class="fill-blue-violet"></circle>
-                <circle cx="26" cy="86" r="6" class="fill-blue-violet/55"></circle>
-                <circle cx="26" cy="122" r="6" class="fill-blue-violet/55"></circle>
-                <circle cx="60" cy="104" r="7" class="fill-blue-violet"></circle>
-                <circle cx="206" cy="70" r="10" class="fill-sun-glare-dark"></circle>
-            </svg>`,
-        blitz: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <rect x="16" y="10" width="208" height="120" rx="14" class="fill-blue-violet/[0.05] stroke-blue-violet/25" stroke-width="1.4"></rect>
-                <g class="stroke-blue-violet" stroke-width="2" fill="none">
-                    <circle cx="40" cy="34" r="11"></circle>
-                    <path d="M40 27 V34 L46 38"></path>
-                </g>
-                <rect x="64" y="24" width="60" height="14" rx="7" class="fill-blue-violet/10 stroke-blue-violet/30" stroke-width="1.1"></rect>
-                <rect x="140" y="24" width="60" height="14" rx="7" class="fill-blue-violet/10 stroke-blue-violet/30" stroke-width="1.1"></rect>
-                <rect x="40" y="60" width="160" height="14" rx="7" class="fill-blue-violet/10 stroke-blue-violet/30" stroke-width="1.1"></rect>
-                <rect x="40" y="94" width="160" height="14" rx="7" class="fill-sun-glare-dark/15 stroke-sun-glare-dark" stroke-width="1.1"></rect>
-            </svg>`,
-        timeline: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <line x1="30" y1="68" x2="195" y2="68" class="stroke-blue-violet/25" stroke-width="2"></line>
-                <circle cx="30" cy="68" r="8" class="fill-blue-violet"></circle>
-                <circle cx="85" cy="68" r="8" class="fill-blue-violet"></circle>
-                <circle cx="140" cy="68" r="8" class="fill-blue-violet"></circle>
-                <circle cx="195" cy="68" r="12" class="fill-sun-glare-dark"></circle>
-                <text x="30" y="98" text-anchor="middle" class="fill-darkest-hour/45 font-mono text-[9px] font-bold">E1</text>
-                <text x="85" y="98" text-anchor="middle" class="fill-darkest-hour/45 font-mono text-[9px] font-bold">E2</text>
-                <text x="140" y="98" text-anchor="middle" class="fill-darkest-hour/45 font-mono text-[9px] font-bold">E3</text>
-                <text x="195" y="98" text-anchor="middle" class="fill-darkest-hour/70 font-mono text-[9px] font-bold">FINAL</text>
-            </svg>`,
-        cup: `
-            <svg viewBox="0 0 240 140" class="h-full w-full">
-                <circle cx="120" cy="34" r="16" class="fill-sun-glare-dark"></circle>
-                <path d="M112 30 L120 20 L128 30 L124 40 L116 40 Z" class="fill-darkest-hour/55"></path>
-                <g class="stroke-blue-violet/40" stroke-width="1.8">
-                    <line x1="60" y1="118" x2="106" y2="52"></line>
-                    <line x1="120" y1="122" x2="120" y2="58"></line>
-                    <line x1="180" y1="118" x2="134" y2="52"></line>
-                </g>
-                <circle cx="60" cy="118" r="7" class="fill-blue-violet/55"></circle>
-                <circle cx="120" cy="122" r="7" class="fill-blue-violet/55"></circle>
-                <circle cx="180" cy="118" r="7" class="fill-blue-violet/55"></circle>
-            </svg>`,
-    };
- 
-    function tfDiagramFor(key) {
-        return tfDiagrams[key] || tfDiagrams.bracket;
-    }
+    const tfDiagramFor = competikaDiagramFor;   // diagramas compartidos (definidos arriba)
  
     // ── Referencias DOM ───────────────────────────────────────────────────
     const tfTitleEl          = document.getElementById('tf-title');
@@ -756,11 +754,19 @@ if (tfForm) {
     };
  
     let tfSelectedTypeId = null;
+    let tfActivos = null;
+    const tfTipos = () => tournamentTypes
+        .map(t => ({ ...t, subtipos: t.subtipos.filter(s => !tfActivos || tfActivos.has(s.id)) }))
+        .filter(t => t.subtipos.length);
+    document.addEventListener('competika:formatos', e => {
+        tfActivos = new Set(e.detail);
+        if (!tfSelectedTypeId) tfRenderFormatCards();
+    });
  
     // ── Paso 1: tarjetas de formato (data-driven desde tournamentTypes) ───
     function tfRenderFormatCards() {
         if (!tfFormatGrid) return;
-        tfFormatGrid.innerHTML = tournamentTypes.map(type => `
+        tfFormatGrid.innerHTML = tfTipos().map(type => `
             <label class="tf-card group relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-violet/40 hover:shadow-[0_18px_40px_rgba(95,31,197,0.12)] has-[:checked]:border-sun-glare-dark has-[:checked]:bg-sun-glare/10 has-[:checked]:shadow-[0_18px_40px_rgba(67,197,158,0.18)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-violet-dark has-[:focus-visible]:ring-offset-2">
                 <input type="radio" name="tf-format" id="tf-format-${type.id}" value="${type.id}" class="peer sr-only" required>
                 ${type.badge ? `<span class="absolute right-5 top-5 rounded-full bg-blue-violet-dark px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-cloud-dancer">${type.badge}</span>` : ''}
@@ -786,7 +792,7 @@ if (tfForm) {
     // ── Paso 2: chips de subtipo + ficha + diagrama de estructura ─────────
     function tfRenderSubtypeChips(typeId) {
         if (!tfSubtypeGrid) return;
-        const type = tournamentTypes.find(t => t.id === typeId);
+        const type = tfTipos().find(t => t.id === typeId);
         if (!type) return;
  
         tfSubtypeGrid.innerHTML = type.subtipos.map((sub, i) => `
@@ -861,9 +867,7 @@ if (tfForm) {
         tfStartDate.min = new Date().toISOString().split('T')[0];
     }
  
-    // ── Envío del formulario ──────────────────────────────────────────────
-    // Lo maneja tournament-api.js: guarda el torneo en la base de datos
-    // (api/tournaments.php) y recién entonces muestra el panel de éxito.
+    // Envío del formulario: tournament-api.js
 
     // ── Crear otro torneo (reset) ──────────────────────────────────────────
     document.getElementById('tf-reset-btn')?.addEventListener('click', () => {
@@ -913,8 +917,9 @@ function tsFromApi(t) {
         formato: t.formatLabel || 'Formato a definir',
         participantes: t.teamCount,
         maxParticipantes: t.maxTeams,
-        premio: t.prizesText || 'Sin premios definidos',
-        inscripcion: t.entryFee > 0 ? `${({ UYU: '$', USD: 'US$', ARS: 'AR$', BRL: 'R$', EUR: '€' })[t.currency] || '$'} ${t.entryFee}` : 'Gratis',
+        premio: t.prizesText ? `1.º: ${t.prizesText}` : 'Sin premios definidos',
+        competitivo: !!t.competitive,
+        inscripcion: t.entryFee > 0 ? `${t.currencySymbol || '$'} ${t.entryFee}` : 'Gratis',
         esMio: !!t.isOwner,
         inscripto: !!t.joined,
     };
@@ -986,7 +991,7 @@ async function tsAbrirInscripcion(t) {
     m.querySelector('[data-step="form"]').hidden = false;
     m.querySelector('[data-step="ok"]').hidden = true;
     m.querySelector("#ts-join-title").textContent = t.nombre;
-    m.querySelector("#ts-join-meta").textContent = `${t.formato} · ${t.ciudad} · Inscripción: ${t.inscripcion}`;
+    m.querySelector("#ts-join-meta").textContent = `${t.formato} · ${t.ciudad} · Inscripción: ${t.inscripcion}` + (t.competitivo ? ' · Competitivo: requiere carné de deportista' : '');
     m.querySelector("#ts-join-team").value = "";
     m.querySelector("#ts-join-error").hidden = true;
     m.hidden = false;
@@ -1098,7 +1103,7 @@ function renderTournaments(lista) {
                     <div class="torneo-deporte-icono">
                         <i class="ti ${sport.icon}"></i>
                     </div>
-                    <span class="torneo-nombre">${tsEsc(t.nombre)}</span>
+                    <a class="torneo-nombre" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}" title="Ver el torneo">${tsEsc(t.nombre)}</a>
                 </div>
                 <span class="estado-badge ${estadoClase[t.estado]}">
                     ${estadoLabel[t.estado]}
@@ -1108,6 +1113,7 @@ function renderTournaments(lista) {
             <div class="torneo-pills">
                 ${t.nivel ? `<span class="pill ${nivelClase}">${tsEsc(t.nivel)}</span>` : ''}
                 <span class="pill formato-pill">${tsEsc(t.formato)}</span>
+                ${t.competitivo ? '<span class="pill formato-pill" title="Resultados cargados por un juez; requiere carné de deportista"><i class="ti ti-shield-check"></i> Competitivo</span>' : ''}
             </div>
 
             <div class="torneo-info">
@@ -1144,7 +1150,7 @@ function renderTournaments(lista) {
                     ? `<button class="btn-completo" disabled><i class="ti ti-circle-check"></i> Inscripto</button>`
                     : isFull
                     ? `<button class="btn-completo" disabled><i class="ti ti-lock"></i> ${t.cerrado ? 'Cerrado' : 'Completo'}</button>
-                    <button class="btn-seguir"><i class="ti ti-eye"></i> Seguir</button>`
+                    <a class="btn-seguir" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}"><i class="ti ti-eye"></i> Ver torneo</a>`
                     : `<button class="btn-inscribirse" data-id="${t.id}"><i class="ti ti-door-enter"></i> Inscribirme</button>`
                 }
             </div>
@@ -1222,7 +1228,4 @@ window.addEventListener("DOMContentLoaded", tsCargarTorneos);
 
 } // fin if (document.getElementById("buscador"))
 
-// ====================================================================
-// TOURNAMENT DASHBOARD → frontend/js/tournament-dashboard-db.js
-// (lee y escribe en la base de datos a través de api/tournaments.php)
-// ====================================================================
+// TOURNAMENT DASHBOARD: tournament-dashboard-db.js

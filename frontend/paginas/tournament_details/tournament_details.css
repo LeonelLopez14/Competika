@@ -434,3 +434,43 @@
     width: 100%;
 }
 
+
+/* ── Diagrama del formato: mismos SVG que el formulario (main.js), con sus colores sin Tailwind ── */
+.tt-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 28px 64px;
+    box-sizing: border-box;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(130,76,218,0.10), transparent 55%),
+        radial-gradient(circle at 80% 85%, rgba(67,197,158,0.12), transparent 50%),
+        #f7f5f0;
+    border: 1.5px solid rgba(95,31,197,0.12);
+    filter: none;
+    box-shadow: 0 14px 34px rgba(104,99,242,0.16);
+    transition: opacity 0.35s ease, transform 1.5s ease;
+}
+.tt-diagram svg { width: 100%; height: auto; max-height: 100%; overflow: visible; }
+.tt-diagram .fill-blue-violet        { fill: #5f1fc5; }
+.tt-diagram .fill-blue-violet\/70    { fill: rgba(95,31,197,0.70); }
+.tt-diagram .fill-blue-violet\/55    { fill: rgba(95,31,197,0.55); }
+.tt-diagram .fill-blue-violet\/40    { fill: rgba(95,31,197,0.40); }
+.tt-diagram .fill-blue-violet\/35    { fill: rgba(95,31,197,0.35); }
+.tt-diagram .fill-blue-violet\/10    { fill: rgba(95,31,197,0.10); }
+.tt-diagram .fill-sun-glare-dark     { fill: #43C59E; }
+.tt-diagram .fill-sun-glare-dark\/15 { fill: rgba(67,197,158,0.15); }
+.tt-diagram .fill-darkest-hour       { fill: #212121; }
+.tt-diagram .fill-darkest-hour\/70   { fill: rgba(33,33,33,0.70); }
+.tt-diagram .fill-darkest-hour\/55   { fill: rgba(33,33,33,0.55); }
+.tt-diagram .fill-darkest-hour\/45   { fill: rgba(33,33,33,0.45); }
+.tt-diagram .stroke-blue-violet      { stroke: #5f1fc5; }
+.tt-diagram .stroke-blue-violet\/40  { stroke: rgba(95,31,197,0.40); }
+.tt-diagram .stroke-blue-violet\/35  { stroke: rgba(95,31,197,0.35); }
+.tt-diagram .stroke-blue-violet\/30  { stroke: rgba(95,31,197,0.30); }
+.tt-diagram .stroke-blue-violet\/25  { stroke: rgba(95,31,197,0.25); }
+.tt-diagram .stroke-sun-glare-dark   { stroke: #43C59E; }
+.tt-diagram .font-mono               { font-family: var(--font-mono); }
+.tt-diagram .font-bold               { font-weight: 700; }
+.tt-diagram .text-\[9px\]            { font-size: 9px; }
+.tt-diagram .text-\[10px\]           { font-size: 10px; }
