@@ -11,6 +11,8 @@ class Torneo {
     private ConfiguracionTorneo $configuracion;
     /** @var Equipo[] */ private array $equipos = [];
     /** @var Partido[] */ private array $partidos = [];
+    /** @var Premio[] */ private array $premios = [];
+    private ?string $primerPremio = null;
 
     // Datos de resumen (listados)
     private int $cantidadEquipos = 0;
@@ -48,6 +50,7 @@ class Torneo {
         $t->cantidadPartidos = (int)($f['match_count'] ?? 0);
         $t->esDelUsuario     = (bool)($f['is_owner'] ?? false);
         $t->usuarioInscripto = (bool)($f['joined'] ?? false);
+        $t->primerPremio     = $f['premio_1'] ?? null;
         return $t;
     }
 
@@ -104,6 +107,10 @@ class Torneo {
     /** @param Equipo[] $equipos  @param Partido[] $partidos */
     public function setEquipos(array $equipos): void { $this->equipos = $equipos; }
     public function setPartidos(array $partidos): void { $this->partidos = $partidos; }
+    /** @param Premio[] $premios */
+    public function setPremios(array $premios): void { $this->premios = $premios; }
+    /** @return Premio[] */
+    public function getPremios(): array { return $this->premios; }
     public function setEsDelUsuario(bool $v): void { $this->esDelUsuario = $v; }
     public function setUsuarioInscripto(bool $v): void { $this->usuarioInscripto = $v; }
     public function setEquipoDelUsuario(?int $id): void { $this->equipoDelUsuario = $id; }
@@ -129,7 +136,8 @@ class Torneo {
             'entryFee'       => Formato::numero($c->getPrecioInscripcion()) ?? 0,
             'currency'       => $c->getMoneda()?->getCodigo(),
             'currencySymbol' => $c->getMoneda()?->getSimbolo() ?? '$',
-            'prizesText'     => $c->getPremios(),
+            'prizesText'     => $this->primerPremio,
+            'competitive'    => $c->esCompetitivo(),
             'teamCount'      => $this->cantidadEquipos,
             'matchCount'     => $this->cantidadPartidos,
             'isOwner'        => $this->esDelUsuario,
@@ -156,7 +164,8 @@ class Torneo {
             'status'       => $this->estadoFront(),
             'costs'        => $c->costosToArray(),
             'referee'      => $c->getArbitro()?->toArray() ?? ['name' => null, 'phone' => null, 'email' => null],
-            'prizesText'   => $c->getPremios(),
+            'prizes'       => array_map(fn(Premio $p) => $p->toArray(), $this->premios),
+            'rules'        => $c->reglasToArray(),
             'organizer'    => $contacto?->toArray() ?? ['name' => null, 'phone' => null, 'email' => null],
             'customContact'=> $c->getContacto() !== null,
             'isOwner'      => $this->esDelUsuario,

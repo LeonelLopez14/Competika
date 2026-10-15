@@ -1,0 +1,14 @@
+/* =====================================================
+   MIS ARBITRAJES — usa la base visual de tournament_view.css
+===================================================== */
+.jz-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.jz-torneo { grid-column: 1 / -1; text-align: center; font-size: 12px; font-weight: 700; color: var(--blue-violet-dark); text-decoration: none; }
+.jz-torneo:hover { text-decoration: underline; }
+.jz-carga { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.jz-carga input {
+    width: 64px; padding: 8px; border-radius: 10px; border: 1.5px solid rgba(33,33,33,0.18);
+    text-align: center; font-family: var(--font-display); font-size: 18px; font-weight: 800; background: #fff;
+}
+.jz-carga input:focus { outline: none; border-color: var(--blue-violet-dark); }
+.jz-carga .tv-btn { padding: 9px 14px; }
+@media (max-width: 900px) { .jz-layout { grid-template-columns: 1fr; } }

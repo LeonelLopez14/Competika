@@ -28,7 +28,7 @@ class PerfilController {
     }
 
     private function datos(string $ci): array {
-        return $this->cuenta($ci)->toArray($this->usuarios->roles($ci));
+        return $this->cuenta($ci)->toArray($this->usuarios->roles($ci)) + ['carne' => $this->usuarios->tieneCarne($ci)];
     }
 
     public function me(): array {
@@ -64,12 +64,13 @@ class PerfilController {
             throw new ApiException('No podés quitar el rol Participante mientras estés inscripto en torneos.');
         }
 
-        $this->usuarios->transaccion(function () use ($ci, $nombre, $apellido, $usuario, $telefono, $bio, $roles, $quiereOrg, $quierePart) {
+        $this->usuarios->transaccion(function () use ($ci, $d, $nombre, $apellido, $usuario, $telefono, $bio, $roles, $quiereOrg, $quierePart) {
             $this->usuarios->actualizarPerfil($ci, $nombre, $apellido, $usuario, $telefono, $bio);
             if ($quiereOrg && !$roles['organizador'])   $this->usuarios->crearOrganizador($ci);
             if (!$quiereOrg && $roles['organizador'])   $this->usuarios->quitarRol($ci, 'organizador');
             if ($quierePart && !$roles['participante']) $this->usuarios->crearParticipante($ci);
             if (!$quierePart && $roles['participante']) $this->usuarios->quitarRol($ci, 'participante');
+            if ($quierePart && array_key_exists('carne', $d)) $this->usuarios->actualizarCarne($ci, !empty($d['carne']));
             // rol_usuario (un solo valor en el esquema) refleja el rol principal actual
             if (!$roles['admin'] && !$roles['juez']) {
                 $this->usuarios->actualizarRolPrincipal($ci, $quiereOrg ? 'organizador' : ($quierePart ? 'participante' : 'observador'));
@@ -99,6 +100,7 @@ class PerfilController {
         $nueva = (string)($d['next'] ?? '');
         Validar::password($nueva);
         $this->usuarios->actualizarPassword($ci, $nueva);
+        (new TokenRepository())->borrarRecordadasDe($ci);     // los "Recordarme" de otros dispositivos dejan de valer
         session_regenerate_id(true);
         return ['success' => true];
     }
@@ -126,6 +128,9 @@ class PerfilController {
         if (strtoupper(trim((string)($d['confirm'] ?? ''))) !== 'ELIMINAR') throw new ApiException('Escribí ELIMINAR para confirmar.');
         if (!$this->usuarios->verificarPassword($ci, (string)($d['password'] ?? ''))) throw ApiException::prohibido('La contraseña no es correcta.');
         if ($this->usuarios->roles($ci)['admin']) throw ApiException::prohibido('Las cuentas de administrador no se pueden eliminar desde acá.');
+        if ($this->usuarios->juezConAsignaciones($ci)) {
+            throw new ApiException('Tenés partidos o torneos asignados como juez: pedile al organizador que los reasigne antes de borrar tu cuenta.');
+        }
         $n = $this->torneos->cantidadDeTorneosDe($ci);
         if ($n > 0) {
             throw new ApiException("Organizás $n torneo(s). Eliminalos desde el Dashboard antes de borrar tu cuenta "
@@ -166,6 +171,7 @@ class PerfilController {
         return [
             'success'  => true,
             'torneos'  => $torneos,
+            'seguidos' => array_map(fn($t) => self::torneoFila($t, 'seguido', null), $this->actividad->torneosSeguidos($ci)),
             'partidos' => $partidos,
             'honores'  => [
                 'dados'     => $this->honores->partidosConHonorDe($ci),

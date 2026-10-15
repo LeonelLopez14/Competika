@@ -1,10 +1,6 @@
 /* =====================================================
    COMPETIKA — forms.css
    Campos con etiqueta flotante (.input-group / .input-field / .floating-label).
-   Son los mismos estilos de login.css, que hasta ahora solo existían en las
-   páginas de login y registro: por eso en el formulario de torneo, el
-   dashboard y la configuración los campos se veían sin borde y con las
-   etiquetas fuera de lugar. Incluir este archivo en esas páginas.
    ===================================================== */
 
 .input-group {

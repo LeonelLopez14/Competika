@@ -14,7 +14,7 @@ class SesionController {
     }
 
     public function estado(): array {
-        $ci = Auth::ci();
+        $ci = Auth::ci();                  // null también si la cuenta fue suspendida
         if ($ci === null) return ['logged' => false];
         $u = $this->usuarios->buscar($ci);
         if ($u === null) {                 // la cuenta ya no existe: se cierra la sesión

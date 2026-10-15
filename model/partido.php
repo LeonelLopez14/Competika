@@ -11,7 +11,9 @@ class Partido {
         private ?string $fecha,          // 'Y-m-d H:i:s' o null
         private ?string $ubicacion,
         private string $fase = self::FASE_POR_DEFECTO,
-        private ?Resultado $resultado = null
+        private ?Resultado $resultado = null,
+        private ?int $juezId = null,             // juez asignado (enfrentamiento_juez)
+        private ?string $juezNombre = null
     ) {}
 
     public static function desdeFila(array $f): self {
@@ -27,7 +29,8 @@ class Partido {
         return new self((int)$f['enfrentamiento_id'], (int)$f['torneo_id_fk'],
             $f['eq_local'] !== null ? (int)$f['eq_local'] : null,
             $f['eq_visitante'] !== null ? (int)$f['eq_visitante'] : null,
-            $f['fecha'], $f['ubicacion'], $f['fase'] ?: self::FASE_POR_DEFECTO, $res);
+            $f['fecha'], $f['ubicacion'], $f['fase'] ?: self::FASE_POR_DEFECTO, $res,
+            isset($f['juez_id']) ? (int)$f['juez_id'] : null, $f['juez_nombre'] ?? null);
     }
 
     /** Fecha y hora del formulario -> DATETIME (sin hora = 00:00). */
@@ -48,6 +51,10 @@ class Partido {
     public function getFase(): string { return $this->fase; }
     public function getResultado(): ?Resultado { return $this->resultado; }
     public function setResultado(?Resultado $r): void { $this->resultado = $r; }
+    public function getJuezId(): ?int { return $this->juezId; }
+    public function setJuezId(?int $id): void { $this->juezId = $id; }
+    public function setLocalId(?int $id): void { $this->localId = $id; }
+    public function setVisitanteId(?int $id): void { $this->visitanteId = $id; }
     public function estaJugado(): bool { return $this->resultado !== null && $this->resultado->estaJugado(); }
 
     /** Rival de un equipo en este partido (null si el equipo no juega o falta el rival). */
@@ -75,6 +82,8 @@ class Partido {
             'venue'     => $this->ubicacion,
             'phase'     => $this->fase,
             'played'    => $jugado,
+            'judgeId'   => $this->juezId !== null ? (string)$this->juezId : null,
+            'judgeName' => $this->juezNombre,
         ];
     }
 }

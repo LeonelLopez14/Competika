@@ -40,6 +40,7 @@ class Notificador {
             ? "«{$t->getNombre()}» comenzó. ¡Éxitos!"
             : "«{$t->getNombre()}» finalizó. Mirá cómo terminó la tabla en tu perfil.";
         foreach ($this->torneos->usuariosInscriptos($t->getId()) as $ci) $this->enviar($ci, 'torneo_estado', $msg, $t->getId());
+        $this->seguidores($t->getId(), 'torneo_estado', $msg);
     }
 
     /** $inscriptos se obtiene ANTES de borrar el torneo. */
@@ -99,5 +100,26 @@ class Notificador {
         } catch (Throwable $e) {
             error_log('[competika] recordatorios: ' . $e->getMessage());
         }
+    }
+
+    /** Aviso a quienes siguen el torneo (observadores), salvo los que ya juegan en él. */
+    public function seguidores(int $torneoId, string $tipo, string $mensaje): void {
+        try {
+            $juegan = array_flip($this->torneos->usuariosInscriptos($torneoId));
+            foreach ($this->torneos->seguidores($torneoId) as $ci) {
+                if (!isset($juegan[$ci])) $this->enviar($ci, $tipo, $mensaje, $torneoId);
+            }
+        } catch (Throwable $e) {
+            error_log('[competika] avisos a seguidores: ' . $e->getMessage());
+        }
+    }
+
+    /** Fixture publicado: un aviso por persona (no uno por partido). */
+    public function fixture(int $torneoId, int $partidos): void {
+        $nombre = $this->torneos->nombre($torneoId);
+        foreach ($this->torneos->usuariosInscriptos($torneoId) as $ci) {
+            $this->enviar($ci, 'partido', "Se publicó el fixture de «{$nombre}» ({$partidos} partidos). Mirá cuándo jugás.", $torneoId);
+        }
+        $this->seguidores($torneoId, 'partido', "Se publicó el fixture de «{$nombre}».");
     }
 }

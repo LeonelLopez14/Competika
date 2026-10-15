@@ -51,6 +51,11 @@ DirectoryIndex frontend/index.html index.php index.html
     RewriteRule ^registro/?$       %{ENV:BASE}frontend/paginas/register/register.html [R=302,L]
     RewriteRule ^perfil/?$         %{ENV:BASE}frontend/paginas/profile/profile.html [R=302,L]
     RewriteRule ^configuracion/?$  %{ENV:BASE}frontend/paginas/profile_configuration/profile_configuration.html [R=302,L]
+    RewriteRule ^recuperar/?$      %{ENV:BASE}frontend/paginas/recover/recover.html [R=302,L]
+    RewriteRule ^arbitrajes/?$     %{ENV:BASE}frontend/paginas/judge/judge.html [R=302,L]
+    RewriteRule ^admin/?$          %{ENV:BASE}frontend/paginas/admin/admin.html [R=302,L]
+    RewriteRule ^terminos/?$       %{ENV:BASE}frontend/paginas/terms/terms.html [R=302,L]
+    RewriteRule ^privacidad/?$     %{ENV:BASE}frontend/paginas/privacy/privacy.html [R=302,L]
 
     # 4) API REST con URLs limpias (reescritura interna, sin redirección)
     #    GET /api/torneos           -> lista      GET /api/torneos/5 -> un torneo

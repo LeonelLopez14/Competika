@@ -8,11 +8,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
-    <link rel="stylesheet" href="tournament_view.css?v=20261011">
-    <link rel="stylesheet" href="../../css/style..css?v=20261011">
-    <link rel="stylesheet" href="../../css/forms.css?v=20261011">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261014">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261014">
+    <link rel="stylesheet" href="tournament_view.css?v=20261014">
+    <link rel="stylesheet" href="../../css/style..css?v=20261014">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261014">
     <title>Torneo — Competika</title>
 </head>
 <body>
@@ -127,6 +127,12 @@
                 <div class="tv-acciones" id="tv-acciones"></div>
             </header>
 
+            <div class="tv-invitaciones" id="tv-invitaciones" hidden></div>
+            <div class="tv-campeon" id="tv-campeon" hidden>
+                <i class="ti ti-trophy" aria-hidden="true"></i>
+                <div><p class="tv-campeon-label">Campeón</p><p class="tv-campeon-nombre" id="tv-campeon-nombre"></p></div>
+            </div>
+
             <div class="tv-layout">
                 <div class="tv-col">
                     <section class="tv-card">
@@ -146,13 +152,17 @@
                 </div>
 
                 <aside class="tv-col tv-col--side">
+                    <section class="tv-card" id="tv-miequipo-card" hidden>
+                        <h2 class="tv-card-title"><i class="ti ti-users-group"></i> Mi equipo <span class="tv-count" id="tv-miequipo-count"></span></h2>
+                        <div id="tv-miequipo"></div>
+                    </section>
                     <section class="tv-card">
                         <h2 class="tv-card-title"><i class="ti ti-ticket"></i> Inscripción</h2>
                         <dl class="tv-datos" id="tv-costos"></dl>
                     </section>
                     <section class="tv-card" id="tv-premios-card" hidden>
                         <h2 class="tv-card-title"><i class="ti ti-medal"></i> Premios</h2>
-                        <p class="tv-texto" id="tv-premios"></p>
+                        <ol class="tv-premios" id="tv-premios"></ol>
                     </section>
                     <section class="tv-card">
                         <h2 class="tv-card-title"><i class="ti ti-user-circle"></i> Organizador</h2>
@@ -175,6 +185,7 @@
             <form method="dialog" id="tv-form">
                 <h2 id="tv-dialog-title">Inscribirme</h2>
                 <p class="tv-dialog-sub" id="tv-dialog-sub"></p>
+                <p class="tv-dialog-nota" id="tv-dialog-nota"></p>
                 <div class="input-group">
                     <input type="text" id="tv-team" class="input-field" placeholder=" " maxlength="100" autocomplete="off">
                     <label for="tv-team" class="floating-label">Nombre de tu equipo (opcional)</label>
@@ -240,7 +251,7 @@
                     <li><a href="../about/about.html">Sobre nosotros</a></li>
                     <li><a href="../contact/contact.html">Contacto</a></li>
                     <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
-                    <li><a href="#">Términos de uso</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
@@ -251,9 +262,9 @@
             </p>
         </div>
     </footer>
-    <script src="../../js/main.js?v=20261011"></script>
-    <script src="../../js/navbar-user.js?v=20261011"></script>
-    <script src="../../js/tournament-api.js?v=20261011"></script>
-    <script src="../../js/tournament-view.js?v=20261011"></script>
+    <script src="../../js/main.js?v=20261014"></script>
+    <script src="../../js/navbar-user.js?v=20261014"></script>
+    <script src="../../js/tournament-api.js?v=20261014"></script>
+    <script src="../../js/tournament-view.js?v=20261014"></script>
 </body>
 </html>

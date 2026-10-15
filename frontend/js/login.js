@@ -1,4 +1,13 @@
 const params = new URLSearchParams(window.location.search);
+// Aviso de éxito (por ejemplo, después de cambiar la contraseña)
+const ok = params.get('ok');
+if (ok) {
+    const box = document.createElement('div');
+    box.className = 'form-ok';
+    box.setAttribute('role', 'status');
+    box.textContent = ok;
+    document.getElementById('error-message')?.before(box);
+}
 const error = params.get('error');
 if (error) {
     const errorDiv = document.getElementById('error-message');

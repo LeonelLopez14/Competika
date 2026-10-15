@@ -2,14 +2,9 @@ USE competika_db;
 
 CREATE USER IF NOT EXISTS 'competika_app'@'localhost' IDENTIFIED BY 'Jacaranda';
 
--- Límites de recursos. OJO: se cuentan para TODA la aplicación (todos los
--- visitantes usan esta misma cuenta) y cada petición a la API abre una
--- conexión. Valores pensados para el uso de un club/liga chica:
---   ~1000 páginas vistas por hora, con margen. Si el sitio crece, subirlos.
---   MAX_USER_CONNECTIONS: conexiones simultáneas; tiene que alcanzar para los
---   procesos de Apache que atienden a la vez (y ser menor que max_connections
---   del servidor, 151 por defecto). Las notificaciones en tiempo real NO
---   dejan conexiones abiertas (ver SenalNotificaciones).
+-- Límites de recursos: valen para toda la aplicación (todos los visitantes
+-- usan esta cuenta). MAX_USER_CONNECTIONS debe cubrir los procesos de Apache
+-- simultáneos y ser menor que max_connections del servidor (151 por defecto).
 ALTER USER 'competika_app'@'localhost' WITH
     MAX_QUERIES_PER_HOUR 100000
     MAX_UPDATES_PER_HOUR 20000
@@ -41,6 +36,15 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.notificacion               
 GRANT SELECT, INSERT                 ON competika_db.honor                       TO 'competika_app'@'localhost';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.persona                      TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE         ON competika_db.solicitud_juez               TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, DELETE         ON competika_db.seguimiento                  TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.sesion_recordada             TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.recuperacion_clave           TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.premio                       TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.grupo                        TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.avance_llave                 TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE         ON competika_db.invitacion_equipo            TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.mensaje_contacto             TO 'competika_app'@'localhost';
 
 -- Catálogos: la aplicación solo los lee
 GRANT SELECT ON competika_db.tipo_torneo TO 'competika_app'@'localhost';

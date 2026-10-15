@@ -25,6 +25,9 @@ El esquema está en 3FN: el árbitro principal y el contacto de un torneo son fi
 (referenciadas por FK desde `configuracion_torneo`), la moneda es FK a `moneda` y el formato es FK a
 `tipo_torneo`. Si el contacto es el mismo que el de la cuenta del organizador no se guarda: se toma de `usuario`.
 
+**Primer administrador:** registrate en el sitio, cambiá el correo dentro de `database/admin.sql` y
+ejecutalo como root (phpMyAdmin). Al volver a entrar aparece "Administración" en el menú.
+
 `usuarios.sql` crea `competika_app` con GRANT por tabla, REVOKE explícitos y límites de recursos.
 Los límites cuentan para todo el sitio (todos los visitantes usan esa cuenta y cada pedido a la API
 abre una conexión): si el sitio crece, subirlos.
@@ -39,7 +42,8 @@ Las fotos de perfil se guardan en `uploads/avatars/`. Apache tiene que poder esc
 y PHP necesita la extensión **GD** (XAMPP la trae; en Ubuntu: `php-gd`) y
 `upload_max_filesize` de al menos 5M.
 
-La app lee la conexión de variables de entorno (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `APP_ENV`).
+La app lee la configuración de variables de entorno (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `APP_ENV`,
+y para los correos `MAIL_ENABLED`, `MAIL_FROM`, `APP_URL`).
 Sin ellas usa los valores locales de `config/database.php`. Con `APP_ENV=production` los errores internos no se muestran al usuario.
 
 ## Local (XAMPP / LAMPP)
@@ -114,4 +118,27 @@ docker compose up -d --build  # http://localhost:8080
 - Los equipos de un torneo son las filas de `tabla_posiciones` con `equipo_id_fk`.
 - `enfrentamiento_equipo.es_local` marca al local; `puntaje_a` es el del local.
 - La app no tiene `DELETE` sobre `resultado`: no se borran partidos/equipos/torneos con resultados.
-- No hay columnas para costos/notas por partido, grupos ni aprobación de inscripciones.
+- Grupos (`grupo`), premios por puesto (`premio`) y el avance en llaves de eliminación (`avance_llave`) son tablas propias.
+- No hay columnas para costos/notas por partido ni aprobación de inscripciones.
+
+## Torneos competitivos, equipos y administración
+
+- **Competitivo:** exige un juez principal (de los jueces aprobados) que queda asignado a todos los
+  partidos; el resultado solo lo carga el juez (o un administrador) y los jugadores necesitan el
+  carné de deportista (se marca al registrarse o en Configuración).
+- **Equipos:** quien se inscribe es el capitán e invita por correo hasta completar "jugadores por equipo".
+- **Fixture automático:** todos los formatos. Suizo, vidas, copa desafío y grupos + eliminación se
+  generan por rondas desde el Calendario del dashboard.
+- **Panel de administración:** solicitudes de juez, usuarios (roles, suspender, eliminar), torneos
+  (estado, transferir, eliminar, editar desde el dashboard), mensajes de Contacto y anuncios.
+- **Redes del pie de página:** se configuran en `frontend/js/navbar-user.js` (objeto `REDES`);
+  las que quedan vacías no se muestran.
+
+## Correos (recuperar contraseña)
+
+- `MAIL_ENABLED=1` activa el envío con `mail()` de PHP; el servidor necesita sendmail/SMTP configurado
+  (en Ubuntu, por ejemplo, `msmtp-mta` con una cuenta SMTP). `MAIL_FROM` es el remitente y `APP_URL`
+  la dirección pública del sitio (ej. `https://competika.ejemplo.uy`) para armar el enlace.
+- Sin correo configurado (XAMPP), en desarrollo y **solo desde la misma máquina** la página muestra el
+  enlace en pantalla ("modo prueba"); siempre queda también en el log de errores de PHP.
+- En producción (`APP_ENV=production`) el enlace nunca se muestra en pantalla.

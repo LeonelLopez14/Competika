@@ -51,10 +51,15 @@ function fill(user) {
     $('settings-current-email-value').textContent = user.email || '—';
     $('settings-role-organizador').checked  = !!user.roles?.organizador;
     $('settings-role-participante').checked = !!user.roles?.participante;
+    $('settings-carne').checked = !!user.carne;
+    syncCarne();
     setAvatar(user.foto);
 
-    const juez = document.querySelector('.settings-role-pending-badge');
-    if (juez && user.roles?.juez) juez.textContent = 'Activo';
+}
+
+function syncCarne() {
+    const row = $('settings-carne-row');
+    if (row) row.hidden = !$('settings-role-participante').checked;
 }
 
 function setAvatar(url) {
@@ -119,6 +124,7 @@ function initAvatar() {
 /* ── Editar perfil ── */
 function initProfileForm() {
     const form = $('settings-profile-form');
+    $('settings-role-participante')?.addEventListener('change', syncCarne);
     form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const body = {
@@ -131,6 +137,7 @@ function initProfileForm() {
                 organizador:  $('settings-role-organizador').checked,
                 participante: $('settings-role-participante').checked,
             },
+            carne: $('settings-carne').checked,
         };
         if (!body.nombre || !body.apellido) { toast('Completá tu nombre y apellido.', true); return; }
 
@@ -230,11 +237,53 @@ function initDeleteAccount() {
     });
 }
 
+/* ── Rol de juez: solicitud ── */
+const JUEZ_API = (window.competikaSiteRoot || '../../..') + '/api/judges.php';
+function pintarJuez(r) {
+    const badge = $('settings-juez-badge'), texto = $('settings-juez-text'), btn = $('settings-juez-btn');
+    if (!badge) return;
+    const s = r.request;
+    let estado = 'ninguna', label = 'No solicitado', msg = 'El rol de Juez no se activa directamente: completá la solicitud y un administrador la revisa.', puede = true;
+    if (r.isJudge) { estado = 'aprobada'; label = 'Activo'; msg = 'Sos juez: los organizadores pueden asignarte partidos. Los ves en "Mis arbitrajes".'; puede = false; }
+    else if (s?.estado === 'pendiente') { estado = 'pendiente'; label = 'Pendiente'; msg = 'Tu solicitud está en revisión. Te avisamos por la campana cuando un administrador la revise.'; puede = false; }
+    else if (s?.estado === 'rechazada') { estado = 'rechazada'; label = 'Rechazada'; msg = `Tu solicitud fue rechazada: ${s.motivo || 'sin motivo'}. Podés volver a enviarla.`; }
+    badge.textContent = label;
+    badge.className = `settings-role-pending-badge settings-role-pending-badge--${estado}`;
+    texto.textContent = msg;
+    btn.style.display = puede ? '' : 'none';
+}
+async function cargarJuez() {
+    try { const r = await (await fetch(`${JUEZ_API}?action=status`, { credentials: 'same-origin' })).json(); if (r.success) pintarJuez(r); } catch (e) { /* sin conexión */ }
+}
+function initJuez() {
+    const dlg = $('juez-dialog');
+    $('settings-juez-btn')?.addEventListener('click', () => { $('juez-error').textContent = ''; dlg.showModal(); $('juez-deportes').focus(); });
+    $('juez-cancel')?.addEventListener('click', () => dlg.close());
+    $('juez-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = { certificado: $('juez-certificado').checked, deportes: $('juez-deportes').value.trim(), experiencia: $('juez-experiencia').value.trim() };
+        if (!body.deportes) { $('juez-error').textContent = 'Indicá en qué deportes podés arbitrar.'; return; }
+        if (body.experiencia.length < 20) { $('juez-error').textContent = 'Contá tu experiencia (al menos 20 caracteres).'; return; }
+        busy($('juez-enviar'), true);
+        let r;
+        try {
+            r = await (await fetch(`${JUEZ_API}?action=request`, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json();
+        } catch (err) { r = { success: false, error: 'No se pudo conectar con el servidor.' }; }
+        busy($('juez-enviar'), false);
+        if (!r.success) { $('juez-error').textContent = r.error || 'No se pudo enviar la solicitud.'; return; }
+        dlg.close();
+        $('juez-form').reset();
+        pintarJuez({ isJudge: false, request: r.request });
+        toast('Solicitud enviada. Un administrador la va a revisar.');
+    });
+}
+
 initNav();
+initJuez();
 initAvatar();
 initProfileForm();
 initEmailForm();
 initPasswordForm();
 initDeleteAccount();
-(window.competikaSessionReady || Promise.resolve({ logged: true })).then(s => { if (s && s.logged) load(); });
+(window.competikaSessionReady || Promise.resolve({ logged: true })).then(s => { if (s && s.logged) { load(); cargarJuez(); } });
 })();

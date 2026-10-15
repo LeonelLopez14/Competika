@@ -1,8 +1,8 @@
 /* =====================================================
    COMPETIKA — tournament-view.js  (tournament_view.html?t=ID)
    Página pública de un torneo: la ve cualquiera (con o sin cuenta).
-   Muestra tabla de posiciones, próximos partidos, resultados, costos,
-   premios, organizador, árbitro y equipos. Desde acá también se inscribe.
+   Muestra tabla de posiciones, partidos, premios, organizador y equipos.
+   Desde acá se inscribe, se gestiona el equipo y se responden invitaciones.
 
    Requiere, en este orden: main.js, navbar-user.js, tournament-api.js.
    Todo dato que viene de la base se inserta con textContent o esc().
@@ -61,6 +61,25 @@ function renderHero() {
         return li;
     }));
 
+    if (t.rules?.competitive) {
+        const b = document.createElement('li');
+        b.innerHTML = '<span class="tv-badge-comp"><i class="ti ti-shield-check" aria-hidden="true"></i> Competitivo</span>';
+        const juez = document.createElement('span');
+        juez.textContent = t.rules.mainJudgeName ? ` Juez: ${t.rules.mainJudgeName}` : '';
+        b.append(juez);
+        $('tv-meta').append(b);
+    }
+    if (t.rules?.playersPerTeam > 1) {
+        const li = document.createElement('li');
+        li.innerHTML = '<i class="ti ti-users-group" aria-hidden="true"></i><span></span>';
+        li.querySelector('span').textContent = `Hasta ${t.rules.playersPerTeam} jugadores por equipo`;
+        $('tv-meta').append(li);
+    }
+
+    const camp = t.champion ? equipo(t.champion) : null;
+    $('tv-campeon').hidden = !camp;
+    if (camp) $('tv-campeon-nombre').textContent = `${camp.emoji} ${camp.name}`;
+
     const desc = $('tv-descripcion');
     desc.hidden = !t.description;
     desc.textContent = t.description || '';
@@ -82,9 +101,27 @@ function renderAcciones() {
     } else {
         principal = `<button class="tv-btn tv-btn--green" id="tv-inscribirme"><i class="ti ti-door-enter"></i> Inscribirme</button>`;
     }
-    cont.innerHTML = principal + `<button class="tv-btn tv-btn--ghost" id="tv-compartir"><i class="ti ti-share"></i> Compartir</button>`;
+    const seguir = t.isOwner || t.joined ? '' :
+        `<button class="tv-btn tv-btn--ghost" id="tv-seguir" aria-pressed="${t.following}"><i class="ti ${t.following ? 'ti-bell-check' : 'ti-bell-plus'}"></i> ${t.following ? 'Siguiendo' : 'Seguir'}${t.followers ? ` · ${t.followers}` : ''}</button>`;
+    cont.innerHTML = principal + seguir + `<button class="tv-btn tv-btn--ghost" id="tv-compartir"><i class="ti ti-share"></i> Compartir</button>`;
     $('tv-inscribirme')?.addEventListener('click', abrirInscripcion);
+    $('tv-seguir')?.addEventListener('click', alternarSeguir);
     $('tv-compartir').addEventListener('click', compartir);
+}
+
+// Seguir: recibe avisos de resultados y cambios del torneo (rol observador)
+async function alternarSeguir() {
+    const sesion = await (window.competikaSessionReady || Promise.resolve({ logged: false }));
+    if (!sesion || !sesion.logged) {
+        location.href = `${window.competikaSiteRoot || '../../..'}/frontend/paginas/login/login.html?error=${encodeURIComponent('Iniciá sesión para seguir un torneo.')}&next=${encodeURIComponent(`frontend/paginas/tournament_view/tournament_view.html?t=${t.id}`)}`;
+        return;
+    }
+    const r = await competikaApi('follow', { method: 'POST', body: { torneoId: Number(t.id), follow: !t.following } });
+    if (!r.success) { toast(r.error || 'No se pudo actualizar.'); return; }
+    t.following = r.following;
+    t.followers = r.followers;
+    renderAcciones();
+    toast(r.following ? 'Ahora seguís este torneo: te avisamos de cada resultado.' : 'Dejaste de seguir el torneo.');
 }
 
 async function compartir() {
@@ -97,18 +134,27 @@ async function compartir() {
 }
 
 // ── Tabla de posiciones ────────────────────────────────
-function renderTabla() {
-    const cont = $('tv-tabla');
-    if (!t.teams.length) { cont.innerHTML = '<p class="tv-vacio">Todavía no hay equipos inscriptos.</p>'; return; }
-    const filas = [...t.teams].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+function tablaHtml(equipos) {
+    const vidas = t.formatSubId === 'vidas';
+    const filas = [...equipos].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
     const hayJugados = t.matches.some(m => m.played);
-    cont.innerHTML = `<div class="tv-tabla-wrap"><table class="tv-tabla">
-        <thead><tr><th>#</th><th>Equipo</th><th title="Partidos jugados">PJ</th><th title="Ganados">G</th><th title="Empatados">E</th><th title="Perdidos">P</th><th>Pts</th></tr></thead>
+    return `<div class="tv-tabla-wrap"><table class="tv-tabla">
+        <thead><tr><th>#</th><th>Equipo</th><th title="Partidos jugados">PJ</th><th title="Ganados">G</th><th title="Empatados">E</th><th title="Perdidos">P</th>${vidas ? '<th>Vidas</th>' : ''}<th>Pts</th></tr></thead>
         <tbody>${filas.map((e, i) => `<tr class="${e.id === t.myTeam ? 'tv-mio' : ''} ${i === 0 && hayJugados && e.points > 0 ? 'tv-lider' : ''}">
             <td class="tv-pos">${i + 1}</td>
             <td><span class="tv-equipo"><span aria-hidden="true">${esc(e.emoji)}</span>${esc(e.name)}</span></td>
             <td>${e.wins + e.draws + e.losses}</td><td>${e.wins}</td><td>${e.draws}</td><td>${e.losses}</td>
+            ${vidas ? `<td title="${e.livesLeft || 0} vidas">${'❤'.repeat(e.livesLeft || 0) || '—'}</td>` : ''}
             <td class="tv-pts">${e.points}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function renderTabla() {
+    const cont = $('tv-tabla');
+    if (!t.teams.length) { cont.innerHTML = '<p class="tv-vacio">Todavía no hay equipos inscriptos.</p>'; return; }
+    const grupos = [...new Set(t.teams.map(e => e.group).filter(Boolean))].sort();
+    cont.innerHTML = grupos.length
+        ? grupos.map(g => `<p class="tv-grupo-titulo">Grupo ${esc(g)}</p>${tablaHtml(t.teams.filter(e => e.group === g))}`).join('')
+        : tablaHtml(t.teams);
 }
 
 // ── Partidos ───────────────────────────────────────────
@@ -119,6 +165,7 @@ function partidoHtml(m) {
     const info = [`<span><i class="ti ti-calendar" aria-hidden="true"></i>${esc(fechaPartido(m))}</span>`];
     if (m.venue) info.push(`<span><i class="ti ti-map-pin" aria-hidden="true"></i>${esc(m.venue)}</span>`);
     if (m.phase) info.push(`<span><i class="ti ti-flag" aria-hidden="true"></i>${esc(m.phase)}</span>`);
+    if (m.judgeName) info.push(`<span><i class="ti ti-gavel" aria-hidden="true"></i>${esc(m.judgeName)}</span>`);
     return `<li class="tv-partido ${mio ? 'tv-mio' : ''}">
         <span class="tv-lado tv-lado--local ${ganaLocal ? 'tv-gana' : ''}">${esc(nombreEquipo(m.home))}</span>
         <span class="tv-centro">${m.played
@@ -155,8 +202,9 @@ function renderLateral() {
     if (c.currency) filas.push(['Moneda', c.currency]);
     $('tv-costos').innerHTML = filas.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
 
-    $('tv-premios-card').hidden = !t.prizesText;
-    $('tv-premios').textContent = t.prizesText || '';
+    const premios = t.prizes || [];
+    $('tv-premios-card').hidden = !premios.length;
+    $('tv-premios').innerHTML = premios.map(p => `<li><span class="tv-puesto">${['🥇', '🥈', '🥉'][p.place - 1] || p.place + '.º'}</span><span>${esc(p.description)}</span></li>`).join('');
 
     $('tv-organizador').innerHTML = t.organizer?.name ? persona(t.organizer) : '<p class="tv-vacio">Sin datos de contacto.</p>';
     const arb = t.referee;
@@ -179,6 +227,10 @@ async function abrirInscripcion() {
     $('tv-dialog-sub').textContent = `«${t.name}»`;
     $('tv-dialog-error').textContent = '';
     $('tv-team').value = '';
+    const nota = [];
+    if (t.rules?.playersPerTeam > 1) nota.push(`Quedás como capitán: después podés invitar hasta ${t.rules.playersPerTeam - 1} jugador${t.rules.playersPerTeam > 2 ? 'es' : ''} más.`);
+    if (t.rules?.competitive) nota.push('Torneo competitivo: necesitás el carné de deportista vigente.');
+    $('tv-dialog-nota').textContent = nota.join(' ');
     $('tv-dialog').showModal();
     $('tv-team').focus();
 }
@@ -196,6 +248,69 @@ $('tv-form').addEventListener('submit', async (e) => {
     await cargar();
 });
 
+// ── Mi equipo e invitaciones ──────────────────────────
+const equipos = (action, opts = {}) => competikaApi(action, { api: 'teams', ...opts });
+
+async function accionEquipo(action, body, okMsg) {
+    const r = await equipos(action, { method: 'POST', body });
+    if (!r.success) { toast(r.error || 'No se pudo completar la acción.'); return false; }
+    if (okMsg) toast(okMsg);
+    await cargar();
+    return true;
+}
+
+async function renderMiEquipo() {
+    const card = $('tv-miequipo-card'), inv = $('tv-invitaciones');
+    card.hidden = true; inv.hidden = true;
+    const sesion = await (window.competikaSessionReady || Promise.resolve(null));
+    if (!sesion || !sesion.logged) return;
+    const r = await equipos('mine', { params: { id: t.id } });
+    if (!r.success) return;
+
+    inv.hidden = !r.invitations.length;
+    inv.innerHTML = r.invitations.map(i => `<div class="tv-invitacion">
+        <p><i class="ti ti-mail-forward" aria-hidden="true"></i> <strong>${esc(i.from)}</strong> te invitó al equipo <strong>${esc(i.team)}</strong>.</p>
+        <div class="tv-acciones-mini">
+          <button class="tv-btn tv-btn--ghost tv-btn--sm" data-inv="${esc(i.id)}" data-accept="0">Rechazar</button>
+          <button class="tv-btn tv-btn--green tv-btn--sm" data-inv="${esc(i.id)}" data-accept="1"><i class="ti ti-check"></i> Aceptar</button>
+        </div></div>`).join('');
+
+    const eq = r.team;
+    if (!eq) return;
+    card.hidden = false;
+    $('tv-miequipo-count').textContent = `${eq.members.length}/${eq.max}`;
+    const libres = eq.max - eq.members.length - eq.pending.length;
+    $('tv-miequipo').innerHTML = `
+      <ul class="tv-integrantes">
+        ${eq.members.map(m => `<li><span>${esc(m.name)}${m.me ? ' (vos)' : ''}</span><span>
+          ${m.captain ? '<span class="tv-tag">Capitán</span>' : ''}
+          ${t.rules?.competitive && !m.carne ? '<span class="tv-tag" title="Sin carné de deportista">Sin carné</span>' : ''}
+          ${eq.isCaptain && !m.captain ? `<button class="tv-icon-btn" data-quitar="${esc(m.key)}" title="Quitar del equipo" aria-label="Quitar a ${esc(m.name)}"><i class="ti ti-user-minus"></i></button>` : ''}
+        </span></li>`).join('')}
+        ${eq.pending.map(p => `<li class="tv-pendiente"><span>${esc(p.name)} · invitación pendiente</span>
+          <button class="tv-icon-btn" data-cancelar="${esc(p.id)}" title="Cancelar invitación" aria-label="Cancelar invitación a ${esc(p.name)}"><i class="ti ti-x"></i></button></li>`).join('')}
+      </ul>
+      ${eq.isCaptain && libres > 0 && t.status !== 'finished' ? `<form class="tv-invitar" id="tv-invitar">
+          <input type="email" id="tv-invitar-email" placeholder="Correo del jugador" required maxlength="150" aria-label="Correo del jugador a invitar">
+          <button class="tv-btn tv-btn--primary tv-btn--sm" type="submit"><i class="ti ti-send"></i> Invitar</button></form>` : ''}
+      ${eq.isCaptain && eq.max === 1 ? '<p class="tv-vacio">Este torneo es individual.</p>' : ''}
+      ${!eq.isCaptain ? '<button class="tv-btn tv-btn--ghost tv-btn--sm" id="tv-salir"><i class="ti ti-logout"></i> Dejar el equipo</button>' : ''}`;
+
+    $('tv-invitar')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        accionEquipo('invite', { torneoId: Number(t.id), email: $('tv-invitar-email').value.trim() }, 'Invitación enviada.');
+    });
+    $('tv-salir')?.addEventListener('click', () => confirm('¿Dejar el equipo?') && accionEquipo('leave', { torneoId: Number(t.id) }, 'Dejaste el equipo.'));
+}
+
+document.addEventListener('click', e => {
+    const b = e.target.closest('[data-inv],[data-quitar],[data-cancelar]');
+    if (!b) return;
+    if (b.dataset.inv) accionEquipo('respond', { id: Number(b.dataset.inv), accept: b.dataset.accept === '1' }, b.dataset.accept === '1' ? '¡Te sumaste al equipo!' : 'Invitación rechazada.');
+    else if (b.dataset.quitar) confirm('¿Quitar a este jugador del equipo?') && accionEquipo('remove', { torneoId: Number(t.id), member: b.dataset.quitar }, 'Jugador quitado.');
+    else if (b.dataset.cancelar) accionEquipo('cancel', { id: Number(b.dataset.cancelar) }, 'Invitación cancelada.');
+});
+
 // ── Carga ──────────────────────────────────────────────
 async function cargar() {
     const r = torneoId ? await competikaApi('get', { params: { id: torneoId } }) : { success: false };
@@ -207,6 +322,7 @@ async function cargar() {
     renderPartidos();
     renderLateral();
     $('tv-torneo').hidden = false;
+    renderMiEquipo();
 }
 
 cargar();

@@ -10,8 +10,10 @@ class EquipoRepository extends BaseRepository {
     /** @return Equipo[] en orden de inscripción */
     public function delTorneo(int $torneoId): array {
         return array_map([Equipo::class, 'desdeFila'], $this->filas(
-            "SELECT e.equipo_id, e.nombre, e.tamanio, tp.puntos, tp.partidos_ganados, tp.partidos_perdidos, tp.partidos_empatados
+            "SELECT e.equipo_id, e.nombre, e.tamanio, tp.puntos, tp.partidos_ganados, tp.partidos_perdidos, tp.partidos_empatados,
+                    g.nombre AS grupo
              FROM tabla_posiciones tp JOIN equipo e ON e.equipo_id = tp.equipo_id_fk
+             LEFT JOIN grupo g ON g.grupo_id = tp.grupo_id_fk
              WHERE tp.torneo_id_fk = ? ORDER BY e.equipo_id", [$torneoId]));
     }
 
@@ -21,6 +23,11 @@ class EquipoRepository extends BaseRepository {
 
     public function estaEnTorneo(int $equipoId, int $torneoId): bool {
         return $this->valor("SELECT 1 FROM tabla_posiciones WHERE torneo_id_fk = ? AND equipo_id_fk = ?", [$torneoId, $equipoId]) !== false;
+    }
+
+    public function torneoDe(int $equipoId): ?int {
+        $v = $this->valor("SELECT torneo_id_fk FROM tabla_posiciones WHERE equipo_id_fk = ? LIMIT 1", [$equipoId]);
+        return $v === false ? null : (int)$v;
     }
 
     /** Torneo en el que está el equipo, si ese torneo es del organizador indicado. */
@@ -113,5 +120,51 @@ class EquipoRepository extends BaseRepository {
     /** Ids de los equipos del torneo. */
     public function idsDelTorneo(int $torneoId): array {
         return array_map('intval', $this->columna("SELECT equipo_id_fk FROM tabla_posiciones WHERE torneo_id_fk = ? AND equipo_id_fk IS NOT NULL", [$torneoId]));
+    }
+
+    /** Crea los grupos del torneo y asigna cada equipo. @param array<string, int[]> $grupos */
+    public function asignarGrupos(int $torneoId, array $grupos): void {
+        $this->transaccion(function () use ($torneoId, $grupos) {
+            foreach ($grupos as $nombre => $equipos) {
+                $gid = $this->insertar("INSERT INTO grupo (torneo_id_fk, nombre) VALUES (?, ?)", [$torneoId, $nombre]);
+                foreach ($equipos as $e) {
+                    $this->ejecutar("UPDATE tabla_posiciones SET grupo_id_fk = ? WHERE torneo_id_fk = ? AND equipo_id_fk = ?", [$gid, $torneoId, $e]);
+                }
+            }
+        });
+    }
+
+    public function borrarGrupos(int $torneoId): void {
+        $this->ejecutar("DELETE FROM grupo WHERE torneo_id_fk = ?", [$torneoId]);
+    }
+
+    /** Integrantes del equipo: [{ci, nombre, carne}] */
+    public function integrantes(int $equipoId): array {
+        return array_map(fn($f) => ['ci' => $f['usuario_ci_fk'], 'nombre' => $f['nombre'], 'carne' => (bool)$f['carne_deportista']],
+            $this->filas("SELECT p.usuario_ci_fk, CONCAT(u.nombre, ' ', u.apellido) AS nombre, p.carne_deportista
+                          FROM equipo_participante ep JOIN participante p ON p.participante_id = ep.participante_id_fk
+                          JOIN usuario u ON u.ci = p.usuario_ci_fk WHERE ep.equipo_id_fk = ? ORDER BY ep.participante_id_fk", [$equipoId]));
+    }
+
+    /** Participante que inscribió al equipo en el torneo (capitán). */
+    public function capitan(int $equipoId, int $torneoId): ?string {
+        $v = $this->valor("SELECT p.usuario_ci_fk FROM tabla_posiciones tp JOIN participante p ON p.participante_id = tp.participante_id_fk
+                           WHERE tp.equipo_id_fk = ? AND tp.torneo_id_fk = ?", [$equipoId, $torneoId]);
+        return $v === false ? null : (string)$v;
+    }
+
+    public function agregarIntegrante(int $equipoId, int $participanteId): void {
+        $this->ejecutar("INSERT IGNORE INTO equipo_participante (equipo_id_fk, participante_id_fk) VALUES (?, ?)", [$equipoId, $participanteId]);
+        $this->actualizarTamanio($equipoId);
+    }
+
+    public function quitarIntegrante(int $equipoId, int $participanteId): void {
+        $this->ejecutar("DELETE FROM equipo_participante WHERE equipo_id_fk = ? AND participante_id_fk = ?", [$equipoId, $participanteId]);
+        $this->actualizarTamanio($equipoId);
+    }
+
+    private function actualizarTamanio(int $equipoId): void {
+        $this->ejecutar("UPDATE equipo SET tamanio = GREATEST(1, (SELECT COUNT(*) FROM equipo_participante WHERE equipo_id_fk = ?)) WHERE equipo_id = ?",
+            [$equipoId, $equipoId]);
     }
 }

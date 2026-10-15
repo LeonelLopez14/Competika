@@ -9,11 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
-    <link rel="stylesheet" href="contact.css?v=20261011">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
-    <link rel="stylesheet" href="../../css/style..css?v=20261011">
-    <title>CONTACTO</title>
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261014">
+    <link rel="stylesheet" href="contact.css?v=20261014">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261014">
+    <link rel="stylesheet" href="../../css/style..css?v=20261014">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261014">
+    <title>Contacto — Competika</title>
 </head>
 <body>
 
@@ -102,8 +103,43 @@
         </div>
     </header>
     <main id="content">
-        <section id="tournament-types">
-            
+        <section class="contacto" aria-labelledby="contacto-titulo">
+            <div class="contacto-intro">
+                <p class="contacto-eyebrow">Contacto</p>
+                <h1 id="contacto-titulo">Hablemos</h1>
+                <p>¿Tenés una consulta, encontraste un error o querés proponer una mejora? Escribinos y el equipo de Competika te responde por correo.</p>
+                <ul class="contacto-datos">
+                    <li><i class="ti ti-mail" aria-hidden="true"></i> hola@competika.com</li>
+                    <li><i class="ti ti-map-pin" aria-hidden="true"></i> Montevideo, Uruguay</li>
+                    <li><i class="ti ti-clock" aria-hidden="true"></i> Respondemos en 48 h hábiles</li>
+                </ul>
+            </div>
+            <form class="contacto-form" id="contacto-form" novalidate>
+                <div class="contacto-fila">
+                    <div class="input-group">
+                        <input type="text" id="c-nombre" class="input-field" placeholder=" " maxlength="100" required autocomplete="name">
+                        <label for="c-nombre" class="floating-label">Nombre</label>
+                    </div>
+                    <div class="input-group">
+                        <input type="email" id="c-email" class="input-field" placeholder=" " maxlength="150" required autocomplete="email">
+                        <label for="c-email" class="floating-label">Correo electrónico</label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="c-asunto" class="input-field" placeholder=" " maxlength="150" required>
+                    <label for="c-asunto" class="floating-label">Asunto</label>
+                </div>
+                <div class="input-group">
+                    <textarea id="c-mensaje" class="input-field" placeholder=" " maxlength="3000" minlength="10" rows="6" required></textarea>
+                    <label for="c-mensaje" class="floating-label">Mensaje</label>
+                </div>
+                <div class="contacto-trampa" aria-hidden="true">
+                    <label for="c-website">No completar</label>
+                    <input type="text" id="c-website" tabindex="-1" autocomplete="off">
+                </div>
+                <p class="contacto-estado" id="contacto-estado" role="status" aria-live="polite"></p>
+                <button type="submit" class="contacto-btn" id="contacto-enviar"><i class="ti ti-send" aria-hidden="true"></i> Enviar mensaje</button>
+            </form>
         </section>
         <!-- ======== BANNER ======== -->
         <section id="banner">
@@ -182,7 +218,7 @@
                     <li><a href="../about/about.html">Sobre nosotros</a></li>
                     <li><a href="../contact/contact.html">Contacto</a></li>
                     <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
-                    <li><a href="#">Términos de uso</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
@@ -193,7 +229,8 @@
         </div>
     </footer>
 
-    <script src="../../js/main.js?v=20261011"></script>
-    <script src="../../js/navbar-user.js?v=20261011"></script>
+    <script src="../../js/main.js?v=20261014"></script>
+    <script src="../../js/navbar-user.js?v=20261014"></script>
+    <script src="../../js/contact.js?v=20261014"></script>
 </body>
 </html>

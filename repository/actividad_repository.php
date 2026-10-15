@@ -5,7 +5,7 @@ require_once __DIR__ . '/base_repository.php';
 class ActividadRepository extends BaseRepository {
     private const TORNEO_COLS = "t.torneo_id, t.nombre, t.deporte, t.fecha_inicio, t.fecha_fin, t.direccion, t.departamento, t.estado,
         (SELECT COUNT(*) FROM tabla_posiciones x WHERE x.torneo_id_fk = t.torneo_id AND x.equipo_id_fk IS NOT NULL) AS equipos,
-        (SELECT premios FROM configuracion_torneo c WHERE c.torneo_id_fk = t.torneo_id ORDER BY configuracion_id LIMIT 1) AS premios";
+        (SELECT GROUP_CONCAT(CONCAT(pr.puesto, '° ', pr.descripcion) ORDER BY pr.puesto SEPARATOR '\n') FROM premio pr WHERE pr.torneo_id_fk = t.torneo_id) AS premios";
 
     public function torneosOrganizados(string $ci): array {
         return $this->filas("SELECT " . self::TORNEO_COLS . "
@@ -31,8 +31,8 @@ class ActividadRepository extends BaseRepository {
         return $this->filas("
             SELECT e.enfrentamiento_id, e.fecha, e.ubicacion, t.torneo_id, t.nombre AS torneo, t.deporte, r.nombre AS fase,
                    ee.equipo_id_fk AS mio,
-                   (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1) AS a,
-                   (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1 OFFSET 1) AS b,
+                   (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id AND es_local = 1 LIMIT 1) AS a,
+                   (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id AND es_local = 0 LIMIT 1) AS b,
                    res.puntaje_a, res.puntaje_b, res.estado AS res_estado
             FROM enfrentamiento_equipo ee
             JOIN enfrentamiento e ON e.enfrentamiento_id = ee.enfrentamiento_id_fk
@@ -51,5 +51,12 @@ class ActividadRepository extends BaseRepository {
             $r[(int)$x['equipo_id']] = $x['nombre'];
         }
         return $r;
+    }
+
+    /** Torneos que sigue el usuario (rol observador). */
+    public function torneosSeguidos(string $ci): array {
+        return $this->filas("SELECT " . self::TORNEO_COLS . "
+            FROM seguimiento s JOIN torneo t ON t.torneo_id = s.torneo_id_fk
+            WHERE s.usuario_ci_fk = ? ORDER BY s.fecha DESC", [$ci]);
     }
 }

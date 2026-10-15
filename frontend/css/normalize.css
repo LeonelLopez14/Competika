@@ -1,7 +1,4 @@
 /*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
-/* Se quitaron los @import de "tailwindcss/*.css": requieren compilar con npm y
-   nunca cargaban (404). Tailwind se usa vía el script @tailwindcss/browser en las
-   páginas que lo necesitan. */
 /* Todo normalize.css va en la capa "reset" (ver style..css). */
 @layer reset {
 

@@ -60,7 +60,8 @@ class UsuarioRepository extends BaseRepository {
     public function roles(string $ci): array {
         $roles = [];
         foreach (self::ROLES as $tabla) {
-            $roles[$tabla] = $this->valor("SELECT 1 FROM $tabla WHERE usuario_ci_fk = ? LIMIT 1", [$ci]) !== false;
+            $extra = $tabla === 'admin' ? ' AND activo = 1' : '';
+            $roles[$tabla] = $this->valor("SELECT 1 FROM $tabla WHERE usuario_ci_fk = ?$extra LIMIT 1", [$ci]) !== false;
         }
         return $roles;
     }
@@ -88,6 +89,26 @@ class UsuarioRepository extends BaseRepository {
         if ($id !== null) return $id;
         $this->crearParticipante($ci);
         return (int)$this->db->lastInsertId();
+    }
+
+    /** Carné de deportista del participante (false si no es participante). */
+    public function tieneCarne(string $ci): bool {
+        return (bool)$this->valor("SELECT carne_deportista FROM participante WHERE usuario_ci_fk = ? ORDER BY participante_id LIMIT 1", [$ci]);
+    }
+
+    public function actualizarCarne(string $ci, bool $tiene): void {
+        $this->ejecutar("UPDATE participante SET carne_deportista = ? WHERE usuario_ci_fk = ?", [(int)$tiene, $ci]);
+    }
+
+    /** ¿Es juez principal de algún torneo o tiene partidos asignados? */
+    public function juezConAsignaciones(string $ci): bool {
+        return (int)$this->valor("SELECT
+            (SELECT COUNT(*) FROM configuracion_torneo c JOIN juez j ON j.juez_id = c.juez_principal_fk WHERE j.usuario_ci_fk = ?) +
+            (SELECT COUNT(*) FROM enfrentamiento_juez ej JOIN juez j ON j.juez_id = ej.juez_id_fk WHERE j.usuario_ci_fk = ?)", [$ci, $ci]) > 0;
+    }
+
+    public function estaBloqueado(string $ci): bool {
+        return (bool)$this->valor("SELECT bloqueado FROM usuario WHERE ci = ?", [$ci]);
     }
 
     public function quitarRol(string $ci, string $tabla): void {

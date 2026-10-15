@@ -250,3 +250,32 @@
     .tv-spin { animation: none; }
     .tv-btn, .tv-toast { transition: none; }
 }
+
+/* Campeón, invitaciones y mi equipo */
+.tv-campeon { display: flex; align-items: center; gap: 16px; margin: 0 0 20px; padding: 18px 22px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255, 196, 0, .22), rgba(108, 92, 231, .12)); }
+.tv-campeon > i { font-size: 2.2rem; color: var(--sun-glare-dark, #e0a800); }
+.tv-campeon-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+.tv-campeon-nombre { font-size: 1.4rem; font-weight: 800; }
+.tv-invitaciones { display: flex; flex-direction: column; gap: 10px; margin: 0 0 20px; }
+.tv-invitacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px;
+    border-radius: 16px; border: 1px solid rgba(108, 92, 231, .25); background: rgba(108, 92, 231, .06); }
+.tv-invitacion p { font-size: 14px; }
+.tv-invitacion .tv-acciones-mini { display: flex; gap: 8px; }
+.tv-btn--sm { padding: 6px 12px; font-size: 13px; }
+.tv-integrantes { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tv-integrantes li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+.tv-integrantes .tv-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(108, 92, 231, .12); }
+.tv-integrantes .tv-pendiente { opacity: .6; font-style: italic; }
+.tv-icon-btn { border: 0; background: none; cursor: pointer; padding: 4px; border-radius: 8px; color: inherit; opacity: .6; }
+.tv-icon-btn:hover, .tv-icon-btn:focus-visible { opacity: 1; background: rgba(0, 0, 0, .06); }
+.tv-invitar { display: flex; gap: 8px; }
+.tv-invitar input { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(0, 0, 0, .15); font: inherit; font-size: 14px; }
+.tv-premios { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.tv-premios li { display: flex; gap: 10px; font-size: 14px; }
+.tv-premios .tv-puesto { font-weight: 800; min-width: 2.2em; }
+.tv-badge-comp { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+    background: rgba(108, 92, 231, .14); color: var(--blue-violet-dark, #4b3fc4); }
+.tv-dialog-nota { font-size: 13px; opacity: .7; margin: -4px 0 12px; }
+.tv-dialog-nota:empty { display: none; }
+.tv-grupo-titulo { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; opacity: .7; }

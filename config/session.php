@@ -16,6 +16,12 @@ if (session_status() === PHP_SESSION_NONE) {
         'samesite' => 'Lax',
     ]);
     session_start();
+
+    // "Recordarme": sin sesión activa pero con la cookie, se restaura la sesión
+    if (empty($_SESSION['usuario_ci']) && !empty($_COOKIE['competika_rec'])) {
+        require_once __DIR__ . '/../core/autoload.php';
+        Recordarme::restaurar();
+    }
 }
 
 /** En un POST, corta si la petición viene de otro sitio (protección CSRF). */

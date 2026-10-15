@@ -7,7 +7,9 @@ class TorneoRepository extends BaseRepository {
     /** Columnas comunes: torneo + formato + configuración (con moneda, árbitro y contacto) + cuenta del organizador. */
     private const SELECT = "
         SELECT t.*, tt.tipo_torneo_id, tt.nombre AS tt_nombre, tt.clave, tt.etiqueta, tt.categoria,
-               c.configuracion_id, c.cant_equipos, c.precio_participacion, c.alquiler_lugar, c.precio_juez, c.premios,
+               c.configuracion_id, c.cant_equipos, c.cant_participante, c.precio_participacion, c.alquiler_lugar, c.precio_juez,
+               c.competitivo, c.vidas, c.cant_grupos, c.juez_principal_fk, CONCAT(uj.nombre, ' ', uj.apellido) AS juez_principal_nombre,
+               (SELECT descripcion FROM premio pr WHERE pr.torneo_id_fk = t.torneo_id ORDER BY pr.puesto LIMIT 1) AS premio_1,
                m.codigo AS moneda_codigo, m.nombre AS moneda_nombre, m.simbolo AS moneda_simbolo,
                pa.persona_id AS arb_id, pa.nombre AS arb_nombre, pa.telefono AS arb_telefono, pa.email AS arb_email,
                pc.persona_id AS con_id, pc.nombre AS con_nombre, pc.telefono AS con_telefono, pc.email AS con_email,
@@ -19,6 +21,8 @@ class TorneoRepository extends BaseRepository {
         LEFT JOIN moneda m   ON m.codigo = c.moneda_codigo_fk
         LEFT JOIN persona pa ON pa.persona_id = c.arbitro_persona_fk
         LEFT JOIN persona pc ON pc.persona_id = c.contacto_persona_fk
+        LEFT JOIN juez jp ON jp.juez_id = c.juez_principal_fk
+        LEFT JOIN usuario uj ON uj.ci = jp.usuario_ci_fk
         LEFT JOIN organizador o ON o.organizador_id = t.organizador_id_fk
         LEFT JOIN usuario u ON u.ci = o.usuario_ci_fk";
 
@@ -98,16 +102,19 @@ class TorneoRepository extends BaseRepository {
                                  WHERE torneo_id_fk = ? ORDER BY configuracion_id LIMIT 1", [$t->getId()]);
         $arbitroId  = $c->getArbitro()  ? $personas->guardar($c->getArbitro())  : null;
         $contactoId = $c->getContacto() ? $personas->guardar($c->getContacto()) : null;
-        $valores = [$c->getCupo(), $c->getCupo(), $c->getPrecioInscripcion(), $c->getAlquilerLugar(), $c->getPrecioJuez(),
-                    $c->getPremios(), $c->getMoneda()?->getCodigo(), $arbitroId, $contactoId];
+        $valores = [$c->getCupo(), $c->getJugadoresPorEquipo(), $c->getPrecioInscripcion(), $c->getAlquilerLugar(), $c->getPrecioJuez(),
+                    $c->getMoneda()?->getCodigo(), $arbitroId, $contactoId, (int)$c->esCompetitivo(), $c->getJuezPrincipalId(),
+                    $c->getVidas(), $c->getCantGrupos()];
         if ($anterior === null) {
             $this->insertar("INSERT INTO configuracion_torneo (cant_equipos, cant_participante, precio_participacion, alquiler_lugar,
-                                 precio_juez, premios, moneda_codigo_fk, arbitro_persona_fk, contacto_persona_fk, competitivo, torneo_id_fk)
-                             VALUES (?,?,?,?,?,?,?,?,?,1,?)", [...$valores, $t->getId()]);
+                                 precio_juez, moneda_codigo_fk, arbitro_persona_fk, contacto_persona_fk, competitivo, juez_principal_fk,
+                                 vidas, cant_grupos, torneo_id_fk)
+                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [...$valores, $t->getId()]);
             return;
         }
         $this->ejecutar("UPDATE configuracion_torneo SET cant_equipos = ?, cant_participante = ?, precio_participacion = ?, alquiler_lugar = ?,
-                             precio_juez = ?, premios = ?, moneda_codigo_fk = ?, arbitro_persona_fk = ?, contacto_persona_fk = ?
+                             precio_juez = ?, moneda_codigo_fk = ?, arbitro_persona_fk = ?, contacto_persona_fk = ?, competitivo = ?,
+                             juez_principal_fk = ?, vidas = ?, cant_grupos = ?
                          WHERE configuracion_id = ?", [...$valores, $anterior['configuracion_id']]);
         foreach (['arbitro_persona_fk', 'contacto_persona_fk'] as $col) {      // personas que quedaron sin uso
             if ($anterior[$col] !== null) $personas->borrarSiSinUso((int)$anterior[$col]);
@@ -158,5 +165,23 @@ class TorneoRepository extends BaseRepository {
     public function cantidadDeTorneosDe(string $ci): int {
         return (int)$this->valor("SELECT COUNT(*) FROM torneo t JOIN organizador o ON o.organizador_id = t.organizador_id_fk
                                   WHERE o.usuario_ci_fk = ?", [$ci]);
+    }
+
+    /** Cédulas de quienes siguen el torneo. */
+    public function seguidores(int $torneoId): array {
+        return $this->columna("SELECT usuario_ci_fk FROM seguimiento WHERE torneo_id_fk = ?", [$torneoId]);
+    }
+
+    public function sigue(string $ci, int $torneoId): bool {
+        return $this->valor("SELECT 1 FROM seguimiento WHERE usuario_ci_fk = ? AND torneo_id_fk = ?", [$ci, $torneoId]) !== false;
+    }
+
+    public function seguir(string $ci, int $torneoId, bool $seguir): void {
+        if ($seguir) $this->ejecutar("INSERT IGNORE INTO seguimiento (usuario_ci_fk, torneo_id_fk) VALUES (?, ?)", [$ci, $torneoId]);
+        else         $this->ejecutar("DELETE FROM seguimiento WHERE usuario_ci_fk = ? AND torneo_id_fk = ?", [$ci, $torneoId]);
+    }
+
+    public function cantidadSeguidores(int $torneoId): int {
+        return (int)$this->valor("SELECT COUNT(*) FROM seguimiento WHERE torneo_id_fk = ?", [$torneoId]);
     }
 }

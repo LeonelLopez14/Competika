@@ -1,0 +1,311 @@
+/* =====================================================
+   COMPETIKA — admin.js  (paginas/admin/admin.html)
+   Solicitudes de juez, usuarios, torneos, mensajes de contacto,
+   anuncios y registro de actividad.
+   Todo dato de la base se inserta con esc() o textContent.
+   ===================================================== */
+(function () {
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const API = (window.competikaSiteRoot || '../../..') + '/api/admin.php';
+const SITE = window.competikaSiteRoot || '../../..';
+
+async function api(action, { method = 'GET', params = {}, body = null } = {}) {
+    const url = new URL(API, location.href);
+    url.searchParams.set('action', action);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    try {
+        const res = await fetch(url, { method, credentials: 'same-origin',
+            headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : null });
+        const data = await res.json();
+        data._status = res.status;
+        return data;
+    } catch (e) { return { success: false, error: 'No se pudo conectar con el servidor.' }; }
+}
+const post = (action, body) => api(action, { method: 'POST', body });
+
+function toast(msg) {
+    const el = $('tv-toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+const fecha = s => s ? new Date(s.replace(' ', 'T')).toLocaleString('es-UY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+const fechaCorta = s => s ? new Date(s + 'T12:00:00').toLocaleDateString('es-UY', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin fecha';
+
+/** Ejecuta una acción; muestra el error o el mensaje de éxito y recarga lo indicado. */
+async function accion(action, body, okMsg, ...recargar) {
+    const r = await post(action, body);
+    if (!r.success) { toast(r.error || 'No se pudo completar la acción.'); return false; }
+    toast(okMsg);
+    await Promise.all([cargarResumen(), ...recargar.map(f => f())]);
+    return true;
+}
+
+// ── Diálogo con un campo de texto (motivo, correo…) ──
+let resolverDialogo = null;
+function pedir({ titulo, sub = '', label, confirmar, minimo = 1, tipo = 'text' }) {
+    $('adm-dialog-title').textContent = titulo;
+    $('adm-dialog-sub').textContent = sub;
+    $('adm-campo-label').textContent = label;
+    $('adm-campo').type = tipo;
+    $('adm-campo').value = '';
+    $('adm-confirm').textContent = confirmar;
+    $('adm-error').textContent = '';
+    $('adm-dialog').dataset.minimo = minimo;
+    $('adm-dialog').showModal();
+    $('adm-campo').focus();
+    return new Promise(res => { resolverDialogo = res; });
+}
+function cerrarDialogo(valor) {
+    $('adm-dialog').close();
+    resolverDialogo?.(valor);
+    resolverDialogo = null;
+}
+$('adm-cancel').addEventListener('click', () => cerrarDialogo(null));
+$('adm-dialog').addEventListener('cancel', () => cerrarDialogo(null));
+$('adm-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('adm-campo').value.trim();
+    if (v.length < Number($('adm-dialog').dataset.minimo) || !$('adm-campo').checkValidity()) {
+        $('adm-error').textContent = 'Completá el campo correctamente.';
+        return;
+    }
+    cerrarDialogo(v);
+});
+
+// ── Resumen ──
+async function cargarResumen() {
+    const r = await api('summary');
+    if (r._status === 403) { $('adm-denegado').hidden = false; return false; }
+    if (!r.success) return false;
+    const t = r.totals;
+    $('adm-totales').innerHTML = [['usuarios', 'Usuarios'], ['torneos', 'Torneos'], ['jueces', 'Jueces'], ['pendientes', 'Solicitudes pendientes'],
+        ['mensajes', 'Mensajes sin leer'], ['suspendidos', 'Cuentas suspendidas']]
+        .map(([k, l]) => `<li><strong>${esc(t[k])}</strong><span>${l}</span></li>`).join('');
+    $('adm-badge-pend').textContent = t.pendientes || '';
+    $('adm-badge-msg').textContent = t.mensajes || '';
+    $('adm-panel').hidden = false;
+    return true;
+}
+
+// ── Solicitudes de juez ──
+let estadoFiltro = 'pendiente';
+async function cargarSolicitudes() {
+    const r = await api('requests', { params: estadoFiltro ? { estado: estadoFiltro } : {} });
+    const ul = $('adm-lista-solicitudes');
+    if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
+    if (!r.requests.length) { ul.innerHTML = '<li class="tv-vacio">No hay solicitudes en esta lista.</li>'; return; }
+    ul.innerHTML = r.requests.map(s => `
+        <li class="adm-solicitud">
+            <div>
+                <h3>${esc(s.nombre)}</h3>
+                <p class="adm-meta">${esc(s.email)} · ${esc(fecha(s.fecha))}</p>
+                <p class="adm-meta">Deportes: <strong>${esc(s.deportes)}</strong> · Certificado: <strong>${s.certificado ? 'Sí' : 'No'}</strong></p>
+            </div>
+            <div class="adm-acciones">${s.estado === 'pendiente'
+                ? `<button class="tv-btn tv-btn--green" data-aprobar="${s.id}"><i class="ti ti-check"></i> Aprobar</button>
+                   <button class="tv-btn tv-btn--ghost" data-rechazar="${s.id}" data-nombre="${esc(s.nombre)}"><i class="ti ti-x"></i> Rechazar</button>`
+                : `<span class="adm-estado adm-estado--${esc(s.estado)}">${esc(s.estado)}</span>`}</div>
+            <p class="adm-exp">${esc(s.experiencia)}</p>
+            ${s.motivo ? `<p class="adm-exp adm-meta">Motivo del rechazo: ${esc(s.motivo)}</p>` : ''}
+        </li>`).join('');
+}
+
+$('adm-lista-solicitudes').addEventListener('click', async (e) => {
+    const ap = e.target.closest('[data-aprobar]');
+    const re = e.target.closest('[data-rechazar]');
+    if (ap) {
+        if (!confirm('¿Aprobar la solicitud? La persona pasa a tener el rol de juez.')) return;
+        ap.disabled = true;
+        if (!await accion('approve', { id: Number(ap.dataset.aprobar) }, 'Solicitud aprobada ✓', cargarSolicitudes)) ap.disabled = false;
+    } else if (re) {
+        const motivo = await pedir({ titulo: 'Rechazar solicitud', sub: re.dataset.nombre, label: 'Motivo (lo verá la persona)', confirmar: 'Rechazar', minimo: 5 });
+        if (motivo) await accion('reject', { id: Number(re.dataset.rechazar), motivo }, 'Solicitud rechazada', cargarSolicitudes);
+    }
+});
+
+$('adm-filtro-estado').addEventListener('click', (e) => {
+    const b = e.target.closest('.adm-chip'); if (!b) return;
+    $('adm-filtro-estado').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
+    estadoFiltro = b.dataset.estado;
+    cargarSolicitudes();
+});
+
+// ── Usuarios ──
+const ROLES = [['admin', 'Admin'], ['organizador', 'Organizador'], ['participante', 'Participante'], ['juez', 'Juez'], ['observador', 'Observador']];
+let tBusqueda;
+async function cargarUsuarios() {
+    const q = $('adm-q').value.trim();
+    const r = await api('users', { params: q ? { q } : {} });
+    const ul = $('adm-lista-usuarios');
+    if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
+    ul.innerHTML = r.users.length ? r.users.map(u => `
+        <li class="adm-solicitud ${u.bloqueado ? 'adm-suspendido' : ''}" data-email="${esc(u.email)}" data-nombre="${esc(u.nombre)}">
+            <div>
+                <h3>${esc(u.nombre)} ${u.bloqueado ? '<span class="adm-estado adm-estado--rechazada">suspendida</span>' : ''}</h3>
+                <p class="adm-meta">${esc(u.email)} · CI ${esc(u.ci)}</p>
+                ${u.bloqueado && u.motivo ? `<p class="adm-meta">Motivo: ${esc(u.motivo)}</p>` : ''}
+            </div>
+            <div class="adm-acciones">
+                <button class="tv-btn tv-btn--ghost" data-bloquear="${u.bloqueado ? 0 : 1}"><i class="ti ${u.bloqueado ? 'ti-lock-open' : 'ti-lock'}"></i> ${u.bloqueado ? 'Reactivar' : 'Suspender'}</button>
+                <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-borrar-usuario><i class="ti ti-trash"></i> Eliminar</button>
+            </div>
+            <div class="adm-roles">${ROLES.map(([k, l]) => `
+                <label class="adm-rol"><input type="checkbox" data-rol="${k}" ${u.roles[k] ? 'checked' : ''}> ${l}</label>`).join('')}</div>
+        </li>`).join('') : '<li class="tv-vacio">Sin resultados.</li>';
+}
+$('adm-q').addEventListener('input', () => { clearTimeout(tBusqueda); tBusqueda = setTimeout(cargarUsuarios, 300); });
+
+$('adm-lista-usuarios').addEventListener('change', async e => {
+    const cb = e.target.closest('[data-rol]');
+    if (!cb) return;
+    const li = cb.closest('[data-email]');
+    const verbo = cb.checked ? 'Dar' : 'Quitar';
+    if (!confirm(`¿${verbo} el rol ${cb.dataset.rol} a ${li.dataset.nombre}?`)) { cb.checked = !cb.checked; return; }
+    if (!await accion('user_role', { email: li.dataset.email, role: cb.dataset.rol, active: cb.checked }, 'Roles actualizados ✓', cargarUsuarios)) cb.checked = !cb.checked;
+});
+$('adm-lista-usuarios').addEventListener('click', async e => {
+    const li = e.target.closest('[data-email]');
+    if (!li) return;
+    const bl = e.target.closest('[data-bloquear]');
+    if (bl) {
+        if (bl.dataset.bloquear === '1') {
+            const motivo = await pedir({ titulo: 'Suspender cuenta', sub: li.dataset.nombre, label: 'Motivo (se le muestra al iniciar sesión)', confirmar: 'Suspender', minimo: 5 });
+            if (motivo) await accion('user_block', { email: li.dataset.email, block: true, motivo }, 'Cuenta suspendida', cargarUsuarios);
+        } else if (confirm(`¿Reactivar la cuenta de ${li.dataset.nombre}?`)) {
+            await accion('user_block', { email: li.dataset.email, block: false }, 'Cuenta reactivada ✓', cargarUsuarios);
+        }
+    } else if (e.target.closest('[data-borrar-usuario]')) {
+        if (confirm(`¿Eliminar definitivamente la cuenta de ${li.dataset.nombre}? No se puede deshacer.`)) {
+            await accion('user_delete', { email: li.dataset.email }, 'Cuenta eliminada', cargarUsuarios);
+        }
+    }
+});
+
+// ── Torneos ──
+const ESTADOS = [['pendiente', 'pending', 'Inscripciones abiertas'], ['activo', 'active', 'En curso'], ['finalizado', 'finished', 'Finalizado']];
+let tBusquedaT;
+async function cargarTorneos() {
+    const q = $('adm-qt').value.trim();
+    const r = await api('tournaments', { params: q ? { q } : {} });
+    const ul = $('adm-lista-torneos');
+    if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
+    ul.innerHTML = r.tournaments.length ? r.tournaments.map(t => `
+        <li class="adm-solicitud" data-id="${t.id}" data-nombre="${esc(t.nombre)}">
+            <div>
+                <h3><a href="${SITE}/frontend/paginas/tournament_view/tournament_view.html?t=${t.id}">${esc(t.nombre)}</a>
+                    ${t.competitivo ? '<span class="adm-pill"><i class="ti ti-shield-check"></i> Competitivo</span>' : ''}</h3>
+                <p class="adm-meta">${esc([t.deporte, t.formato].filter(Boolean).join(' · ') || 'Sin formato')} · ${esc(fechaCorta(t.inicio))}</p>
+                <p class="adm-meta">Organiza: <strong>${esc(t.organizador)}</strong> (${esc(t.organizadorEmail)}) · ${t.equipos} equipos · ${t.partidos} partidos · ${t.resultados} resultados</p>
+            </div>
+            <div class="adm-acciones">
+                <select class="adm-select" data-estado aria-label="Estado del torneo">${ESTADOS.map(([db, front, l]) =>
+                    `<option value="${front}" ${t.estado === db ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                <a class="tv-btn tv-btn--ghost" href="${SITE}/frontend/paginas/tournament_dashboard/tournament_dashboard.html?t=${t.id}"><i class="ti ti-settings"></i> Gestionar</a>
+                <button class="tv-btn tv-btn--ghost" data-transferir><i class="ti ti-arrows-exchange"></i> Transferir</button>
+                <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-borrar-torneo ${t.resultados ? 'disabled title="Tiene resultados: marcalo como finalizado"' : ''}><i class="ti ti-trash"></i></button>
+            </div>
+        </li>`).join('') : '<li class="tv-vacio">Sin resultados.</li>';
+}
+$('adm-qt').addEventListener('input', () => { clearTimeout(tBusquedaT); tBusquedaT = setTimeout(cargarTorneos, 300); });
+
+$('adm-lista-torneos').addEventListener('change', async e => {
+    const sel = e.target.closest('[data-estado]');
+    if (!sel) return;
+    const li = sel.closest('[data-id]');
+    if (!await accion('tournament_status', { id: Number(li.dataset.id), status: sel.value }, 'Estado actualizado ✓', cargarTorneos)) cargarTorneos();
+});
+$('adm-lista-torneos').addEventListener('click', async e => {
+    const li = e.target.closest('[data-id]');
+    if (!li) return;
+    const body = { id: Number(li.dataset.id) };
+    if (e.target.closest('[data-transferir]')) {
+        const email = await pedir({ titulo: 'Transferir torneo', sub: li.dataset.nombre, label: 'Correo del nuevo organizador', confirmar: 'Transferir', tipo: 'email' });
+        if (email) await accion('tournament_transfer', { ...body, email }, 'Torneo transferido ✓', cargarTorneos);
+    } else if (e.target.closest('[data-borrar-torneo]')) {
+        if (confirm(`¿Eliminar el torneo «${li.dataset.nombre}»? Se avisa a los inscriptos y al organizador.`)) {
+            await accion('tournament_delete', body, 'Torneo eliminado', cargarTorneos);
+        }
+    }
+});
+
+// ── Mensajes de contacto ──
+let soloNoLeidos = true;
+async function cargarMensajes() {
+    const r = await api('messages', { params: soloNoLeidos ? { unread: 1 } : {} });
+    const ul = $('adm-lista-mensajes');
+    if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
+    ul.innerHTML = r.messages.length ? r.messages.map(m => `
+        <li class="adm-solicitud ${m.leido ? '' : 'adm-no-leido'}" data-id="${m.id}">
+            <div>
+                <h3>${esc(m.asunto)}</h3>
+                <p class="adm-meta">${esc(m.nombre)} · <a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: ' + m.asunto)}">${esc(m.email)}</a>
+                    ${m.registrado ? '· cuenta registrada' : ''} · ${esc(fecha(m.fecha))}</p>
+            </div>
+            <div class="adm-acciones">
+                <button class="tv-btn tv-btn--ghost" data-leido="${m.leido ? 0 : 1}"><i class="ti ${m.leido ? 'ti-mail' : 'ti-mail-opened'}"></i> ${m.leido ? 'Marcar sin leer' : 'Marcar leído'}</button>
+                <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-borrar-msg aria-label="Borrar mensaje"><i class="ti ti-trash"></i></button>
+            </div>
+            <p class="adm-exp">${esc(m.mensaje)}</p>
+        </li>`).join('') : `<li class="tv-vacio">${soloNoLeidos ? 'No hay mensajes sin leer.' : 'No hay mensajes.'}</li>`;
+}
+$('adm-filtro-msg').addEventListener('click', e => {
+    const b = e.target.closest('.adm-chip'); if (!b) return;
+    $('adm-filtro-msg').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
+    soloNoLeidos = b.dataset.unread === '1';
+    cargarMensajes();
+});
+$('adm-lista-mensajes').addEventListener('click', async e => {
+    const li = e.target.closest('[data-id]');
+    if (!li) return;
+    const id = Number(li.dataset.id);
+    const le = e.target.closest('[data-leido]');
+    if (le) await accion('message_read', { id, read: le.dataset.leido === '1' }, 'Mensaje actualizado', cargarMensajes);
+    else if (e.target.closest('[data-borrar-msg]') && confirm('¿Borrar este mensaje?')) await accion('message_delete', { id }, 'Mensaje borrado', cargarMensajes);
+});
+
+// ── Anuncios ──
+$('adm-anuncio-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const message = $('adm-anuncio-texto').value.trim();
+    const to = $('adm-anuncio-para').value;
+    if (!message) { $('adm-anuncio-texto').focus(); return; }
+    const destino = $('adm-anuncio-para').selectedOptions[0].textContent.toLowerCase();
+    if (!confirm(`¿Enviar el anuncio a: ${destino}?`)) return;
+    const r = await post('announce', { message, to });
+    if (!r.success) { toast(r.error || 'No se pudo enviar.'); return; }
+    $('adm-anuncio-texto').value = '';
+    toast(`Anuncio enviado a ${r.sent} cuenta${r.sent === 1 ? '' : 's'} ✓`);
+});
+
+// ── Registro de actividad ──
+async function cargarActividad() {
+    const r = await api('activity');
+    const ul = $('adm-lista-actividad');
+    if (!r.success) { ul.innerHTML = `<li>${esc(r.error)}</li>`; return; }
+    ul.innerHTML = r.activity.length ? r.activity.map(a => `<li><strong>${esc(a.accion)}</strong> — ${esc(a.descripcion)}
+        <time>${esc(fecha(a.fecha))} · ${esc(a.admin)}</time></li>`).join('') : '<li class="tv-vacio">Todavía no hay actividad registrada.</li>';
+}
+
+// ── Pestañas ──
+const cargas = { solicitudes: cargarSolicitudes, usuarios: cargarUsuarios, torneos: cargarTorneos, mensajes: cargarMensajes, anuncios: () => {}, actividad: cargarActividad };
+function abrirPestania(nombre) {
+    if (!cargas[nombre]) nombre = 'solicitudes';
+    document.querySelectorAll('.adm-tab').forEach(t => {
+        const on = t.dataset.tab === nombre;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on);
+    });
+    Object.keys(cargas).forEach(k => { $(`adm-${k}`).hidden = k !== nombre; });
+    cargas[nombre]();
+}
+document.querySelectorAll('.adm-tab').forEach(tab => tab.addEventListener('click', () => {
+    history.replaceState(null, '', '#' + tab.dataset.tab);
+    abrirPestania(tab.dataset.tab);
+}));
+
+(window.competikaSessionReady || Promise.resolve({ logged: false })).then(async s => {
+    if (!s || !s.logged) return;            // navbar-user.js redirige al login
+    if (await cargarResumen()) abrirPestania(location.hash.slice(1));
+});
+})();

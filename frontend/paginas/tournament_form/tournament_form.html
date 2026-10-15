@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
-    <link rel="stylesheet" href="tournament_form.css?v=20261011">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
-    <link rel="stylesheet" href="../../css/style..css?v=20261011">
-    <link rel="stylesheet" href="../../css/forms.css?v=20261011">
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261014">
+    <link rel="stylesheet" href="tournament_form.css?v=20261014">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261014">
+    <link rel="stylesheet" href="../../css/style..css?v=20261014">
+    <link rel="stylesheet" href="../../css/forms.css?v=20261014">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <style type="text/tailwindcss">
@@ -290,6 +290,45 @@
                                     </div>
                                 </div>
 
+                                <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6 sm:p-8">
+                                    <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
+                                        <i class="ti ti-adjustments text-blue-violet-dark"></i>
+                                        Reglas del torneo
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                        <div class="input-group">
+                                            <input type="number" id="tf-players-per-team" class="input-field" placeholder=" " min="1" max="50" value="1">
+                                            <label for="tf-players-per-team" class="floating-label">Jugadores por equipo</label>
+                                        </div>
+                                        <div class="input-group" id="tf-lives-group" hidden>
+                                            <input type="number" id="tf-lives" class="input-field" placeholder=" " min="1" max="10" value="3">
+                                            <label for="tf-lives" class="floating-label">Vidas por participante</label>
+                                        </div>
+                                        <div class="input-group" id="tf-groups-group" hidden>
+                                            <input type="number" id="tf-groups" class="input-field" placeholder=" " min="1" max="16">
+                                            <label for="tf-groups" class="floating-label">Cantidad de grupos (vacío = automático)</label>
+                                        </div>
+                                    </div>
+                                    <label class="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-blue-violet/15 bg-white/50 p-4">
+                                        <span class="flex flex-col gap-1">
+                                            <span class="flex items-center gap-2 font-display text-sm font-bold uppercase tracking-wide text-darkest-hour"><i class="ti ti-shield-check text-blue-violet-dark"></i> Torneo competitivo</span>
+                                            <span class="text-xs leading-relaxed text-darkest-hour/55">Los resultados los carga un juez del sitio y los jugadores necesitan carné de deportista vigente.</span>
+                                        </span>
+                                        <span class="relative mt-1 inline-flex h-7 w-12 shrink-0 items-center">
+                                            <input type="checkbox" id="tf-competitive" class="peer sr-only">
+                                            <span class="absolute inset-0 rounded-full bg-darkest-hour/15 transition-colors duration-300 peer-checked:bg-sun-glare-dark peer-focus-visible:ring-2 peer-focus-visible:ring-blue-violet-dark"></span>
+                                            <span class="absolute left-1 h-5 w-5 rounded-full bg-cloud-dancer shadow transition-transform duration-300 peer-checked:translate-x-5"></span>
+                                        </span>
+                                    </label>
+                                    <div id="tf-judge-group" hidden>
+                                        <div class="input-group">
+                                            <select id="tf-main-judge" class="input-field"><option value="">Elegí un juez…</option></select>
+                                            <label for="tf-main-judge" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Juez principal (obligatorio)</label>
+                                        </div>
+                                        <p class="mt-2 text-xs text-darkest-hour/55" id="tf-judge-help">Se asigna a todos los partidos; después podés cambiar el juez de cada partido.</p>
+                                    </div>
+                                </div>
+
                             </div>
 
                             <div class="flex flex-col gap-6">
@@ -300,10 +339,16 @@
                                     </h3>
 
                                     <div class="input-group">
-                                        <textarea id="tf-prizes" class="input-field" style="height:auto;min-height:96px;padding-top:14px;resize:vertical;" rows="3" placeholder=" "></textarea>
-                                        <label for="tf-prizes" class="floating-label">
-                                            Descripción de los premios
-                                        </label>
+                                        <input type="text" id="tf-prize-1" class="input-field" placeholder=" " maxlength="255">
+                                        <label for="tf-prize-1" class="floating-label">1.º puesto</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="tf-prize-2" class="input-field" placeholder=" " maxlength="255">
+                                        <label for="tf-prize-2" class="floating-label">2.º puesto (opcional)</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="text" id="tf-prize-3" class="input-field" placeholder=" " maxlength="255">
+                                        <label for="tf-prize-3" class="floating-label">3.º puesto (opcional)</label>
                                     </div>
                                 </div>
 
@@ -481,7 +526,7 @@
                     <li><a href="../about/about.html">Sobre nosotros</a></li>
                     <li><a href="../contact/contact.html">Contacto</a></li>
                     <li><a href="../privacy/privacy.html">Política de privacidad</a></li>
-                    <li><a href="#">Términos de uso</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
@@ -492,8 +537,8 @@
             </p>
         </div>
     </footer>
-    <script src="../../js/main.js?v=20261011"></script>
-    <script src="../../js/navbar-user.js?v=20261011"></script>
-    <script src="../../js/tournament-api.js?v=20261011"></script>
+    <script src="../../js/main.js?v=20261014"></script>
+    <script src="../../js/navbar-user.js?v=20261014"></script>
+    <script src="../../js/tournament-api.js?v=20261014"></script>
 </body>
 </html>

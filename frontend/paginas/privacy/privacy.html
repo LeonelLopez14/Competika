@@ -9,11 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Finlandica+Text:ital,wght@0,100..900;1,100..900&family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../css/normalize.css?v=20261011">
-    <link rel="stylesheet" href="privacy.css?v=20261011">
-    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261011">
-    <link rel="stylesheet" href="../../css/style..css?v=20261011">
-    <title>PRIVACIDAD</title>
+    <link rel="stylesheet" href="../../css/normalize.css?v=20261014">
+    <link rel="stylesheet" href="privacy.css?v=20261014">
+    <link rel="stylesheet" href="../../css/navbar-user.css?v=20261014">
+    <link rel="stylesheet" href="../../css/style..css?v=20261014">
+    <link rel="stylesheet" href="../../css/legal.css?v=20261014">
+    <title>Política de privacidad — Competika</title>
 </head>
 <body>
 
@@ -102,9 +103,42 @@
         </div>
     </header>
     <main id="content">
-        <section id="tournament-types">
-            
-        </section>
+        <article class="legal">
+            <p class="legal-eyebrow">Legal</p>
+            <h1>Política de privacidad</h1>
+            <p class="legal-fecha">Última actualización: octubre de 2026</p>
+            <ul class="legal-indice">
+                <li><a href="#p-datos">Qué datos guardamos</a></li><li><a href="#p-uso">Para qué</a></li>
+                <li><a href="#p-publico">Qué es público</a></li><li><a href="#p-seguridad">Seguridad</a></li>
+                <li><a href="#p-cookies">Cookies</a></li><li><a href="#p-derechos">Tus derechos</a></li>
+            </ul>
+            <section id="p-datos"><h2>1. Qué datos guardamos</h2>
+                <ul>
+                    <li><strong>Cuenta:</strong> cédula, nombre, apellido, correo, contraseña (solo cifrada), y si los cargás: teléfono, dirección, fecha de nacimiento, nombre de usuario, biografía y foto de perfil.</li>
+                    <li><strong>Actividad:</strong> torneos que organizás, seguís o en los que jugás, tus equipos, partidos, resultados, honores y notificaciones.</li>
+                    <li><strong>Solicitud de juez:</strong> si tenés certificado, deportes y experiencia que declarás.</li>
+                    <li><strong>Contactos de torneos:</strong> nombre, teléfono y correo del árbitro principal o del contacto que cargue un organizador.</li>
+                </ul></section>
+            <section id="p-uso"><h2>2. Para qué los usamos</h2>
+                <p>Solo para que la plataforma funcione: identificarte, mostrar tus torneos y estadísticas, avisarte de partidos y resultados, y permitir que organizadores y jueces gestionen las competencias. No vendemos ni compartimos tus datos con terceros ni los usamos para publicidad.</p></section>
+            <section id="p-publico"><h2>3. Qué ven los demás</h2>
+                <ul>
+                    <li>En la página pública de un torneo se ven el nombre de los equipos, los partidos, los resultados, el nombre del juez de cada partido y el contacto que eligió el organizador.</li>
+                    <li>Tu cédula, contraseña, dirección y fecha de nacimiento nunca se muestran a otros usuarios. En el panel de administración la cédula aparece parcialmente oculta.</li>
+                </ul></section>
+            <section id="p-seguridad"><h2>4. Seguridad</h2>
+                <ul>
+                    <li>Las contraseñas se guardan cifradas con bcrypt; nadie, ni siquiera un administrador, puede verlas.</li>
+                    <li>Los enlaces de recuperación de contraseña y los tokens de "Recordarme" se guardan solo como hash y vencen.</li>
+                    <li>Las fotos de perfil se vuelven a procesar al subirlas: se recortan y se eliminan sus metadatos (por ejemplo, la ubicación GPS).</li>
+                    <li>La aplicación accede a la base de datos con un usuario con permisos mínimos.</li>
+                </ul></section>
+            <section id="p-cookies"><h2>5. Cookies</h2>
+                <p>Usamos solo cookies necesarias: la de sesión (mientras navegás) y, si marcás "Recordarme", una cookie que mantiene la sesión 30 días. No usamos cookies de publicidad ni de seguimiento.</p></section>
+            <section id="p-derechos"><h2>6. Tus derechos</h2>
+                <p>De acuerdo con la Ley N.º 18.331 de Protección de Datos Personales de Uruguay, podés acceder a tus datos, corregirlos y eliminarlos. Casi todo lo podés hacer vos desde <a href="../profile_configuration/profile_configuration.html">Configuración</a> (incluido eliminar la cuenta); para lo demás, escribinos desde <a href="../contact/contact.html">Contacto</a>.</p>
+                <p class="legal-nota">Competika es un proyecto académico desarrollado por estudiantes. Esta política describe el funcionamiento real del sistema y no constituye asesoramiento legal.</p></section>
+        </article>
         <!-- ======== BANNER ======== -->
         <section id="banner">
             <div class="banner-bg">
@@ -182,7 +216,7 @@
                     <li><a href="../about/about.html">Sobre nosotros</a></li>
                     <li><a href="../contact/contact.html">Contacto</a></li>
                     <li><a href="privacy.html">Política de privacidad</a></li>
-                    <li><a href="#">Términos de uso</a></li>
+                    <li><a href="../terms/terms.html">Términos de uso</a></li>
                 </ul>
             </div>
         </div>
@@ -193,7 +227,7 @@
         </div>
     </footer>
 
-    <script src="../../js/main.js?v=20261011"></script>
-    <script src="../../js/navbar-user.js?v=20261011"></script>
+    <script src="../../js/main.js?v=20261014"></script>
+    <script src="../../js/navbar-user.js?v=20261014"></script>
 </body>
 </html>

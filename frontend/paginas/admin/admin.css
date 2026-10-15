@@ -1,0 +1,66 @@
+/* =====================================================
+   ADMINISTRACIÓN — usa la base visual de tournament_view.css
+===================================================== */
+.adm-totales { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; padding: 0; margin: 4px 0 0; }
+.adm-totales li {
+    min-width: 130px; padding: 12px 16px; border-radius: 14px;
+    border: 1.5px solid rgba(95,31,197,0.12); background: rgba(255,255,255,0.45);
+}
+.adm-totales strong { display: block; font-family: var(--font-display); font-size: 26px; font-weight: 900; color: var(--blue-violet-dark); }
+.adm-totales span { font-size: 13px; color: rgba(33,33,33,0.6); }
+
+.adm-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.adm-tab {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px;
+    border: 1.5px solid rgba(95,31,197,0.15); background: transparent; font-weight: 700; font-size: 14px;
+    color: rgba(33,33,33,0.7); cursor: pointer;
+}
+.adm-tab.active { background: var(--blue-violet-dark); border-color: var(--blue-violet-dark); color: #fff; }
+.adm-tab:focus-visible, .adm-chip:focus-visible { outline: 2px solid var(--blue-violet-dark); outline-offset: 2px; }
+.adm-badge:not(:empty) {
+    min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--sun-glare); color: var(--darkest-hour);
+    font-size: 12px; text-align: center;
+}
+
+.adm-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.adm-chip {
+    padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(33,33,33,0.15); background: transparent;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.adm-chip.active { background: rgba(95,31,197,0.1); border-color: rgba(95,31,197,0.35); color: var(--blue-violet-dark); }
+
+.adm-lista { display: flex; flex-direction: column; gap: 12px; list-style: none; padding: 0; margin: 0; }
+.adm-solicitud {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: start;
+    padding: 16px; border-radius: 14px; background: rgba(240,238,233,0.7); border: 1px solid rgba(33,33,33,0.06);
+}
+.adm-solicitud h3 { font-size: 16px; font-weight: 800; }
+.adm-solicitud .adm-meta { font-size: 13px; color: rgba(33,33,33,0.6); }
+.adm-solicitud .adm-exp { grid-column: 1 / -1; font-size: 14px; line-height: 1.55; white-space: pre-line; }
+.adm-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.adm-acciones .tv-btn { padding: 9px 14px; }
+.adm-estado { font-family: var(--font-mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.adm-estado--aprobada { color: #1f8a6a; }
+.adm-estado--rechazada { color: #c0392b; }
+.adm-estado--pendiente { color: var(--exuberant-orange-dark); }
+.adm-pill { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; border-radius: 999px; background: rgba(95,31,197,0.08); font-size: 12px; font-weight: 600; }
+.adm-buscar { max-width: 420px; }
+.adm-log { display: flex; flex-direction: column; list-style: none; padding: 0; margin: 0; }
+.adm-log li { padding: 12px 0; border-bottom: 1px solid rgba(95,31,197,0.08); font-size: 14px; }
+.adm-log time { display: block; font-size: 12px; color: rgba(33,33,33,0.5); }
+
+@media (max-width: 600px) {
+    .adm-solicitud { grid-template-columns: 1fr; }
+}
+
+.adm-roles { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; padding-top: 6px; border-top: 1px dashed rgba(95,31,197,0.12); }
+.adm-rol { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.adm-rol input { accent-color: var(--blue-violet-dark); }
+.adm-suspendido { opacity: .75; border-color: rgba(192,57,43,0.3); }
+.adm-no-leido { border-left: 4px solid var(--blue-violet-dark); }
+.adm-btn-peligro { color: #c0392b !important; border-color: rgba(192,57,43,0.3) !important; }
+.adm-btn-peligro:disabled { opacity: .4; cursor: not-allowed; }
+.adm-select { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(33,33,33,0.15); background: var(--cloud-dancer); font: inherit; font-size: 13px; }
+.adm-solicitud h3 a { color: inherit; }
+.adm-anuncio { display: flex; flex-direction: column; gap: 16px; max-width: 620px; }
+.adm-anuncio textarea.input-field { min-height: 96px; }

@@ -32,9 +32,6 @@
     padding: 5%;
 }
 
-/* (Se quitó "#tf-step2 * { padding: 1.5% }": compensaba que el reset global
-   anulaba los rellenos de Tailwind. Con el reset en @layer ya no hace falta y
-   deformaba los campos y sus etiquetas.) */
 
 /* Al pasar de paso o mostrar el éxito, la página se desplaza hasta el asistente:
    este margen evita que el título quede tapado por la barra de navegación fija. */

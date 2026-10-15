@@ -13,7 +13,7 @@ CREATE DATABASE IF NOT EXISTS competika_db
 
 USE competika_db;
 -- Los datos de este archivo (tildes, €) están en UTF-8: que el cliente los lea así
-SET NAMES utf8mb4;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS usuario (
     ci VARCHAR(20) PRIMARY KEY,
@@ -27,12 +27,15 @@ CREATE TABLE IF NOT EXISTS usuario (
     rol_usuario ENUM('admin','observador','organizador','juez','participante') NOT NULL,
     nombre_usuario VARCHAR(50) NULL UNIQUE,
     biografia VARCHAR(200) NULL,
-    foto_perfil VARCHAR(100) NULL          -- solo el nombre del archivo en uploads/avatars/
+    foto_perfil VARCHAR(100) NULL,         -- nombre del archivo en uploads/avatars/
+    bloqueado BOOLEAN NOT NULL DEFAULT FALSE,
+    motivo_bloqueo VARCHAR(255) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS admin (
     admin_id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_ci_fk VARCHAR(20) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,   -- al quitar el rol se desactiva (su registro de actividad se conserva)
     FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -126,24 +129,26 @@ CREATE TABLE IF NOT EXISTS torneo (
 CREATE TABLE IF NOT EXISTS configuracion_torneo (
     configuracion_id INT AUTO_INCREMENT PRIMARY KEY,
     precio_participacion DOUBLE,
-    cant_participante INT,
+    cant_participante INT,                  -- máximo de jugadores por equipo (1 = individual)
     cant_equipos INT,
     cant_grupos INT,
     cant_partidos INT,
-    premios VARCHAR(255),
-    competitivo BOOLEAN,
+    competitivo BOOLEAN,                    -- exige juez del sitio y carné de deportista
+    vidas TINYINT NULL,                     -- formato "vidas"
     alquiler_lugar DOUBLE,
     precio_juez DOUBLE,
     moneda_codigo_fk CHAR(3) NULL,
     arbitro_persona_fk INT NULL,            -- árbitro principal
-    contacto_persona_fk INT NULL,           -- NULL = se usan los datos de la cuenta del organizador
+    contacto_persona_fk INT NULL,           -- NULL = datos de la cuenta del organizador
+    juez_principal_fk INT NULL,             -- obligatorio si es competitivo
     torneo_id_fk INT NOT NULL,
     admin_id_fk INT NULL,                   -- solo si lo configuró un administrador
     FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id),
     FOREIGN KEY (admin_id_fk) REFERENCES admin(admin_id),
     FOREIGN KEY (moneda_codigo_fk) REFERENCES moneda(codigo),
     FOREIGN KEY (arbitro_persona_fk) REFERENCES persona(persona_id),
-    FOREIGN KEY (contacto_persona_fk) REFERENCES persona(persona_id)
+    FOREIGN KEY (contacto_persona_fk) REFERENCES persona(persona_id),
+    FOREIGN KEY (juez_principal_fk) REFERENCES juez(juez_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS equipo (
@@ -217,6 +222,14 @@ CREATE TABLE IF NOT EXISTS resultado (
     FOREIGN KEY (ganador_participante_fk) REFERENCES participante(participante_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS grupo (
+    grupo_id INT AUTO_INCREMENT PRIMARY KEY,
+    torneo_id_fk INT NOT NULL,
+    nombre VARCHAR(20) NOT NULL,
+    UNIQUE KEY uq_grupo (torneo_id_fk, nombre),
+    FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS tabla_posiciones (
     posiciones_id INT AUTO_INCREMENT PRIMARY KEY,
     torneo_id_fk INT NOT NULL,
@@ -227,7 +240,9 @@ CREATE TABLE IF NOT EXISTS tabla_posiciones (
     partidos_ganados INT DEFAULT 0,
     partidos_empatados INT DEFAULT 0,
     partidos_perdidos INT DEFAULT 0,
+    grupo_id_fk INT NULL,
     FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id),
+    FOREIGN KEY (grupo_id_fk) REFERENCES grupo(grupo_id) ON DELETE SET NULL,
     FOREIGN KEY (equipo_id_fk) REFERENCES equipo(equipo_id),
     FOREIGN KEY (participante_id_fk) REFERENCES participante(participante_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -271,4 +286,105 @@ CREATE TABLE IF NOT EXISTS honor (
     FOREIGN KEY (enfrentamiento_id_fk) REFERENCES enfrentamiento(enfrentamiento_id) ON DELETE CASCADE,
     FOREIGN KEY (de_usuario_ci_fk)     REFERENCES usuario(ci) ON DELETE CASCADE,
     FOREIGN KEY (a_equipo_id_fk)       REFERENCES equipo(equipo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Solicitudes para ser juez: el usuario completa el formulario y un
+-- administrador la aprueba (se crea la fila en juez) o la rechaza.
+CREATE TABLE IF NOT EXISTS solicitud_juez (
+    solicitud_id          INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_ci_fk         VARCHAR(20)  NOT NULL,
+    certificado           BOOLEAN      NOT NULL DEFAULT FALSE,   -- mismo dato que juez.certificado
+    deportes              VARCHAR(150) NULL,
+    experiencia           VARCHAR(500) NULL,
+    estado                ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+    fecha                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revisada_por_admin_fk INT          NULL,
+    fecha_revision        DATETIME     NULL,
+    motivo_rechazo        VARCHAR(255) NULL,
+    INDEX idx_solicitud_estado (estado),
+    FOREIGN KEY (usuario_ci_fk)         REFERENCES usuario(ci) ON DELETE CASCADE,
+    FOREIGN KEY (revisada_por_admin_fk) REFERENCES admin(admin_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Torneos que sigue un usuario (rol observador): recibe sus novedades.
+CREATE TABLE IF NOT EXISTS seguimiento (
+    usuario_ci_fk  VARCHAR(20) NOT NULL,
+    torneo_id_fk   INT         NOT NULL,
+    fecha          DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (usuario_ci_fk, torneo_id_fk),
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- "Recordarme": token persistente (selector público + validador guardado
+-- como hash SHA-256; si roban la base, los tokens no sirven).
+CREATE TABLE IF NOT EXISTS sesion_recordada (
+    selector        CHAR(24)    PRIMARY KEY,
+    validador_hash  CHAR(64)    NOT NULL,
+    usuario_ci_fk   VARCHAR(20) NOT NULL,
+    expira          DATETIME    NOT NULL,
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- "¿Olvidaste tu contraseña?": enlaces de un solo uso que vencen en 1 hora
+-- (se guarda solo el hash del token).
+CREATE TABLE IF NOT EXISTS recuperacion_clave (
+    token_hash     CHAR(64)    PRIMARY KEY,
+    usuario_ci_fk  VARCHAR(20) NOT NULL,
+    expira         DATETIME    NOT NULL,
+    usado          BOOLEAN     NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Premios por puesto de cada torneo.
+CREATE TABLE IF NOT EXISTS premio (
+    premio_id     INT AUTO_INCREMENT PRIMARY KEY,
+    torneo_id_fk  INT          NOT NULL,
+    puesto        TINYINT      NOT NULL,
+    descripcion   VARCHAR(255) NOT NULL,
+    UNIQUE KEY uq_premio (torneo_id_fk, puesto),
+    FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Llaves de eliminación: a qué partido pasa el ganador (o el perdedor, en
+-- doble eliminación) y de qué lado juega.
+CREATE TABLE IF NOT EXISTS avance_llave (
+    origen_fk   INT NOT NULL,
+    resultado   ENUM('ganador','perdedor') NOT NULL,
+    destino_fk  INT NOT NULL,
+    lado        ENUM('local','visitante') NOT NULL,
+    PRIMARY KEY (origen_fk, resultado),
+    FOREIGN KEY (origen_fk)  REFERENCES enfrentamiento(enfrentamiento_id) ON DELETE CASCADE,
+    FOREIGN KEY (destino_fk) REFERENCES enfrentamiento(enfrentamiento_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Invitaciones para sumarse a un equipo.
+CREATE TABLE IF NOT EXISTS invitacion_equipo (
+    invitacion_id       INT AUTO_INCREMENT PRIMARY KEY,
+    equipo_id_fk        INT         NOT NULL,
+    torneo_id_fk        INT         NOT NULL,
+    invitado_ci_fk      VARCHAR(20) NOT NULL,
+    invitado_por_ci_fk  VARCHAR(20) NOT NULL,
+    estado              ENUM('pendiente','aceptada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
+    fecha               DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_invitacion_invitado (invitado_ci_fk, estado),
+    FOREIGN KEY (equipo_id_fk)       REFERENCES equipo(equipo_id) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id_fk)       REFERENCES torneo(torneo_id) ON DELETE CASCADE,
+    FOREIGN KEY (invitado_ci_fk)     REFERENCES usuario(ci) ON DELETE CASCADE,
+    FOREIGN KEY (invitado_por_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Mensajes del formulario de Contacto (los lee un administrador).
+CREATE TABLE IF NOT EXISTS mensaje_contacto (
+    mensaje_id     INT AUTO_INCREMENT PRIMARY KEY,
+    nombre         VARCHAR(100) NOT NULL,
+    email          VARCHAR(150) NOT NULL,
+    asunto         VARCHAR(150) NOT NULL,
+    mensaje        TEXT         NOT NULL,
+    usuario_ci_fk  VARCHAR(20)  NULL,
+    ip_hash        CHAR(64)     NULL,
+    leido          BOOLEAN      NOT NULL DEFAULT FALSE,
+    fecha          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_mensaje_ip (ip_hash, fecha),
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

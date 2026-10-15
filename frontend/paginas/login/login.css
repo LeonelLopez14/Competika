@@ -196,3 +196,10 @@
     font-size: 0.875rem;
     text-align: center;
 }
+
+/* Recuperar contraseña / avisos */
+.rc-ok, .form-ok {
+    margin: 8px 0 4px; padding: 14px 16px; border-radius: 10px;
+    background: rgba(67,197,158,0.12); color: #17694f; font-size: 14px; line-height: 1.5;
+}
+.rc-dev { margin-top: 8px; font-size: 13px; color: rgba(33,33,33,0.7); }

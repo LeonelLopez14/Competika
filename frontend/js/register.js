@@ -8,3 +8,10 @@ if (error) {
     errorDiv.textContent = error;
     errorDiv.style.display = 'block';
 }
+const perfil = document.getElementById('profile');
+const carneRow = document.getElementById('carne-row');
+if (perfil && carneRow) {
+    const sync = () => { carneRow.hidden = perfil.value !== 'participante'; };
+    perfil.addEventListener('change', sync);
+    sync();
+}

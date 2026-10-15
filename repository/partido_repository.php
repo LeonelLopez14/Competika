@@ -10,10 +10,14 @@ class PartidoRepository extends BaseRepository {
 
     private const SELECT = "
         SELECT e.enfrentamiento_id, e.torneo_id_fk, e.ubicacion, e.fecha, r.nombre AS fase,
-               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1) AS eq_local,
-               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id ORDER BY es_local DESC, equipo_id_fk LIMIT 1 OFFSET 1) AS eq_visitante,
-               res.resultado_id, res.puntaje_a, res.puntaje_b, res.estado AS res_estado, res.ganador_equipo_fk
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id AND es_local = 1 LIMIT 1) AS eq_local,
+               (SELECT equipo_id_fk FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = e.enfrentamiento_id AND es_local = 0 LIMIT 1) AS eq_visitante,
+               res.resultado_id, res.puntaje_a, res.puntaje_b, res.estado AS res_estado, res.ganador_equipo_fk,
+               jz.juez_id, CONCAT(uj.nombre, ' ', uj.apellido) AS juez_nombre
         FROM enfrentamiento e
+        LEFT JOIN enfrentamiento_juez ejz ON ejz.enfrentamiento_id_fk = e.enfrentamiento_id
+        LEFT JOIN juez jz ON jz.juez_id = ejz.juez_id_fk
+        LEFT JOIN usuario uj ON uj.ci = jz.usuario_ci_fk
         JOIN ronda r ON r.ronda_id = e.ronda_id_fk
         LEFT JOIN resultado res ON res.resultado_id =
              (SELECT MAX(resultado_id) FROM resultado WHERE enfrentamiento_id_fk = e.enfrentamiento_id)";
@@ -41,6 +45,14 @@ class PartidoRepository extends BaseRepository {
         return $id !== false ? (int)$id : $this->insertar("INSERT INTO ronda (nombre, torneo_id_fk) VALUES (?, ?)", [$fase, $torneoId]);
     }
 
+    /** Un juez por partido: se reemplaza el que hubiera. */
+    private function asignarJuez(Partido $p): void {
+        $this->ejecutar("DELETE FROM enfrentamiento_juez WHERE enfrentamiento_id_fk = ?", [$p->getId()]);
+        if ($p->getJuezId() !== null) {
+            $this->ejecutar("INSERT INTO enfrentamiento_juez (enfrentamiento_id_fk, juez_id_fk) VALUES (?, ?)", [$p->getId(), $p->getJuezId()]);
+        }
+    }
+
     private function asignarEquipos(Partido $p): void {
         $this->ejecutar("DELETE FROM enfrentamiento_equipo WHERE enfrentamiento_id_fk = ?", [$p->getId()]);
         $ins = $this->db->prepare("INSERT INTO enfrentamiento_equipo (enfrentamiento_id_fk, equipo_id_fk, es_local) VALUES (?, ?, ?)");
@@ -54,6 +66,7 @@ class PartidoRepository extends BaseRepository {
                 [$p->getUbicacion(), $p->getFecha(), $p->getTorneoId(), $this->rondaId($p->getTorneoId(), $p->getFase()), $organizadorId]);
             $p->setId($id);
             $this->asignarEquipos($p);
+            $this->asignarJuez($p);
             return $id;
         });
     }
@@ -64,6 +77,7 @@ class PartidoRepository extends BaseRepository {
             $this->ejecutar("UPDATE enfrentamiento SET ubicacion = ?, fecha = ?, ronda_id_fk = ? WHERE enfrentamiento_id = ?",
                 [$p->getUbicacion(), $p->getFecha(), $this->rondaId($p->getTorneoId(), $p->getFase()), $p->getId()]);
             $this->asignarEquipos($p);
+            $this->asignarJuez($p);
 
             $resId = $this->valor("SELECT resultado_id FROM resultado WHERE enfrentamiento_id_fk = ? ORDER BY resultado_id DESC LIMIT 1", [$p->getId()]);
             $r = $p->getResultado();
@@ -98,5 +112,40 @@ class PartidoRepository extends BaseRepository {
     /** @return Partido[] jugados del torneo (para la tabla de posiciones) */
     public function jugadosDelTorneo(int $torneoId): array {
         return array_values(array_filter($this->delTorneo($torneoId), fn(Partido $p) => $p->estaJugado()));
+    }
+
+    /** @return Partido[] asignados a un juez (de todos los torneos), por fecha */
+    public function delJuez(int $juezId): array {
+        return array_map([Partido::class, 'desdeFila'],
+            $this->filas(self::SELECT . " WHERE ejz.juez_id_fk = ? ORDER BY e.fecha IS NULL, e.fecha, e.enfrentamiento_id", [$juezId]));
+    }
+
+    /** Nombres de las fases del torneo en el orden en que se crearon. */
+    public function fasesEnOrden(int $torneoId): array {
+        return $this->columna("SELECT nombre FROM ronda WHERE torneo_id_fk = ? ORDER BY ronda_id", [$torneoId]);
+    }
+
+    public function cantidadDelTorneo(int $torneoId): int {
+        return (int)$this->valor("SELECT COUNT(*) FROM enfrentamiento WHERE torneo_id_fk = ?", [$torneoId]);
+    }
+
+    /** Avances de llave que salen de un partido: [['resultado','destino_fk','lado'], ...] */
+    public function avancesDesde(int $partidoId): array {
+        return $this->filas("SELECT resultado, destino_fk, lado FROM avance_llave WHERE origen_fk = ?", [$partidoId]);
+    }
+
+    public function guardarAvance(int $origen, string $resultado, int $destino, string $lado): void {
+        $this->ejecutar("INSERT INTO avance_llave (origen_fk, resultado, destino_fk, lado) VALUES (?, ?, ?, ?)", [$origen, $resultado, $destino, $lado]);
+    }
+
+    /** Partidos del torneo que tienen avance de llave (son eliminatorios). */
+    public function idsEliminatorios(int $torneoId): array {
+        return array_map('intval', $this->columna("SELECT DISTINCT a.origen_fk FROM avance_llave a
+            JOIN enfrentamiento e ON e.enfrentamiento_id = a.origen_fk WHERE e.torneo_id_fk = ?", [$torneoId]));
+    }
+
+    /** ¿Algún partido alimenta a este? (sus equipos salen de una llave) */
+    public function tieneOrigenes(int $partidoId): bool {
+        return $this->valor("SELECT 1 FROM avance_llave WHERE destino_fk = ? LIMIT 1", [$partidoId]) !== false;
     }
 }

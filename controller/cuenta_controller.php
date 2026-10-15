@@ -43,8 +43,12 @@ class CuentaController {
         $u = $this->usuarios->obtenerPorEmail($email);
         // Mismo mensaje si el correo no existe o la contraseña no coincide (no revela qué cuentas existen)
         if (!$u || !password_verify($password, $u['contrasenia'])) self::ir(self::LOGIN, 'Email o contraseña incorrectos.');
+        if (!empty($u['bloqueado'])) {
+            self::ir(self::LOGIN, 'Tu cuenta está suspendida' . ($u['motivo_bloqueo'] ? ': ' . rtrim($u['motivo_bloqueo'], '.') : '') . '. Escribinos desde Contacto.');
+        }
 
         self::iniciarSesion($u);
+        if (!empty($_POST['remember-me'])) Recordarme::crear($u['ci']);
         // Volver a la página desde donde se pidió el login. Solo páginas propias
         // del sitio (evita redirecciones abiertas a otros dominios).
         $next = (string)($_POST['next'] ?? '');
@@ -87,11 +91,14 @@ class CuentaController {
         try {
             $this->usuarios->transaccion(function () use ($usuario, $ci, $rol) {
                 $this->usuarios->registrar($usuario);
-                match ($rol) {
-                    'organizador'  => $this->usuarios->crearOrganizador($ci),
-                    'participante' => $this->usuarios->crearParticipante($ci),
-                    'observador'   => $this->usuarios->crearObservador($ci),
-                };
+                if ($rol === 'organizador') {
+                    $this->usuarios->crearOrganizador($ci);
+                } elseif ($rol === 'participante') {
+                    $this->usuarios->crearParticipante($ci);
+                    $this->usuarios->actualizarCarne($ci, !empty($_POST['carne']));
+                } else {
+                    $this->usuarios->crearObservador($ci);
+                }
             });
         } catch (Throwable $e) {
             error_log('[competika] registro: ' . $e->getMessage());
@@ -102,6 +109,7 @@ class CuentaController {
     }
 
     public function logout(): void {
+        Recordarme::olvidar();
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $p = session_get_cookie_params();

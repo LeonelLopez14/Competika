@@ -79,7 +79,9 @@ function renderTopStats() {
 function renderActive() {
     const list = $('pf-tournaments-list');
     if (!list) return;
-    const activos = data.torneos.filter(t => t.estado !== 'finalizado');
+    const propios = new Set(data.torneos.map(t => t.id));
+    const activos = data.torneos.filter(t => t.estado !== 'finalizado')
+        .concat((data.seguidos || []).filter(t => t.estado !== 'finalizado' && !propios.has(t.id)));
     if (!activos.length) {
         list.innerHTML = `<p class="pf-empty">No tenés torneos activos. <a href="../tournament_search/tournament_search.html">Buscá un torneo</a> o <a href="../tournament_form/tournament_form.html">creá uno</a>.</p>`;
         return;
@@ -103,7 +105,7 @@ function renderActive() {
                 </div>
             </div>
             <div class="pf-t-side">
-                <span class="pf-role-pill pf-role-pill--${t.rol}">${t.rol === 'organizador' ? 'Organizador' : 'Participante'}</span>
+                <span class="pf-role-pill pf-role-pill--${t.rol}">${{ organizador: 'Organizador', participante: 'Participante', seguido: 'Siguiendo' }[t.rol]}</span>
                 ${t.lugar ? `<span class="pf-t-location"><i class="ti ti-map-pin"></i>${esc(t.lugar)}</span>` : ''}
             </div>
         </a>`;

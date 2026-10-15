@@ -2,14 +2,14 @@
 -- COMPETIKA — Migración de bases creadas con versiones anteriores
 --
 -- Si creaste la base con el schema.sql actual NO hace falta: ya tiene todo.
--- Si tu base es anterior (o le corriste un ajustes.sql viejo), ejecutá este
+-- Si tu base es anterior, ejecutá este
 -- archivo una vez y después usuarios.sql. Deja la base igual que schema.sql
 -- sin perder datos. Se puede correr más de una vez.
 -- Requiere MariaDB 10.2+ (XAMPP/LAMPP y la imagen de Docker lo cumplen).
 -- =====================================================
 USE competika_db;
 -- Los datos de este archivo (tildes, €) están en UTF-8: que el cliente los lea así
-SET NAMES utf8mb4;
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 1) Columnas agregadas al esquema original
 ALTER TABLE configuracion_torneo MODIFY admin_id_fk INT NULL;
@@ -101,11 +101,8 @@ ALTER TABLE configuracion_torneo
     ADD CONSTRAINT fk_config_arbitro  FOREIGN KEY IF NOT EXISTS (arbitro_persona_fk)  REFERENCES persona(persona_id),
     ADD CONSTRAINT fk_config_contacto FOREIGN KEY IF NOT EXISTS (contacto_persona_fk) REFERENCES persona(persona_id);
 
--- 4) Pasar los datos de las columnas viejas a las entidades nuevas y
---    borrar esas columnas (eran las que rompían la 3FN).
---    Sin procedimientos almacenados (funciona aunque las tablas de sistema de
---    XAMPP estén desactualizadas): cada paso se arma como texto y solo se
---    ejecuta si la columna vieja existe; si no, se ejecuta "DO 0" (no hace nada).
+-- 4) Pasar los datos de las columnas que rompían la 3FN a sus entidades y
+--    borrarlas. Cada paso se ejecuta solo si la columna existe (si no, "DO 0").
 
 -- 4a) torneo.tipo_torneo (texto) -> torneo.tipo_torneo_id_fk
 SET @hay = (SELECT COUNT(*) FROM information_schema.COLUMNS
@@ -155,3 +152,155 @@ UPDATE configuracion_torneo c JOIN persona p ON p._cfg = c.configuracion_id SET 
 ALTER TABLE persona DROP COLUMN IF EXISTS _cfg;
 ALTER TABLE configuracion_torneo
     DROP COLUMN IF EXISTS contacto_nombre, DROP COLUMN IF EXISTS contacto_telefono, DROP COLUMN IF EXISTS contacto_email;
+
+-- 5) Tablas de juez, seguimiento de torneos, "Recordarme" y recuperación de contraseña
+
+-- Solicitudes para ser juez: el usuario completa el formulario y un
+-- administrador la aprueba (se crea la fila en juez) o la rechaza.
+CREATE TABLE IF NOT EXISTS solicitud_juez (
+    solicitud_id          INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_ci_fk         VARCHAR(20)  NOT NULL,
+    certificado           BOOLEAN      NOT NULL DEFAULT FALSE,   -- mismo dato que juez.certificado
+    deportes              VARCHAR(150) NULL,
+    experiencia           VARCHAR(500) NULL,
+    estado                ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
+    fecha                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    revisada_por_admin_fk INT          NULL,
+    fecha_revision        DATETIME     NULL,
+    motivo_rechazo        VARCHAR(255) NULL,
+    INDEX idx_solicitud_estado (estado),
+    FOREIGN KEY (usuario_ci_fk)         REFERENCES usuario(ci) ON DELETE CASCADE,
+    FOREIGN KEY (revisada_por_admin_fk) REFERENCES admin(admin_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Torneos que sigue un usuario (rol observador): recibe sus novedades.
+CREATE TABLE IF NOT EXISTS seguimiento (
+    usuario_ci_fk  VARCHAR(20) NOT NULL,
+    torneo_id_fk   INT         NOT NULL,
+    fecha          DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (usuario_ci_fk, torneo_id_fk),
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- "Recordarme": token persistente (selector público + validador guardado
+-- como hash SHA-256; si roban la base, los tokens no sirven).
+CREATE TABLE IF NOT EXISTS sesion_recordada (
+    selector        CHAR(24)    PRIMARY KEY,
+    validador_hash  CHAR(64)    NOT NULL,
+    usuario_ci_fk   VARCHAR(20) NOT NULL,
+    expira          DATETIME    NOT NULL,
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- "¿Olvidaste tu contraseña?": enlaces de un solo uso que vencen en 1 hora
+-- (se guarda solo el hash del token).
+CREATE TABLE IF NOT EXISTS recuperacion_clave (
+    token_hash     CHAR(64)    PRIMARY KEY,
+    usuario_ci_fk  VARCHAR(20) NOT NULL,
+    expira         DATETIME    NOT NULL,
+    usado          BOOLEAN     NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6) Competitivo, equipos de varios integrantes, grupos, premios por puesto,
+--    llaves de eliminación, contacto y bloqueo de cuentas
+ALTER TABLE admin ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE usuario
+    ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS motivo_bloqueo VARCHAR(255) NULL;
+
+ALTER TABLE configuracion_torneo
+    ADD COLUMN IF NOT EXISTS vidas TINYINT NULL AFTER competitivo,
+    ADD COLUMN IF NOT EXISTS juez_principal_fk INT NULL AFTER contacto_persona_fk,
+    ADD CONSTRAINT fk_config_juez FOREIGN KEY IF NOT EXISTS (juez_principal_fk) REFERENCES juez(juez_id);
+
+CREATE TABLE IF NOT EXISTS grupo (
+    grupo_id INT AUTO_INCREMENT PRIMARY KEY,
+    torneo_id_fk INT NOT NULL,
+    nombre VARCHAR(20) NOT NULL,
+    UNIQUE KEY uq_grupo (torneo_id_fk, nombre),
+    FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE tabla_posiciones
+    ADD COLUMN IF NOT EXISTS grupo_id_fk INT NULL,
+    ADD CONSTRAINT fk_posiciones_grupo FOREIGN KEY IF NOT EXISTS (grupo_id_fk) REFERENCES grupo(grupo_id) ON DELETE SET NULL;
+
+-- Premios por puesto de cada torneo.
+CREATE TABLE IF NOT EXISTS premio (
+    premio_id     INT AUTO_INCREMENT PRIMARY KEY,
+    torneo_id_fk  INT          NOT NULL,
+    puesto        TINYINT      NOT NULL,
+    descripcion   VARCHAR(255) NOT NULL,
+    UNIQUE KEY uq_premio (torneo_id_fk, puesto),
+    FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Llaves de eliminación: a qué partido pasa el ganador (o el perdedor, en
+-- doble eliminación) y de qué lado juega.
+CREATE TABLE IF NOT EXISTS avance_llave (
+    origen_fk   INT NOT NULL,
+    resultado   ENUM('ganador','perdedor') NOT NULL,
+    destino_fk  INT NOT NULL,
+    lado        ENUM('local','visitante') NOT NULL,
+    PRIMARY KEY (origen_fk, resultado),
+    FOREIGN KEY (origen_fk)  REFERENCES enfrentamiento(enfrentamiento_id) ON DELETE CASCADE,
+    FOREIGN KEY (destino_fk) REFERENCES enfrentamiento(enfrentamiento_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Invitaciones para sumarse a un equipo.
+CREATE TABLE IF NOT EXISTS invitacion_equipo (
+    invitacion_id       INT AUTO_INCREMENT PRIMARY KEY,
+    equipo_id_fk        INT         NOT NULL,
+    torneo_id_fk        INT         NOT NULL,
+    invitado_ci_fk      VARCHAR(20) NOT NULL,
+    invitado_por_ci_fk  VARCHAR(20) NOT NULL,
+    estado              ENUM('pendiente','aceptada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
+    fecha               DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_invitacion_invitado (invitado_ci_fk, estado),
+    FOREIGN KEY (equipo_id_fk)       REFERENCES equipo(equipo_id) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id_fk)       REFERENCES torneo(torneo_id) ON DELETE CASCADE,
+    FOREIGN KEY (invitado_ci_fk)     REFERENCES usuario(ci) ON DELETE CASCADE,
+    FOREIGN KEY (invitado_por_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Mensajes del formulario de Contacto (los lee un administrador).
+CREATE TABLE IF NOT EXISTS mensaje_contacto (
+    mensaje_id     INT AUTO_INCREMENT PRIMARY KEY,
+    nombre         VARCHAR(100) NOT NULL,
+    email          VARCHAR(150) NOT NULL,
+    asunto         VARCHAR(150) NOT NULL,
+    mensaje        TEXT         NOT NULL,
+    usuario_ci_fk  VARCHAR(20)  NULL,
+    ip_hash        CHAR(64)     NULL,
+    leido          BOOLEAN      NOT NULL DEFAULT FALSE,
+    fecha          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_mensaje_ip (ip_hash, fecha),
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- cant_participante = jugadores por equipo (1 si guardaba el cupo)
+UPDATE configuracion_torneo SET cant_participante = 1 WHERE cant_participante IS NULL OR cant_participante = cant_equipos;
+UPDATE configuracion_torneo SET competitivo = 0 WHERE competitivo IS NULL OR juez_principal_fk IS NULL;
+
+-- premios (texto, una línea por puesto: "1° Trofeo") -> tabla premio
+SET @hay = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion_torneo' AND COLUMN_NAME = 'premios');
+SET @sql = IF(@hay > 0, 'INSERT IGNORE INTO premio (torneo_id_fk, puesto, descripcion)
+    SELECT c.torneo_id_fk, n.puesto,
+           TRIM(REGEXP_REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(c.premios, ''\n'', n.puesto), ''\n'', -1), ''^[0-9]+° *'', ''''))
+    FROM configuracion_torneo c
+    JOIN (SELECT 1 AS puesto UNION SELECT 2 UNION SELECT 3) n
+      ON n.puesto <= 1 + LENGTH(c.premios) - LENGTH(REPLACE(c.premios, ''\n'', ''''))
+    WHERE c.premios IS NOT NULL AND TRIM(c.premios) <> ''''', 'DO 0');
+PREPARE paso FROM @sql; EXECUTE paso; DEALLOCATE PREPARE paso;
+ALTER TABLE configuracion_torneo DROP COLUMN IF EXISTS premios;
+
+-- Partidos cargados antes de es_local: el equipo de menor id queda como local
+UPDATE enfrentamiento_equipo ee
+JOIN (SELECT enfrentamiento_id_fk, MIN(equipo_id_fk) AS local_id FROM enfrentamiento_equipo
+      GROUP BY enfrentamiento_id_fk HAVING SUM(es_local) = 0 AND COUNT(*) = 2) x
+  ON x.enfrentamiento_id_fk = ee.enfrentamiento_id_fk AND x.local_id = ee.equipo_id_fk
+SET ee.es_local = 1;
