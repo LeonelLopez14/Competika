@@ -46,6 +46,7 @@ class GestorPartidos {
             $this->recalcular($p->getTorneoId());
         });
 
+        $this->auditarResultado($p, $antes);
         if ($p->estaJugado() && !$p->getResultado()->igualMarcador($antes->getResultado())) {
             $this->avisos->resultado($p);
             $this->avisos->seguidores($p->getTorneoId(), 'resultado', $this->textoResultado($p));
@@ -115,6 +116,29 @@ class GestorPartidos {
             if ($existente->estaJugado()) throw new ApiException('No se puede cambiar este resultado: el desempate de la final ya se jugó.');
             $this->partidos->eliminar((int)$existente->getId());
         }
+    }
+
+    private function auditarResultado(Partido $p, Partido $antes): void {
+        $ahora = $p->estaJugado() ? $p->getResultado() : null;
+        $previo = $antes->estaJugado() ? $antes->getResultado() : null;
+        if ($ahora === null && $previo === null) return;
+        if ($ahora !== null && $previo !== null && $ahora->igualMarcador($previo)) return;
+
+        $local = $this->equipos->nombre($p->getLocalId());
+        $visitante = $this->equipos->nombre($p->getVisitanteId());
+        $texto = fn(Resultado $r) => $local . ' ' . Formato::marcador($r->getLocal()) . '-' . Formato::marcador($r->getVisitante()) . ' ' . $visitante;
+        $torneo = "«{$this->torneos->nombre($p->getTorneoId())}» (#{$p->getTorneoId()}), partido #{$p->getId()}";
+        if ($ahora === null) {
+            $accion = 'Anuló un resultado';
+            $detalle = "$torneo: se anuló " . $texto($previo) . '.';
+        } elseif ($previo === null) {
+            $accion = 'Registró un resultado';
+            $detalle = "$torneo: " . $texto($ahora) . '.';
+        } else {
+            $accion = 'Modificó un resultado';
+            $detalle = "$torneo: " . $texto($ahora) . ' (antes: ' . Formato::marcador($previo->getLocal()) . '-' . Formato::marcador($previo->getVisitante()) . ').';
+        }
+        Auditoria::actual(Auditoria::RESULTADO, $accion, $detalle);
     }
 
     private function textoResultado(Partido $p): string {

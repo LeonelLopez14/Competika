@@ -949,10 +949,22 @@ function tsCrearModal() {
                     <label for="ts-join-team" class="floating-label">Nombre de tu equipo (opcional)</label>
                 </div>
                 <p class="ts-modal-hint">Si lo dejás vacío, te inscribimos con tu nombre.</p>
+                <button type="button" class="ts-modal-link" id="ts-join-abiertos" hidden><i class="ti ti-users"></i> No tengo equipo, ver equipos abiertos</button>
                 <p class="ts-modal-error" id="ts-join-error" hidden></p>
                 <div class="ts-modal-actions">
                     <button type="button" class="btn-seguir" data-close>Cancelar</button>
                     <button type="button" class="btn-inscribirse" id="ts-join-confirm"><i class="ti ti-check"></i> Confirmar</button>
+                </div>
+            </div>
+            <div data-step="teams" hidden>
+                <span class="ts-modal-eyebrow"><i class="ti ti-users"></i> Equipos abiertos</span>
+                <h2 class="ts-modal-title" id="ts-teams-title"></h2>
+                <p class="ts-modal-meta">Pedí sumarte a uno de estos equipos y el capitán decide si te acepta.</p>
+                <ul class="ts-modal-teams" id="ts-teams-list"></ul>
+                <p class="ts-modal-error" id="ts-teams-error" hidden></p>
+                <div class="ts-modal-actions">
+                    <button type="button" class="btn-seguir" id="ts-teams-back"><i class="ti ti-arrow-left"></i> Volver</button>
+                    <button type="button" class="btn-inscribirse" data-close id="ts-teams-listo" hidden><i class="ti ti-check"></i> Aceptar</button>
                 </div>
             </div>
             <div data-step="ok" hidden>
@@ -970,7 +982,55 @@ function tsCrearModal() {
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !tsModal.hidden) tsCerrarModal(); });
     tsModal.querySelector("#ts-join-team").addEventListener("keydown", e => { if (e.key === "Enter") tsConfirmar(); });
     tsModal.querySelector("#ts-join-confirm").addEventListener("click", tsConfirmar);
+    tsModal.querySelector("#ts-join-abiertos").addEventListener("click", tsVerAbiertos);
+    tsModal.querySelector("#ts-teams-back").addEventListener("click", () => tsPaso("form"));
+    tsModal.querySelector("#ts-teams-list").addEventListener("click", e => {
+        const b = e.target.closest("[data-pedir]");
+        if (b) tsPedirUnirme(b);
+    });
     return tsModal;
+}
+
+function tsPaso(paso) {
+    tsModal.querySelectorAll("[data-step]").forEach(el => { el.hidden = el.dataset.step !== paso; });
+}
+
+async function tsVerAbiertos() {
+    const lista = tsModal.querySelector("#ts-teams-list");
+    const err = tsModal.querySelector("#ts-teams-error");
+    tsModal.querySelector("#ts-teams-title").textContent = tsModalTorneo.nombre;
+    err.hidden = true;
+    tsModal.querySelector("#ts-teams-back").hidden = false;
+    tsModal.querySelector("#ts-teams-listo").hidden = true;
+    lista.innerHTML = '<li class="ts-modal-teams-vacio">Cargando…</li>';
+    tsPaso("teams");
+    const r = await competikaApi("open_teams", { api: "teams", params: { id: tsModalTorneo.id } });
+    if (!r.success || !r.teams.length) {
+        lista.innerHTML = '<li class="ts-modal-teams-vacio">' + (r.success ? "Todavía no hay equipos abiertos en este torneo." : (r.error || "No se pudieron cargar los equipos.")) + "</li>";
+        return;
+    }
+    lista.innerHTML = r.teams.map(e => `
+        <li>
+            <span><strong>${tsEsc(e.name)}</strong> · ${e.members}/${e.max}<br><small>Capitán: ${tsEsc(e.captain)}</small></span>
+            <button type="button" class="btn-inscribirse" data-pedir="${e.id}">Pedir unirme</button>
+        </li>`).join("");
+}
+
+async function tsPedirUnirme(btn) {
+    const err = tsModal.querySelector("#ts-teams-error");
+    err.hidden = true;
+    btn.disabled = true;
+    const r = await competikaApi("join_request", { api: "teams", method: "POST", body: { torneoId: Number(tsModalTorneo.id), teamId: Number(btn.dataset.pedir) } });
+    if (r._status === 401) return;
+    if (!r.success && !/Ya le mandaste/.test(r.error || "")) {
+        btn.disabled = false;
+        err.textContent = r.error || "No se pudo enviar la solicitud.";
+        err.hidden = false;
+        return;
+    }
+    btn.textContent = "Solicitud enviada";
+    tsModal.querySelector("#ts-teams-back").hidden = true;
+    tsModal.querySelector("#ts-teams-listo").hidden = false;
 }
 
 function tsCerrarModal() {
@@ -988,8 +1048,8 @@ async function tsAbrirInscripcion(t) {
     }
     tsModalTorneo = t;
     const m = tsCrearModal();
-    m.querySelector('[data-step="form"]').hidden = false;
-    m.querySelector('[data-step="ok"]').hidden = true;
+    tsPaso("form");
+    m.querySelector("#ts-join-abiertos").hidden = true;
     m.querySelector("#ts-join-title").textContent = t.nombre;
     m.querySelector("#ts-join-meta").textContent = `${t.formato} · ${t.ciudad} · Inscripción: ${t.inscripcion}` + (t.competitivo ? ' · Competitivo: requiere carné de deportista' : '');
     m.querySelector("#ts-join-team").value = "";
@@ -997,6 +1057,8 @@ async function tsAbrirInscripcion(t) {
     m.hidden = false;
     document.body.style.overflow = "hidden";
     setTimeout(() => m.querySelector("#ts-join-team").focus(), 50);
+    const ab = await competikaApi("open_teams", { api: "teams", params: { id: t.id } });
+    if (tsModalTorneo === t && ab.success && ab.teams.length) m.querySelector("#ts-join-abiertos").hidden = false;
 }
 
 async function tsConfirmar() {
@@ -1012,8 +1074,7 @@ async function tsConfirmar() {
         err.hidden = false;
         return;
     }
-    tsModal.querySelector('[data-step="form"]').hidden = true;
-    tsModal.querySelector('[data-step="ok"]').hidden = false;
+    tsPaso("ok");
     tsModal.querySelector("#ts-join-ok-text").textContent = `Te sumaste a ${tsModalTorneo.nombre}. El torneo aparece ahora en tu perfil.`;
     tsCargarTorneos();
 }

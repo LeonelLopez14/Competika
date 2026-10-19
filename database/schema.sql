@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS usuario (
     biografia VARCHAR(200) NULL,
     foto_perfil VARCHAR(100) NULL,         -- nombre del archivo en uploads/avatars/
     bloqueado BOOLEAN NOT NULL DEFAULT FALSE,
-    motivo_bloqueo VARCHAR(255) NULL
+    motivo_bloqueo VARCHAR(255) NULL,
+    intentos_fallidos TINYINT NOT NULL DEFAULT 0,
+    bloqueo_hasta DATETIME NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS admin (
@@ -114,6 +116,7 @@ CREATE TABLE IF NOT EXISTS torneo (
     direccion VARCHAR(150),
     departamento VARCHAR(100),
     estado VARCHAR(50),
+    motivo_rechazo VARCHAR(255) NULL,
     organizador_id_fk INT NOT NULL,
     FOREIGN KEY (organizador_id_fk) REFERENCES organizador(organizador_id),
     FOREIGN KEY (tipo_torneo_id_fk) REFERENCES tipo_torneo(tipo_torneo_id)
@@ -147,7 +150,8 @@ CREATE TABLE IF NOT EXISTS configuracion_torneo (
 CREATE TABLE IF NOT EXISTS equipo (
     equipo_id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    tamanio INT
+    tamanio INT,
+    abierto BOOLEAN NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS equipo_participante (
@@ -242,10 +246,14 @@ CREATE TABLE IF NOT EXISTS tabla_posiciones (
 
 CREATE TABLE IF NOT EXISTS registro_de_actividad (
     registro_id INT AUTO_INCREMENT PRIMARY KEY,
-    admin_id_fk INT NOT NULL,
+    admin_id_fk INT NULL,
+    usuario_ci_fk VARCHAR(20) NULL,
+    actor VARCHAR(150) NULL,
+    categoria VARCHAR(20) NOT NULL DEFAULT 'administracion',
     nombre VARCHAR(150),
     fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     descripcion TEXT,
+    INDEX idx_registro_categoria (categoria, registro_id),
     FOREIGN KEY (admin_id_fk) REFERENCES admin(admin_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -358,6 +366,20 @@ CREATE TABLE IF NOT EXISTS invitacion_equipo (
     FOREIGN KEY (torneo_id_fk)       REFERENCES torneo(torneo_id) ON DELETE CASCADE,
     FOREIGN KEY (invitado_ci_fk)     REFERENCES usuario(ci) ON DELETE CASCADE,
     FOREIGN KEY (invitado_por_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS solicitud_equipo (
+    solicitud_id    INT AUTO_INCREMENT PRIMARY KEY,
+    equipo_id_fk    INT         NOT NULL,
+    torneo_id_fk    INT         NOT NULL,
+    usuario_ci_fk   VARCHAR(20) NOT NULL,
+    estado          ENUM('pendiente','aceptada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
+    fecha           DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_solicitud_equipo (equipo_id_fk, estado),
+    INDEX idx_solicitud_usuario (usuario_ci_fk, torneo_id_fk, estado),
+    FOREIGN KEY (equipo_id_fk)  REFERENCES equipo(equipo_id) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Mensajes del formulario de Contacto (los lee un administrador).

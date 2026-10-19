@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const torneoId = new URLSearchParams(location.search).get('t');
 
-const ESTADOS = { pending: 'Inscripciones abiertas', active: 'En curso', finished: 'Finalizado' };
+const ESTADOS = { pending: 'Inscripciones abiertas', active: 'En curso', finished: 'Finalizado', review: 'En revisión', rejected: 'Rechazado' };
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
@@ -40,6 +40,16 @@ function renderHero() {
     const st = $('tv-estado');
     st.textContent = ESTADOS[t.status] ?? t.status;
     st.className = `tv-estado tv-estado--${t.status}`;
+    document.getElementById('tv-aviso-estado')?.remove();
+    if (t.status === 'review' || t.status === 'rejected') {
+        const aviso = document.createElement('p');
+        aviso.id = 'tv-aviso-estado';
+        aviso.className = 'tv-aviso-estado';
+        aviso.textContent = t.status === 'review'
+            ? 'Este torneo está esperando la aprobación de un administrador. Todavía no es público.'
+            : `Un administrador rechazó este torneo: ${t.rejectionReason || 'sin motivo'}. Editalo y se vuelve a enviar a revisión.`;
+        $('tv-acciones').before(aviso);
+    }
 
     const meta = [];
     const fechas = [fecha(t.startDate), fecha(t.endDate)].filter(Boolean).join(' → ');
@@ -268,6 +278,7 @@ async function renderMiEquipo() {
         </div></div>`).join('');
 
     const eq = r.team;
+    await renderAbiertos(r, eq);
     if (!eq) return;
     card.hidden = false;
     $('tv-miequipo-count').textContent = `${eq.members.length}/${eq.max}`;
@@ -286,8 +297,17 @@ async function renderMiEquipo() {
           <input type="email" id="tv-invitar-email" placeholder="Correo del jugador" required maxlength="150" aria-label="Correo del jugador a invitar">
           <button class="tv-btn tv-btn--primary tv-btn--sm" type="submit"><i class="ti ti-send"></i> Invitar</button></form>` : ''}
       ${eq.isCaptain && eq.max === 1 ? '<p class="tv-vacio">Este torneo es individual.</p>' : ''}
+      ${eq.isCaptain && eq.max > 1 && t.status !== 'finished' ? `<label class="tv-abierto"><input type="checkbox" id="tv-abrir" ${eq.open ? 'checked' : ''}>
+          <span>Equipo abierto: otros jugadores sin equipo pueden pedir sumarse</span></label>` : ''}
+      ${eq.requests.length ? `<h3 class="tv-subtitulo">Solicitudes para unirse</h3><ul class="tv-integrantes">
+        ${eq.requests.map(s => `<li><span>${esc(s.name)}<br><button class="tv-link" data-perfil="${esc(s.id)}">Ver perfil</button></span><span class="tv-acciones">
+          <button class="tv-btn tv-btn--ghost tv-btn--sm" data-sol="${esc(s.id)}" data-accept="0">Rechazar</button>
+          <button class="tv-btn tv-btn--green tv-btn--sm" data-sol="${esc(s.id)}" data-accept="1"><i class="ti ti-check"></i> Aceptar</button></span></li>`).join('')}
+      </ul>` : ''}
       ${!eq.isCaptain ? '<button class="tv-btn tv-btn--ghost tv-btn--sm" id="tv-salir"><i class="ti ti-logout"></i> Dejar el equipo</button>' : ''}`;
 
+    $('tv-abrir')?.addEventListener('change', e => accionEquipo('open', { torneoId: Number(t.id), open: e.target.checked },
+        e.target.checked ? 'Tu equipo está abierto.' : 'Tu equipo ya no recibe solicitudes.'));
     $('tv-invitar')?.addEventListener('submit', async e => {
         e.preventDefault();
         accionEquipo('invite', { torneoId: Number(t.id), email: $('tv-invitar-email').value.trim() }, 'Invitación enviada.');
@@ -295,10 +315,58 @@ async function renderMiEquipo() {
     $('tv-salir')?.addEventListener('click', () => confirm('¿Dejar el equipo?') && accionEquipo('leave', { torneoId: Number(t.id) }, 'Dejaste el equipo.'));
 }
 
+async function verPerfilSolicitante(id) {
+    const r = await equipos('join_profile', { params: { id } });
+    if (!r.success) { toast(r.error || 'No se pudo cargar el perfil.'); return; }
+    const p = r.profile;
+    const foto = p.photo ? `${window.competikaSiteRoot || '../../..'}/${p.photo}` : '';
+    $('tv-perfil').innerHTML = `
+      <div class="tv-perfil-cab">
+        ${foto ? `<img src="${esc(foto)}" alt="" class="tv-perfil-foto">` : '<span class="tv-perfil-foto tv-perfil-foto--vacia"><i class="ti ti-user"></i></span>'}
+        <div><h2>${esc(p.name)}</h2>${p.username ? `<p class="tv-dialog-sub">@${esc(p.username)}</p>` : ''}</div>
+      </div>
+      <p class="tv-perfil-bio">${p.bio ? esc(p.bio) : 'Todavía no escribió una biografía.'}</p>
+      <div class="tv-perfil-stats">
+        <div><strong>${p.stats.tournaments}</strong><span>Torneos</span></div>
+        <div><strong>${p.stats.titles}</strong><span>Títulos</span></div>
+        <div><strong>${p.stats.matches}</strong><span>Partidos</span></div>
+        <div><strong>${p.stats.wins}</strong><span>Victorias</span></div>
+        <div><strong>${p.stats.honors}</strong><span>Honores</span></div>
+      </div>
+      <ul class="tv-perfil-datos">
+        <li><i class="ti ti-id-badge-2"></i> ${p.card ? 'Tiene carné de deportista' : 'Sin carné de deportista'}</li>
+      </ul>
+      <div class="tv-dialog-actions"><button type="button" class="tv-btn tv-btn--ghost" id="tv-perfil-cerrar">Cerrar</button></div>`;
+    $('tv-perfil-cerrar').addEventListener('click', () => $('tv-perfil-dialog').close());
+    $('tv-perfil-dialog').showModal();
+}
+
+async function renderAbiertos(r, eq) {
+    const card = $('tv-abiertos-card');
+    card.hidden = true;
+    if (eq || !r.canJoin) return;
+    const a = await equipos('open_teams', { params: { id: t.id } });
+    if (!a.success) return;
+    const enviadas = new Map((r.myRequests || []).map(s => [String(s.teamId), s.id]));
+    if (!a.teams.length && !enviadas.size) return;
+    card.hidden = false;
+    $('tv-abiertos').innerHTML = `<p class="tv-nota">¿Sin equipo? Pedí sumarte a uno de estos y el capitán decide.</p>
+      <ul class="tv-integrantes">
+      ${a.teams.map(e => `<li><span>${esc(e.name)} · ${e.members}/${e.max}<br><small>Capitán: ${esc(e.captain)}</small></span>
+        ${enviadas.has(e.id)
+            ? `<button class="tv-btn tv-btn--ghost tv-btn--sm" data-solcancel="${esc(enviadas.get(e.id))}">Cancelar solicitud</button>`
+            : `<button class="tv-btn tv-btn--primary tv-btn--sm" data-solpedir="${esc(e.id)}">Pedir unirme</button>`}</li>`).join('')}
+      </ul>`;
+}
+
 document.addEventListener('click', e => {
-    const b = e.target.closest('[data-inv],[data-quitar],[data-cancelar]');
+    const b = e.target.closest('[data-inv],[data-quitar],[data-cancelar],[data-sol],[data-solpedir],[data-solcancel],[data-perfil]');
     if (!b) return;
-    if (b.dataset.inv) accionEquipo('respond', { id: Number(b.dataset.inv), accept: b.dataset.accept === '1' }, b.dataset.accept === '1' ? '¡Te sumaste al equipo!' : 'Invitación rechazada.');
+    if (b.dataset.perfil) verPerfilSolicitante(b.dataset.perfil);
+    else if (b.dataset.solpedir) accionEquipo('join_request', { torneoId: Number(t.id), teamId: Number(b.dataset.solpedir) }, 'Solicitud enviada.');
+    else if (b.dataset.solcancel) accionEquipo('join_cancel', { id: Number(b.dataset.solcancel) }, 'Solicitud cancelada.');
+    else if (b.dataset.sol) accionEquipo('join_respond', { id: Number(b.dataset.sol), accept: b.dataset.accept === '1' }, b.dataset.accept === '1' ? 'Jugador sumado al equipo.' : 'Solicitud rechazada.');
+    else if (b.dataset.inv) accionEquipo('respond', { id: Number(b.dataset.inv), accept: b.dataset.accept === '1' }, b.dataset.accept === '1' ? '¡Te sumaste al equipo!' : 'Invitación rechazada.');
     else if (b.dataset.quitar) confirm('¿Quitar a este jugador del equipo?') && accionEquipo('remove', { torneoId: Number(t.id), member: b.dataset.quitar }, 'Jugador quitado.');
     else if (b.dataset.cancelar) accionEquipo('cancel', { id: Number(b.dataset.cancelar) }, 'Invitación cancelada.');
 });

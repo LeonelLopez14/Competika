@@ -44,9 +44,9 @@
             <div class="navbar-right">
                 <ul class="navbar-list" id="navbar-list">
                     <li class="nav-links"><a href="../../index.html">Inicio</a></li>
-                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Buscar</a></li>
                     <li class="nav-links"><a href="../tournament_details/tournament_details.html">Características</a></li>
-                    <li class="nav-links"><a href="tournament_dashboard.html">Dashboard</a></li>
+                    <li class="nav-links"><a href="tournament_dashboard.html">Mis torneos</a></li>
                     <li class="nav-links"><a href="../login/login.html">Iniciar sesión</a></li>
                     <li class="nav-links"><a href="../register/register.html">Registrarse</a></li>
                 </ul>
@@ -96,9 +96,9 @@
             <p class="mobile-menu-logo">COMPETIKA</p>
             <ul class="mobile-menu-list">
                 <li><a href="../../index.html">Inicio</a></li>
-                <li><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                <li><a href="../tournament_search/tournament_search.html">Buscar</a></li>
                 <li><a href="../tournament_details/tournament_details.html">Características</a></li>
-                <li><a href="tournament_dashboard.html">Dashboard</a></li>
+                <li><a href="tournament_dashboard.html">Mis torneos</a></li>
                 <li><a href="../login/login.html">Iniciar sesión</a></li>
                 <li><a href="../register/register.html">Registrarse</a></li>
                 <li><a href="../profile/profile.html">Mi Perfil</a></li>
@@ -112,12 +112,15 @@
         </button>
         <div id="td-sidebar-backdrop"></div>
         <aside id="td-sidebar">
-            <div class="td-brand">
-                <img src="../../assets/img/logologito.png" alt="Competika" class="td-brand-logo">
-                <span class="td-brand-name">COMPETIKA</span>
-            </div>
+            <nav class="td-nav td-nav--back">
+                <ul id="td-nav-back">
+                    <li class="td-nav-item" data-section="selector">
+                        <i class="ti ti-arrow-left"></i><span>Mis torneos</span>
+                    </li>
+                </ul>
+            </nav>
             <div class="td-tournament-info" id="td-sidebar-info"></div>
-            <nav class="td-nav">
+            <nav class="td-nav" id="td-nav">
                 <ul id="td-nav-list">
                     <li class="td-nav-item" data-section="overview">
                         <i class="ti ti-layout-dashboard"></i><span>Overview</span>
@@ -133,9 +136,6 @@
                     </li>
                     <li class="td-nav-item" data-section="calendario">
                         <i class="ti ti-calendar"></i><span>Calendario</span>
-                    </li>
-                    <li class="td-nav-item" data-section="selector">
-                        <i class="ti ti-arrow-left"></i><span>Mis Torneos</span>
                     </li>
                 </ul>
             </nav>
@@ -163,4 +163,4 @@
     <script src="../../js/tournament-api.js?v=20261015"></script>
     <script src="../../js/tournament-dashboard-db.js?v=20261015"></script>
 </body>
-</html>
+</html>

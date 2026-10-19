@@ -38,9 +38,23 @@ class CuentaController {
         if ($email === '' || $password === '') self::ir(self::LOGIN, 'Completá email y contraseña.');
 
         $u = $this->usuarios->obtenerPorEmail($email);
+        if ($u && ($espera = $this->usuarios->segundosDeBloqueo($u['ci'])) > 0) {
+            Auditoria::registrar($u['ci'], Auditoria::CUENTA, 'Intento de inicio de sesión con la cuenta bloqueada', $u['email'] . '.');
+            self::ir(self::LOGIN, 'Demasiados intentos fallidos. Probá de nuevo en ' . ceil($espera / 60) . ' minuto(s).');
+        }
         // Mismo mensaje si el correo no existe o la contraseña no coincide (no revela qué cuentas existen)
-        if (!$u || !password_verify($password, $u['contrasenia'])) self::ir(self::LOGIN, 'Email o contraseña incorrectos.');
+        if (!$u || !password_verify($password, $u['contrasenia'])) {
+            Auditoria::registrar($u['ci'] ?? null, Auditoria::CUENTA, 'Intento de inicio de sesión fallido',
+                $u ? 'Contraseña incorrecta para ' . $u['email'] . '.' : 'Correo sin cuenta: ' . mb_substr($email, 0, 150) . '.');
+            if ($u && $this->usuarios->registrarIntentoFallido($u['ci'])) {
+                Auditoria::registrar($u['ci'], Auditoria::CUENTA, 'Cuenta bloqueada 10 minutos por intentos fallidos', $u['email'] . '.');
+                self::ir(self::LOGIN, 'Demasiados intentos fallidos. Probá de nuevo en 10 minutos.');
+            }
+            self::ir(self::LOGIN, 'Email o contraseña incorrectos.');
+        }
+        $this->usuarios->limpiarIntentosFallidos($u['ci']);
         if (!empty($u['bloqueado'])) {
+            Auditoria::registrar($u['ci'], Auditoria::CUENTA, 'Intento de inicio de sesión en una cuenta suspendida', $u['email'] . '.');
             self::ir(self::LOGIN, 'Tu cuenta está suspendida' . ($u['motivo_bloqueo'] ? ': ' . rtrim($u['motivo_bloqueo'], '.') : '') . '. Escribinos desde Contacto.');
         }
 

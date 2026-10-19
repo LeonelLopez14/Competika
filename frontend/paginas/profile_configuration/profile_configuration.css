@@ -194,13 +194,16 @@
     align-self: flex-start;
     padding: 8px 16px;
     border-radius: 8px;
-    border: 1.5px solid rgba(33,33,33,0.15);
+    border: 1.5px solid var(--blue-violet-dark);
     background: transparent;
-    color: rgba(33,33,33,0.4);
+    color: var(--blue-violet-dark);
     font-size: 12.5px;
     font-weight: 700;
-    cursor: not-allowed;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
 }
+.settings-role-request-btn:not([disabled]) { cursor: pointer; }
+.settings-role-request-btn:hover:not([disabled]) { background: var(--blue-violet-dark); color: #fff; }
 
 
 .settings-save-btn {
@@ -357,6 +360,7 @@
 .settings-role-pending-badge--rechazada { background: rgba(192,57,43,0.1); color: #c0392b; }
 .settings-role-request-btn[disabled] { opacity: 0.55; cursor: default; }
 .settings-dialog {
+    margin: auto;
     width: min(480px, calc(100% - 32px));
     padding: 28px;
     border: none;
@@ -369,6 +373,7 @@
 .settings-dialog h2 .ti { color: var(--blue-violet-dark); }
 .settings-dialog-sub { font-size: 14px; line-height: 1.5; color: rgba(33,33,33,0.6); margin-bottom: 18px; }
 .settings-dialog-check { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 14px; cursor: pointer; }
+.settings-dialog .input-group + .input-group { margin-top: 18px; }
 .settings-dialog-check input { width: 18px; height: 18px; accent-color: var(--blue-violet-dark); }
 .settings-dialog-error { min-height: 1.2em; font-size: 13px; color: #c0392b; margin: 4px 0 8px; }
 .settings-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }

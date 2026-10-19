@@ -14,6 +14,8 @@ require_once __DIR__ . '/bootstrap.php';
     ->post('user_delete',       'eliminarUsuario')
     ->get('tournaments',        'listarTorneos')
     ->post('tournament_status', 'estadoTorneo')
+    ->post('tournament_approve', 'aprobarTorneo')
+    ->post('tournament_reject', 'rechazarTorneo')
     ->post('tournament_delete', 'eliminarTorneo')
     ->post('tournament_transfer', 'transferirTorneo')
     ->get('messages',           'mensajes')
