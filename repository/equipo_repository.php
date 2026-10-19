@@ -150,6 +150,29 @@ class EquipoRepository extends BaseRepository {
         return $v === false ? null : (string)$v;
     }
 
+    public function estaAbierto(int $equipoId): bool {
+        return (bool)$this->valor("SELECT abierto FROM equipo WHERE equipo_id = ?", [$equipoId]);
+    }
+
+    public function marcarAbierto(int $equipoId, bool $abierto): void {
+        $this->ejecutar("UPDATE equipo SET abierto = ? WHERE equipo_id = ?", [(int)$abierto, $equipoId]);
+    }
+
+    public function abiertosDelTorneo(int $torneoId, int $maximo): array {
+        return array_map(fn($f) => ['id' => (string)$f['equipo_id'], 'name' => $f['nombre'], 'captain' => $f['capitan'],
+                                    'members' => (int)$f['integrantes'], 'max' => $maximo],
+            $this->filas("SELECT e.equipo_id, e.nombre, CONCAT(uc.nombre, ' ', uc.apellido) AS capitan,
+                                 (SELECT COUNT(*) FROM equipo_participante ep WHERE ep.equipo_id_fk = e.equipo_id) AS integrantes
+                          FROM tabla_posiciones tp
+                          JOIN equipo e ON e.equipo_id = tp.equipo_id_fk
+                          JOIN participante pc ON pc.participante_id = tp.participante_id_fk
+                          JOIN usuario uc ON uc.ci = pc.usuario_ci_fk
+                          WHERE tp.torneo_id_fk = ? AND e.abierto = 1
+                            AND (SELECT COUNT(*) FROM equipo_participante ep WHERE ep.equipo_id_fk = e.equipo_id)
+                              + (SELECT COUNT(*) FROM invitacion_equipo i WHERE i.equipo_id_fk = e.equipo_id AND i.estado = 'pendiente') < ?
+                          ORDER BY e.equipo_id", [$torneoId, $maximo]));
+    }
+
     public function agregarIntegrante(int $equipoId, int $participanteId): void {
         $this->ejecutar("INSERT IGNORE INTO equipo_participante (equipo_id_fk, participante_id_fk) VALUES (?, ?)", [$equipoId, $participanteId]);
         $this->actualizarTamanio($equipoId);

@@ -74,11 +74,12 @@ async function cargarResumen() {
     if (r._status === 403) { $('adm-denegado').hidden = false; return false; }
     if (!r.success) return false;
     const t = r.totals;
-    $('adm-totales').innerHTML = [['usuarios', 'Usuarios'], ['torneos', 'Torneos'], ['jueces', 'Jueces'], ['pendientes', 'Solicitudes pendientes'],
+    $('adm-totales').innerHTML = [['usuarios', 'Usuarios'], ['torneos', 'Torneos'], ['jueces', 'Jueces'], ['pendientes', 'Solicitudes pendientes'], ['revision', 'Torneos por aprobar'],
         ['mensajes', 'Mensajes sin leer'], ['suspendidos', 'Cuentas suspendidas']]
         .map(([k, l]) => `<li><strong>${esc(t[k])}</strong><span>${l}</span></li>`).join('');
     $('adm-badge-pend').textContent = t.pendientes || '';
     $('adm-badge-msg').textContent = t.mensajes || '';
+    $('adm-badge-rev').textContent = t.revision || '';
     $('adm-panel').hidden = false;
     return true;
 }
@@ -192,10 +193,16 @@ async function cargarTorneos() {
                     ${t.competitivo ? '<span class="adm-pill"><i class="ti ti-shield-check"></i> Competitivo</span>' : ''}</h3>
                 <p class="adm-meta">${esc([t.deporte, t.formato].filter(Boolean).join(' · ') || 'Sin formato')} · ${esc(fechaCorta(t.inicio))}</p>
                 <p class="adm-meta">Organiza: <strong>${esc(t.organizador)}</strong> (${esc(t.organizadorEmail)}) · ${t.equipos} equipos · ${t.partidos} partidos · ${t.resultados} resultados</p>
+                ${t.estado === 'rechazado' ? `<p class="adm-meta"><span class="adm-pill"><i class="ti ti-circle-x"></i> Rechazado</span> ${esc(t.motivo || '')}</p>` : ''}
             </div>
             <div class="adm-acciones">
+                ${t.estado === 'en_revision' ? `
+                <span class="adm-pill"><i class="ti ti-hourglass"></i> En revisión</span>
+                <button class="tv-btn" data-aprobar-torneo><i class="ti ti-check"></i> Aprobar</button>
+                <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-rechazar-torneo><i class="ti ti-x"></i> Rechazar</button>
+                ` : t.estado === 'rechazado' ? '' : `
                 <select class="adm-select" data-estado aria-label="Estado del torneo">${ESTADOS.map(([db, front, l]) =>
-                    `<option value="${front}" ${t.estado === db ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                    `<option value="${front}" ${t.estado === db ? 'selected' : ''}>${l}</option>`).join('')}</select>`}
                 <a class="tv-btn tv-btn--ghost" href="${SITE}/frontend/paginas/tournament_dashboard/tournament_dashboard.html?t=${t.id}"><i class="ti ti-settings"></i> Gestionar</a>
                 <button class="tv-btn tv-btn--ghost" data-transferir><i class="ti ti-arrows-exchange"></i> Transferir</button>
                 <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-borrar-torneo ${t.resultados ? 'disabled title="Tiene resultados: marcalo como finalizado"' : ''}><i class="ti ti-trash"></i></button>
@@ -214,7 +221,12 @@ $('adm-lista-torneos').addEventListener('click', async e => {
     const li = e.target.closest('[data-id]');
     if (!li) return;
     const body = { id: Number(li.dataset.id) };
-    if (e.target.closest('[data-transferir]')) {
+    if (e.target.closest('[data-aprobar-torneo]')) {
+        await accion('tournament_approve', body, 'Torneo aprobado ✓', cargarTorneos);
+    } else if (e.target.closest('[data-rechazar-torneo]')) {
+        const motivo = await pedir({ titulo: 'Rechazar torneo', sub: li.dataset.nombre, label: 'Motivo (lo ve el organizador)', confirmar: 'Rechazar', minimo: 5 });
+        if (motivo) await accion('tournament_reject', { ...body, motivo }, 'Torneo rechazado', cargarTorneos);
+    } else if (e.target.closest('[data-transferir]')) {
         const email = await pedir({ titulo: 'Transferir torneo', sub: li.dataset.nombre, label: 'Correo del nuevo organizador', confirmar: 'Transferir', tipo: 'email' });
         if (email) await accion('tournament_transfer', { ...body, email }, 'Torneo transferido ✓', cargarTorneos);
     } else if (e.target.closest('[data-borrar-torneo]')) {
@@ -311,13 +323,29 @@ $('adm-moneda-nueva').addEventListener('submit', async e => {
 });
 
 // ── Registro de actividad ──
+let categoriaAct = '';
+let tBusquedaA;
+const CATEGORIAS = { cuenta: 'Cuenta', torneo: 'Torneo', inscripcion: 'Inscripción', resultado: 'Resultado', administracion: 'Administración' };
 async function cargarActividad() {
-    const r = await api('activity');
+    const q = $('adm-qa').value.trim();
+    const params = {};
+    if (categoriaAct) params.categoria = categoriaAct;
+    if (q) params.q = q;
+    const r = await api('activity', { params });
     const ul = $('adm-lista-actividad');
     if (!r.success) { ul.innerHTML = `<li>${esc(r.error)}</li>`; return; }
     ul.innerHTML = r.activity.length ? r.activity.map(a => `<li><strong>${esc(a.accion)}</strong> — ${esc(a.descripcion)}
-        <time>${esc(fecha(a.fecha))} · ${esc(a.admin)}</time></li>`).join('') : '<li class="tv-vacio">Todavía no hay actividad registrada.</li>';
+        <time>${esc(fecha(a.fecha))} · ${esc(a.admin || 'Sin cuenta')} · ${esc(CATEGORIAS[a.categoria] || a.categoria)}</time></li>`).join('')
+        : `<li class="tv-vacio">${categoriaAct || q ? 'No hay actividad que coincida.' : 'Todavía no hay actividad registrada.'}</li>`;
 }
+$('adm-filtro-act').addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]');
+    if (!b) return;
+    $('adm-filtro-act').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
+    categoriaAct = b.dataset.cat;
+    cargarActividad();
+});
+$('adm-qa').addEventListener('input', () => { clearTimeout(tBusquedaA); tBusquedaA = setTimeout(cargarActividad, 300); });
 
 // ── Pestañas ──
 const cargas = { solicitudes: cargarSolicitudes, usuarios: cargarUsuarios, torneos: cargarTorneos, mensajes: cargarMensajes, anuncios: () => {}, catalogos: cargarCatalogos, actividad: cargarActividad };

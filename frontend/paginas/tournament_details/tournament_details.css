@@ -1,16 +1,18 @@
-
-
 /* =====================================================
-    TOURNAMENT TYPES
+    TOURNAMENT TYPES  (mobile first)
    ===================================================== */
 
 #tournament-types {
+    --tt-nav-w: min(92vw, 380px);
+    --tt-li: calc(var(--tt-nav-w) / 5);
+    --tt-ind: min(70px, calc(var(--tt-li) - 6px));
     background: transparent;
     width: 100%;
     min-height: 100vh;
     padding-top: calc(var(--nav-h) + 20px);
     margin-top: 0;
     transform: none;
+    overflow-x: hidden;
 }
 
 /* ── TÍTULO ── */
@@ -22,14 +24,14 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    font-size: clamp(1.6rem, 4vw, 3.4rem);
+    font-size: clamp(1.6rem, 7vw, 3.4rem);
     font-weight: 800;
     font-family: var(--font-display);
     text-transform: uppercase;
     text-align: center;
     opacity: 0;
     filter: blur(14px);
-    letter-spacing: -2px;
+    letter-spacing: -1px;
     transform: scale(0.92) translateY(24px);
     transition: opacity 1.1s cubic-bezier(0.22,1,0.36,1),
                 filter  1.1s cubic-bezier(0.22,1,0.36,1),
@@ -44,14 +46,14 @@
     transform: scale(1) translateY(0);
 }
 
-/* ── CONTAINER PRINCIPAL ── */
+/* ── CONTAINER PRINCIPAL: una columna en celular ── */
 .tournament-types-container {
     background: transparent;
-    padding: 55px 10% 80px;
+    padding: 32px 5vw 64px;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
-    gap: 40px;
+    gap: 28px;
     width: 100%;
 }
 
@@ -61,17 +63,19 @@
     flex-direction: column;
     align-items: center;
     gap: 0;
+    min-width: 0;
 }
 
 .tt-image-wrapper {
     position: relative;
-    width: 380px;
+    width: var(--tt-nav-w);
     flex-shrink: 0;
 }
 
 .tournament-types-image {
     width: 100%;
-    height: 460px;
+    aspect-ratio: 4 / 3;
+    height: auto;
     object-fit: cover;
     border-radius: 12px 12px 0 0;
     filter: drop-shadow(0 12px 32px rgba(104,99,242,0.25));
@@ -89,13 +93,13 @@
     transition: all 1.5s ease;
 }
 
-/* ── FLECHAS SUBTIPOS ── */
+/* ── FLECHAS SUBTIPOS (adentro de la imagen en celular) ── */
 .tt-sub-arrow {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: rgba(240,238,233,0.95);
     border: 1.5px solid rgba(0,0,0,0.12);
@@ -116,13 +120,14 @@
     box-shadow: 0 4px 20px rgba(104,99,242,0.35);
 }
 .tt-sub-arrow:active { transform: translateY(-50%) scale(0.95); }
-.tt-sub-arrow--prev { left: -20px; }
-.tt-sub-arrow--next { right: -20px; }
+.tt-sub-arrow--prev { left: 8px; }
+.tt-sub-arrow--next { right: 8px; }
 .tt-sub-arrow.hidden { display: none; }
 
 .showSubArrows {
-    opacity: 1; 
+    opacity: 1;
 }
+
 /* ── INDICADOR PUNTOS SUBTIPOS ── */
 .tt-sub-indicator {
     position: absolute;
@@ -149,10 +154,10 @@
     border-color: var(--sun-glare);
 }
 
-/* ── NAVEGACIÓN PRINCIPAL ── */
+/* ── NAVEGACIÓN PRINCIPAL (ancho fluido, 5 ítems iguales) ── */
 .tournament-types-navigation {
     position: relative;
-    width: 380px;
+    width: var(--tt-nav-w);
     height: 70px;
     background: var(--darkest-hour);
     display: flex;
@@ -172,7 +177,7 @@
 
 .tournament-types-navigation ul {
     display: flex;
-    width: 380px;
+    width: var(--tt-nav-w);
     list-style: none;
     padding: 0;
     margin: 0;
@@ -183,7 +188,7 @@
     position: relative;
     list-style: none;
     height: 70px;
-    width: 76px;
+    width: var(--tt-li);
     z-index: 1;
     cursor: pointer;
 }
@@ -207,14 +212,14 @@
 .indicator {
     position: absolute;
     top: -50%;
-    width: 70px;
-    height: 70px;
+    width: var(--tt-ind);
+    height: var(--tt-ind);
     background: var(--sun-glare);
     border-radius: 50%;
     border: 6px solid var(--cloud-dancer);
     transition: 0.5s;
     pointer-events: none;
-    left: 3px;
+    left: calc((var(--tt-li) - var(--tt-ind)) / 2);
 }
 
 .indicator::before {
@@ -241,11 +246,11 @@
     box-shadow: -1px -10px 0 0 var(--cloud-dancer);
 }
 
-.tournament-types-navigation ul li:nth-child(1).active ~ .indicator { transform: translateX(calc(76px * 0)); }
-.tournament-types-navigation ul li:nth-child(2).active ~ .indicator { transform: translateX(calc(76px * 1)); }
-.tournament-types-navigation ul li:nth-child(3).active ~ .indicator { transform: translateX(calc(76px * 2)); }
-.tournament-types-navigation ul li:nth-child(4).active ~ .indicator { transform: translateX(calc(76px * 3)); }
-.tournament-types-navigation ul li:nth-child(5).active ~ .indicator { transform: translateX(calc(76px * 4)); }
+.tournament-types-navigation ul li:nth-child(1).active ~ .indicator { transform: translateX(calc(var(--tt-li) * 0)); }
+.tournament-types-navigation ul li:nth-child(2).active ~ .indicator { transform: translateX(calc(var(--tt-li) * 1)); }
+.tournament-types-navigation ul li:nth-child(3).active ~ .indicator { transform: translateX(calc(var(--tt-li) * 2)); }
+.tournament-types-navigation ul li:nth-child(4).active ~ .indicator { transform: translateX(calc(var(--tt-li) * 3)); }
+.tournament-types-navigation ul li:nth-child(5).active ~ .indicator { transform: translateX(calc(var(--tt-li) * 4)); }
 
 
 .rotated {
@@ -286,15 +291,16 @@
 
 .info-types-container .tournament-types-title {
     font-family: var(--font-body);
-    font-size: clamp(1.3rem, 2vw, 2rem);
+    font-size: clamp(1.3rem, 5.5vw, 2rem);
     font-weight: 900;
     color: var(--darkest-hour);
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     line-height: 1.1;
+    overflow-wrap: anywhere;
 }
 
 .info-types-container .tournament-types-subtitle {
-    font-size: clamp(13px, 1.1vw, 16px);
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -303,11 +309,11 @@
 }
 
 .tournament-types-description {
-    font-size: clamp(1.3rem, 1.1vw, 16px);
-    line-height: 1.75;
+    font-size: 1.05rem;
+    line-height: 1.7;
     font-weight: 600;
     color: var(--darkest-hour);
-    text-align: justify;
+    text-align: left;
 }
 
 .tournament-types-attributes { margin-top: 4px; }
@@ -324,7 +330,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: clamp(1.2rem, 1vw, 15px);
+    font-size: 1rem;
     font-weight: 500;
     opacity: 0;
     transform: translateX(-14px);
@@ -342,27 +348,29 @@
 
 .attribute-item i { color: var(--blue-violet-dark); flex-shrink: 0; }
 
-/* ── DEPORTES SUGERIDOS  ── */
+/* ── DEPORTES SUGERIDOS: fila horizontal en celular ── */
 .sports-supported {
     display: flex;
     flex-direction: column;
     gap: 14px;
     align-items: center;
     padding-top: 4px;
-    min-width: 100px;
+    min-width: 0;
     opacity: 0;
     animation: ttInitIn 0.7s ease 0.6s forwards;
 }
 
 .sports-icons-list {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
     align-items: center;
 }
 
 .icon-sports-supported {
-    font-size: clamp(2.6rem, 3.2vw, 4rem);   
+    font-size: clamp(2.2rem, 9vw, 3rem);
     color: var(--darkest-hour);
     transition: transform 0.3s ease, color 0.3s ease;
 }
@@ -387,15 +395,7 @@
     to   { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-.sport-icon-wrap{
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.sport-icon-wrap{
+.sport-icon-wrap {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -419,19 +419,89 @@
 }
 
 .sport-icon-wrap:hover .sport-tooltip {
-    opacity: 1;    
-    max-height: 100px;   
+    opacity: 1;
+    max-height: 100px;
 }
 
 .sports-supported-title {
     font-family: var(--font-display);
-    font-size: clamp(1rem, 1.4vw, 1.5rem);    
+    font-size: clamp(1rem, 4vw, 1.5rem);
     font-weight: 800;
     color: var(--darkest-hour);
     text-align: center;
     padding-bottom: 8px;
     border-bottom: 2px solid var(--blue-violet-light);
     width: 100%;
+}
+
+
+/* =====================================================
+    TABLET  (≥ 700px): sigue en una columna, texto centrado y legible
+   ===================================================== */
+@media (min-width: 700px) {
+    .tournament-types-presentation { letter-spacing: -2px; font-size: clamp(1.6rem, 4vw, 3.4rem); }
+
+    #tournament-types { --tt-nav-w: 400px; }
+
+    .tournament-types-container { padding: 40px 6% 72px; gap: 36px; }
+
+    .info-types-container,
+    .sports-supported { width: 100%; max-width: 720px; margin-inline: auto; }
+
+    .tt-sub-arrow { width: 40px; height: 40px; }
+    .tt-sub-arrow--prev { left: -20px; }
+    .tt-sub-arrow--next { right: -20px; }
+
+    .tournament-types-description { font-size: 1.2rem; }
+    .attribute-item { font-size: 1.1rem; }
+}
+
+
+/* =====================================================
+    LAPTOP  (≥ 1000px): imagen a la izquierda, info a la derecha
+   ===================================================== */
+@media (min-width: 1000px) {
+    #tournament-types { --tt-nav-w: 380px; }
+
+    .tournament-types-image { aspect-ratio: 380 / 460; }
+
+    .tournament-types-container {
+        padding: 48px 6% 72px;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 40px;
+    }
+
+    .info-types-container,
+    .sports-supported { max-width: none; margin-inline: 0; }
+
+    .sports-supported { grid-column: 1 / -1; }
+
+    .tournament-types-description { text-align: justify; }
+}
+
+
+/* =====================================================
+    ESCRITORIO  (≥ 1280px): tres columnas como el diseño original
+   ===================================================== */
+@media (min-width: 1280px) {
+    .tournament-types-container {
+        padding: 55px 10% 80px;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .sports-supported { grid-column: auto; min-width: 100px; width: auto; }
+
+    .sports-icons-list { flex-direction: column; flex-wrap: nowrap; gap: 14px; }
+
+    .icon-sports-supported { font-size: clamp(2.6rem, 3.2vw, 4rem); }
+
+    .info-types-container .tournament-types-title { font-size: clamp(1.3rem, 2vw, 2rem); letter-spacing: 3px; }
+    .info-types-container .tournament-types-subtitle { font-size: clamp(13px, 1.1vw, 16px); }
+
+    .tournament-types-description { font-size: 1.3rem; line-height: 1.75; }
+    .attribute-item { font-size: 1.2rem; }
+
+    .sports-supported-title { font-size: clamp(1rem, 1.4vw, 1.5rem); }
 }
 
 

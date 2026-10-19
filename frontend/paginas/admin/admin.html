@@ -25,9 +25,9 @@
             <div class="navbar-right">
                 <ul class="navbar-list" id="navbar-list">
                     <li class="nav-links"><a href="../../index.html">Inicio</a></li>
-                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                    <li class="nav-links"><a href="../tournament_search/tournament_search.html">Buscar</a></li>
                     <li class="nav-links"><a href="../tournament_details/tournament_details.html">Características</a></li>
-                    <li class="nav-links"><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                    <li class="nav-links"><a href="../tournament_dashboard/tournament_dashboard.html">Mis torneos</a></li>
                     <li class="nav-links"><a href="../login/login.html">Iniciar sesión</a></li>
                     <li class="nav-links"><a href="../register/register.html">Registrarse</a></li>
                 </ul>
@@ -91,9 +91,9 @@
             <p class="mobile-menu-logo">COMPETIKA</p>
             <ul class="mobile-menu-list">
                 <li><a href="../../index.html">Inicio</a></li>
-                <li><a href="../tournament_search/tournament_search.html">Torneos</a></li>
+                <li><a href="../tournament_search/tournament_search.html">Buscar</a></li>
                 <li><a href="../tournament_details/tournament_details.html">Características</a></li>
-                <li><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                <li><a href="../tournament_dashboard/tournament_dashboard.html">Mis torneos</a></li>
                 <li><a href="../login/login.html">Iniciar sesión</a></li>
                 <li><a href="../register/register.html">Registrarse</a></li>
                 <li><a href="../profile/profile.html">Mi Perfil</a></li>
@@ -117,7 +117,7 @@
             <nav class="adm-tabs" role="tablist">
                 <button class="adm-tab active" role="tab" data-tab="solicitudes" aria-selected="true"><i class="ti ti-gavel"></i> Solicitudes de juez <span class="adm-badge" id="adm-badge-pend"></span></button>
                 <button class="adm-tab" role="tab" data-tab="usuarios" aria-selected="false"><i class="ti ti-users"></i> Usuarios</button>
-                <button class="adm-tab" role="tab" data-tab="torneos" aria-selected="false"><i class="ti ti-tournament"></i> Torneos</button>
+                <button class="adm-tab" role="tab" data-tab="torneos" aria-selected="false"><i class="ti ti-tournament"></i> Torneos <span class="adm-badge" id="adm-badge-rev"></span></button>
                 <button class="adm-tab" role="tab" data-tab="mensajes" aria-selected="false"><i class="ti ti-mail"></i> Mensajes <span class="adm-badge" id="adm-badge-msg"></span></button>
                 <button class="adm-tab" role="tab" data-tab="anuncios" aria-selected="false"><i class="ti ti-speakerphone"></i> Anuncios</button>
                 <button class="adm-tab" role="tab" data-tab="catalogos" aria-selected="false"><i class="ti ti-list-details"></i> Catálogos</button>
@@ -186,6 +186,18 @@
                 <ul class="adm-lista" id="adm-lista-formatos"></ul>
             </section>
             <section class="adm-seccion tv-card" id="adm-actividad" hidden>
+                <div class="adm-filtros" id="adm-filtro-act">
+                    <button class="adm-chip active" data-cat="">Todo</button>
+                    <button class="adm-chip" data-cat="cuenta">Cuentas</button>
+                    <button class="adm-chip" data-cat="torneo">Torneos</button>
+                    <button class="adm-chip" data-cat="inscripcion">Inscripciones y equipos</button>
+                    <button class="adm-chip" data-cat="resultado">Resultados</button>
+                    <button class="adm-chip" data-cat="administracion">Administración</button>
+                </div>
+                <div class="input-group adm-buscar">
+                    <input type="search" id="adm-qa" class="input-field" placeholder=" " autocomplete="off">
+                    <label for="adm-qa" class="floating-label">Buscar por persona, acción o detalle</label>
+                </div>
                 <ul class="adm-log" id="adm-lista-actividad"></ul>
             </section>
         </div>
@@ -234,7 +246,7 @@
                     <li><a href="../tournament_details/tournament_details.html">Características</a></li>
                     <li><a href="../login/login.html">Iniciar sesión</a></li>
                     <li><a href="../register/register.html">Registrarse</a></li>
-                    <li><a href="../tournament_dashboard/tournament_dashboard.html">Dashboard</a></li>
+                    <li><a href="../tournament_dashboard/tournament_dashboard.html">Mis torneos</a></li>
                     <li><a href="../profile/profile.html">Perfil</a></li>
                     <li><a href="../tournament_form/tournament_form.html">Formulario</a></li>
                 </ul>
@@ -275,4 +287,4 @@
     <script src="../../js/tournament-api.js?v=20261015"></script>
     <script src="../../js/admin.js?v=20261015"></script>
 </body>
-</html>
+</html>

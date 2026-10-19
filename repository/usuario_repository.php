@@ -107,6 +107,24 @@ class UsuarioRepository extends BaseRepository {
             (SELECT COUNT(*) FROM enfrentamiento_juez ej JOIN juez j ON j.juez_id = ej.juez_id_fk WHERE j.usuario_ci_fk = ?)", [$ci, $ci]) > 0;
     }
 
+    public function segundosDeBloqueo(string $ci): int {
+        $seg = (int)$this->valor("SELECT COALESCE(TIMESTAMPDIFF(SECOND, NOW(), bloqueo_hasta), 0) FROM usuario WHERE ci = ?", [$ci]);
+        if ($seg <= 0) {
+            $this->ejecutar("UPDATE usuario SET intentos_fallidos = 0, bloqueo_hasta = NULL WHERE ci = ? AND bloqueo_hasta IS NOT NULL", [$ci]);
+            return 0;
+        }
+        return $seg;
+    }
+
+    public function registrarIntentoFallido(string $ci): bool {
+        $this->ejecutar("UPDATE usuario SET intentos_fallidos = intentos_fallidos + 1, bloqueo_hasta = IF(intentos_fallidos >= 3, NOW() + INTERVAL 10 MINUTE, bloqueo_hasta) WHERE ci = ?", [$ci]);
+        return (bool)$this->valor("SELECT bloqueo_hasta IS NOT NULL FROM usuario WHERE ci = ?", [$ci]);
+    }
+
+    public function limpiarIntentosFallidos(string $ci): void {
+        $this->ejecutar("UPDATE usuario SET intentos_fallidos = 0, bloqueo_hasta = NULL WHERE ci = ? AND (intentos_fallidos > 0 OR bloqueo_hasta IS NOT NULL)", [$ci]);
+    }
+
     public function estaBloqueado(string $ci): bool {
         return (bool)$this->valor("SELECT bloqueado FROM usuario WHERE ci = ?", [$ci]);
     }
@@ -151,6 +169,12 @@ class UsuarioRepository extends BaseRepository {
 
     public function actualizarPassword(string $ci, string $password): void {
         $this->ejecutar("UPDATE usuario SET contrasenia = ? WHERE ci = ?", [password_hash($password, PASSWORD_BCRYPT), $ci]);
+    }
+
+    public function datosParaCapitan(string $ci): ?array {
+        $f = $this->fila("SELECT nombre, apellido, nombre_usuario, biografia, foto_perfil FROM usuario WHERE ci = ?", [$ci]);
+        return $f ? ['name' => $f['nombre'] . ' ' . $f['apellido'], 'username' => $f['nombre_usuario'], 'bio' => $f['biografia'],
+                     'photo' => Formato::fotoUrl($f['foto_perfil']), 'card' => $this->tieneCarne($ci)] : null;
     }
 
     public function fotoPerfil(string $ci): ?string {

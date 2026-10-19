@@ -4,15 +4,22 @@ class Torneo {
     public const PENDIENTE = 'pendiente';     // inscripciones abiertas
     public const ACTIVO = 'activo';
     public const FINALIZADO = 'finalizado';
+    public const EN_REVISION = 'en_revision';
+    public const RECHAZADO = 'rechazado';
 
     /** estado en la base <-> estado que usa el frontend */
-    private const ESTADO_FRONT = [self::PENDIENTE => 'pending', self::ACTIVO => 'active', self::FINALIZADO => 'finished'];
+    private const ESTADO_FRONT = [
+        self::PENDIENTE => 'pending', self::ACTIVO => 'active', self::FINALIZADO => 'finished',
+        self::EN_REVISION => 'review', self::RECHAZADO => 'rejected',
+    ];
+    private const ESTADOS_EDITABLES = [self::PENDIENTE, self::ACTIVO, self::FINALIZADO];
 
     private ConfiguracionTorneo $configuracion;
     /** @var Equipo[] */ private array $equipos = [];
     /** @var Partido[] */ private array $partidos = [];
     /** @var Premio[] */ private array $premios = [];
     private ?string $primerPremio = null;
+    private ?string $motivoRechazo = null;
 
     // Datos de resumen (listados)
     private int $cantidadEquipos = 0;
@@ -51,6 +58,7 @@ class Torneo {
         $t->esDelUsuario     = (bool)($f['is_owner'] ?? false);
         $t->usuarioInscripto = (bool)($f['joined'] ?? false);
         $t->primerPremio     = $f['premio_1'] ?? null;
+        $t->motivoRechazo    = $f['motivo_rechazo'] ?? null;
         return $t;
     }
 
@@ -71,6 +79,10 @@ class Torneo {
     public function getConfiguracion(): ConfiguracionTorneo { return $this->configuracion; }
     public function getContactoCuenta(): ?Persona { return $this->contactoCuenta; }
     public function aceptaInscripciones(): bool { return $this->estado === self::PENDIENTE; }
+    public function estaEnRevision(): bool { return $this->estado === self::EN_REVISION; }
+    public function estaRechazado(): bool { return $this->estado === self::RECHAZADO; }
+    public function estaOculto(): bool { return $this->estaEnRevision() || $this->estaRechazado(); }
+    public function getMotivoRechazo(): ?string { return $this->motivoRechazo; }
 
     /** Contacto que ven los participantes: el cargado para el torneo o, si no hay, el de la cuenta. */
     public function contactoVisible(): ?Persona {
@@ -97,11 +109,15 @@ class Torneo {
         $this->fechaFin = $fin;
     }
 
-    /** Recibe el estado del frontend (pending | active | finished). */
     public function setEstadoFront(string $estado): void {
         $db = array_search($estado, self::ESTADO_FRONT, true);
-        if ($db === false) throw new ApiException('Estado inválido.');
+        if ($db === false || !in_array($db, self::ESTADOS_EDITABLES, true)) throw new ApiException('Estado inválido.');
         $this->estado = $db;
+    }
+
+    public function setEstado(string $estado): void {
+        if (!isset(self::ESTADO_FRONT[$estado])) throw new ApiException('Estado inválido.');
+        $this->estado = $estado;
     }
 
     /** @param Equipo[] $equipos  @param Partido[] $partidos */
@@ -132,6 +148,7 @@ class Torneo {
             'venue'          => $this->direccion,
             'department'     => $this->departamento,
             'status'         => $this->estadoFront(),
+            'rejectionReason' => $this->motivoRechazo,
             'organizer'      => $this->contactoVisible()?->getNombre(),
             'entryFee'       => Formato::numero($c->getPrecioInscripcion()) ?? 0,
             'currency'       => $c->getMoneda()?->getCodigo(),
@@ -162,6 +179,7 @@ class Torneo {
             'venue'        => $this->direccion,
             'department'   => $this->departamento,
             'status'       => $this->estadoFront(),
+            'rejectionReason' => $this->motivoRechazo,
             'costs'        => $c->costosToArray(),
             'referee'      => $c->getArbitro()?->toArray() ?? ['name' => null, 'phone' => null, 'email' => null],
             'prizes'       => array_map(fn(Premio $p) => $p->toArray(), $this->premios),

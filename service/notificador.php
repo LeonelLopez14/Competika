@@ -40,6 +40,26 @@ class Notificador {
         $this->seguidores($t->getId(), 'torneo_estado', $msg);
     }
 
+    public function torneoPorRevisar(int $torneoId, string $nombre, string $organizador): void {
+        try {
+            foreach ((new AdminRepository())->cisAdmins() as $ci) {
+                $this->enviar($ci, 'torneo_revision', "{$organizador} creó «{$nombre}» y espera tu aprobación.", $torneoId);
+            }
+        } catch (Throwable $e) {
+            error_log('[competika] aviso a administradores no enviado: ' . $e->getMessage());
+        }
+    }
+
+    public function torneoAprobado(string $ciOrganizador, int $torneoId, string $nombre): void {
+        $this->enviar($ciOrganizador, 'torneo_estado',
+            "Tu torneo «{$nombre}» fue aprobado. Ya aparece en la búsqueda y se pueden abrir las inscripciones.", $torneoId);
+    }
+
+    public function torneoRechazado(string $ciOrganizador, int $torneoId, string $nombre, string $motivo): void {
+        $this->enviar($ciOrganizador, 'torneo_estado',
+            "Tu torneo «{$nombre}» fue rechazado. Motivo: {$motivo}. Podés corregirlo y se vuelve a enviar a revisión.", $torneoId);
+    }
+
     /** $inscriptos se obtiene ANTES de borrar el torneo. */
     public function torneoCancelado(string $nombre, array $inscriptos): void {
         foreach ($inscriptos as $ci) $this->enviar($ci, 'torneo_cancelado', "El organizador eliminó el torneo «{$nombre}».");

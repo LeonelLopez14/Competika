@@ -52,6 +52,8 @@ const STATUS = {
     pending:  { label: 'Inscripciones abiertas', color: 'rgba(245,158,11,0.9)' },
     active:   { label: 'En curso',               color: 'var(--sun-glare-dark)' },
     finished: { label: 'Finalizado',             color: 'rgba(33,33,33,0.4)' },
+    review:   { label: 'En revisión',            color: 'rgba(95,31,197,0.9)' },
+    rejected: { label: 'Rechazado',              color: 'rgba(200,40,40,0.9)' },
 };
 const statusOf = s => STATUS[s] || STATUS.pending;
 const phaseClass = p => ({
@@ -118,7 +120,7 @@ function show(id) {
     const [title, crumb, render] = SECTIONS[id];
     $('td-page-title').textContent = title;
     $('td-breadcrumb').textContent = crumb;
-    document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.classList.toggle('active', li.dataset.section === id));
+    document.querySelectorAll('#td-sidebar .td-nav-item').forEach(li => li.classList.toggle('active', li.dataset.section === id));
     const c = $('td-section-content');
     c.innerHTML = '';
     c.classList.remove('td-section-anim'); void c.offsetWidth; c.classList.add('td-section-anim');
@@ -127,7 +129,7 @@ function show(id) {
 }
 const rerender = () => show(current);
 
-document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.addEventListener('click', () => {
+document.querySelectorAll('#td-sidebar .td-nav-item').forEach(li => li.addEventListener('click', () => {
     if (li.dataset.section === 'selector') { tdData = null; updateSidebar(); history.replaceState(null, '', location.pathname); }
     show(li.dataset.section);
 }));
@@ -142,35 +144,83 @@ document.querySelectorAll('#td-nav-list .td-nav-item').forEach(li => li.addEvent
 const content = () => $('td-section-content');
 
 // ═════════════════════════════════════════ MIS TORNEOS
+let selTab = null;
+
+const cardEstado = st => `<span class="td-sc-status" style="background:color-mix(in srgb, ${st.color} 15%, transparent);color:${st.color}">${st.label}</span>`;
+const cardMeta = t => `
+    <div class="td-sc-meta">
+        <span><i class="ti ti-calendar"></i>${fmtDate(t.startDate)}</span>
+        <span><i class="ti ti-list-details"></i>${esc(t.formatLabel || 'Formato a definir')}</span>
+        <span><i class="ti ti-users"></i>${t.teamCount} / ${t.maxTeams} equipos</span>
+        ${t.department || t.venue ? `<span><i class="ti ti-map-pin"></i>${esc([t.venue, t.department].filter(Boolean).join(', '))}</span>` : ''}
+    </div>`;
+
+function vacio(titulo, sub, boton = '') {
+    return `<div class="td-empty-state">
+        <span class="td-empty-icon"><i class="ti ti-tournament"></i></span>
+        <h2 class="td-empty-title">${titulo}</h2>
+        <p class="td-empty-sub">${sub}</p>${boton}
+    </div>`;
+}
+
 async function renderSelector() {
     content().innerHTML = '<p class="td-no-data">Cargando torneos…</p>';
-    const all = await competikaListTournaments();
+    const [sesion, organizados, todos] = await Promise.all([
+        window.competikaSessionReady || Promise.resolve({}),
+        competikaListTournaments(),
+        competikaApi('list'),
+    ]);
     if (current !== 'selector') return;
-    const nuevo = `<a href="../tournament_form/tournament_form.html" class="td-btn-primary"><i class="ti ti-plus"></i> Crear torneo</a>`;
-    if (!all.length) {
-        content().innerHTML = `
-            <div class="td-empty-state">
-                <span class="td-empty-icon"><i class="ti ti-tournament"></i></span>
-                <h2 class="td-empty-title">Todavía no organizás ningún torneo</h2>
-                <p class="td-empty-sub">Creá tu primer torneo y volvé acá para gestionarlo.</p>${nuevo}
-            </div>`;
+    const roles = (sesion && sesion.roles) || {};
+    const puedeCrear = !!(roles.organizador || roles.admin);
+    const jugados = todos.success ? todos.tournaments.filter(t => t.joined) : [];
+    if (!selTab) selTab = (roles.organizador || organizados.length || !roles.participante) ? 'organizador' : 'participante';
+
+    const tabs = `
+        <div class="td-selector-tabs" role="tablist">
+            <button class="td-selector-tab ${selTab === 'organizador' ? 'active' : ''}" role="tab" aria-selected="${selTab === 'organizador'}" data-action="sel-tab" data-tab="organizador">Como organizador <span>${organizados.length}</span></button>
+            <button class="td-selector-tab ${selTab === 'participante' ? 'active' : ''}" role="tab" aria-selected="${selTab === 'participante'}" data-action="sel-tab" data-tab="participante">Como participante <span>${jugados.length}</span></button>
+        </div>`;
+
+    if (selTab === 'participante') {
+        content().innerHTML = tabs + (jugados.length ? `
+            <div class="td-selector-grid">
+            ${jugados.map(t => `
+                <div class="td-selector-card">
+                    <div class="td-sc-header">
+                        <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
+                        ${cardEstado(statusOf(t.status))}
+                    </div>
+                    ${cardMeta(t)}
+                    <div class="td-sc-footer">
+                        <a class="td-btn-primary td-sc-enter" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}"><i class="ti ti-arrow-right"></i> Ver torneo</a>
+                    </div>
+                </div>`).join('')}
+            </div>` : roles.participante
+                ? vacio('Todavía no estás inscripto en ningún torneo', 'Buscá un torneo y anotate para verlo acá.',
+                    '<a href="../tournament_search/tournament_search.html" class="td-btn-primary"><i class="ti ti-search"></i> Buscar torneos</a>')
+                : vacio('Necesitás el rol de Participante', 'Para inscribirte en torneos activá el rol de Participante en Configuración.',
+                    '<a href="../profile_configuration/profile_configuration.html" class="td-btn-primary"><i class="ti ti-settings"></i> Ir a Configuración</a>'));
         return;
     }
-    content().innerHTML = `
-        <div class="td-selector-header">${nuevo}</div>
+
+    const nuevo = puedeCrear ? '<a href="../tournament_form/tournament_form.html" class="td-btn-primary"><i class="ti ti-plus"></i> Crear torneo</a>' : '';
+    if (!organizados.length) {
+        content().innerHTML = tabs + vacio('Todavía no organizás ningún torneo',
+            puedeCrear ? 'Creá tu primer torneo y volvé acá para gestionarlo.' : 'Para crear torneos activá el rol de Organizador en Configuración.', nuevo);
+        return;
+    }
+    content().innerHTML = tabs + (nuevo ? `<div class="td-selector-header">${nuevo}</div>` : '') + `
         <div class="td-selector-grid">
-        ${all.map(t => { const st = statusOf(t.status); return `
+        ${organizados.map(t => { const st = statusOf(t.status); return `
             <div class="td-selector-card">
                 <div class="td-sc-header">
                     <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
-                    <span class="td-sc-status" style="background:${st.color}20;color:${st.color}">${st.label}</span>
+                    ${cardEstado(st)}
                 </div>
-                <div class="td-sc-meta">
-                    <span><i class="ti ti-calendar"></i>${fmtDate(t.startDate)}</span>
-                    <span><i class="ti ti-list-details"></i>${esc(t.formatLabel || 'Formato a definir')}</span>
-                    <span><i class="ti ti-users"></i>${t.teamCount} / ${t.maxTeams} equipos</span>
-                    ${t.department || t.venue ? `<span><i class="ti ti-map-pin"></i>${esc([t.venue, t.department].filter(Boolean).join(', '))}</span>` : ''}
-                </div>
+                ${t.status === 'review' ? '<p class="td-sc-aviso"><i class="ti ti-hourglass"></i> Esperando la aprobación de un administrador. Todavía no es público.</p>' : ''}
+                ${t.status === 'rejected' ? `<p class="td-sc-aviso td-sc-aviso--no"><i class="ti ti-circle-x"></i> Rechazado: ${esc(t.rejectionReason || 'sin motivo')}. Editalo y se vuelve a enviar a revisión.</p>` : ''}
+                ${cardMeta(t)}
                 <div class="td-sc-footer">
                     <button class="td-btn-primary td-sc-enter" data-action="open" data-id="${t.id}"><i class="ti ti-arrow-right"></i> Gestionar</button>
                     <button class="td-sc-delete" data-action="delete-tournament" data-id="${t.id}" title="Eliminar torneo"><i class="ti ti-trash"></i></button>
@@ -261,6 +311,7 @@ function renderParticipantes() {
           <div class="td-empty-state td-empty-state--sm"><span class="td-empty-icon" style="font-size:2rem"><i class="ti ti-users"></i></span>
           <p class="td-empty-sub">Todavía no hay equipos. Agregalos desde el panel de la derecha o esperá inscripciones.</p></div>`}
         ${t.teams.map(e => `
+          <div class="td-team-wrap">
           <div class="td-team-row">
             <span class="td-team-row-emoji">${e.emoji}</span>
             <div class="td-team-row-info">
@@ -268,8 +319,11 @@ function renderParticipantes() {
               <p class="td-team-row-sub">${e.players} jugador${e.players === 1 ? '' : 'es'} · ${e.points} pts</p>
             </div>
             <span class="td-team-rec">${e.wins}G ${e.draws}E ${e.losses}P</span>
+            <button class="td-action-btn td-action-ok" title="Ver participantes" data-action="team-members" data-id="${e.id}"><i class="ti ti-users" style="font-size:12px"></i></button>
             <button class="td-action-btn td-action-ok" title="Renombrar" data-action="rename-team" data-id="${e.id}"><i class="ti ti-pencil" style="font-size:12px"></i></button>
             <button class="td-action-btn td-action-no" title="Eliminar" data-action="delete-team" data-id="${e.id}"><i class="ti ti-trash" style="font-size:12px"></i></button>
+          </div>
+          <ul class="td-team-members" id="tm-${e.id}" hidden></ul>
           </div>`).join('')}
       </div>
       <div class="td-card td-part-add">
@@ -568,6 +622,7 @@ const tid = () => ({ id: tdData.id });
 
 const ACTIONS = {
     'open': el => openTournament(el.dataset.id),
+    'sel-tab': el => { selTab = el.dataset.tab; renderSelector(); },
 
     'delete-tournament': async el => {
         if (!confirm('¿Eliminar este torneo? Esta acción no se puede deshacer.')) return;
@@ -588,6 +643,25 @@ const ACTIONS = {
         if (!name || !name.trim()) return;
         if (await call('update_team', { method: 'POST', params: { team_id: el.dataset.id }, body: { name: name.trim() } }, 'Equipo actualizado ✓')) {
             await reload(); rerender();
+        }
+    },
+    'team-members': async el => {
+        const lista = $('tm-' + el.dataset.id);
+        if (!lista) return;
+        if (!lista.hidden) { lista.hidden = true; return; }
+        const r = await competikaApi('team_members', { params: { team_id: el.dataset.id } });
+        if (!r.success) { toast(r.error || 'No se pudieron cargar los participantes.', 'warn'); return; }
+        lista.innerHTML = r.members.length ? r.members.map(m => `
+          <li><span>${esc(m.name)}${m.captain ? ' <small class="td-team-cap">Capitán</small>' : ''}</span>
+            ${m.captain ? '' : `<button class="td-btn-danger td-btn-sm" data-action="remove-member" data-team="${el.dataset.id}" data-member="${esc(m.id)}" data-name="${esc(m.name)}">Quitar</button>`}</li>`).join('')
+          : '<li class="td-team-members-vacio">Este equipo no tiene jugadores registrados en el sitio.</li>';
+        lista.hidden = false;
+    },
+    'remove-member': async el => {
+        if (!confirm(`¿Quitar a ${el.dataset.name} del equipo ${team(el.dataset.team)?.name || ''}?`)) return;
+        if (await call('remove_member', { method: 'POST', params: { team_id: el.dataset.team }, body: { member: el.dataset.member } }, 'Integrante quitado')) {
+            await reload(); rerender();
+            $('tm-' + el.dataset.team) && ACTIONS['team-members']({ dataset: { id: el.dataset.team } });
         }
     },
     'delete-team': async el => {

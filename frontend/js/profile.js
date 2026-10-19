@@ -84,6 +84,7 @@ function renderActive() {
     list.innerHTML = activos.map(t => {
         const [icon, bg, color] = sportIcon(t.deporte);
         const curso = t.estado === 'activo';
+        const etiqueta = { en_revision: 'En revisión', rechazado: 'Rechazado' }[t.estado] || (curso ? 'En curso' : 'Próximo');
         const link = t.rol === 'organizador' ? `../tournament_dashboard/tournament_dashboard.html?t=${t.id}` : `../tournament_view/tournament_view.html?t=${t.id}`;
         return `
         <a class="pf-tournament-item" href="${link}" style="text-decoration:none;color:inherit">
@@ -91,7 +92,7 @@ function renderActive() {
             <div class="pf-t-body">
                 <div class="pf-t-top">
                     <span class="pf-t-name">${esc(t.nombre)}</span>
-                    <span class="pf-status-pill pf-status-pill--${curso ? 'curso' : 'proximo'}">${curso ? 'En curso' : 'Próximo'}</span>
+                    <span class="pf-status-pill pf-status-pill--${curso ? 'curso' : 'proximo'}">${etiqueta}</span>
                 </div>
                 <div class="pf-t-meta">
                     <span><i class="ti ti-calendar"></i>${esc(rango(t.inicio, t.fin))}</span>

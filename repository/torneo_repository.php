@@ -34,8 +34,7 @@ class TorneoRepository extends BaseRepository {
         return $t;
     }
 
-    /** Torneos para los listados. @return Torneo[] */
-    public function listar(?string $ci, ?int $soloOrganizador = null): array {
+    public function listar(?string $ci, ?int $soloOrganizador = null, bool $esAdmin = false): array {
         // Agrega al SELECT común las columnas de resumen
         $sql = str_replace("FROM torneo t", ",
                (SELECT COUNT(*) FROM tabla_posiciones tp WHERE tp.torneo_id_fk = t.torneo_id AND tp.equipo_id_fk IS NOT NULL) AS team_count,
@@ -47,7 +46,13 @@ class TorneoRepository extends BaseRepository {
                         WHERE tp2.torneo_id_fk = t.torneo_id AND p.usuario_ci_fk = ?) AS joined
         FROM torneo t", self::SELECT);
         $params = [$ci ?? '', $ci ?? ''];
-        if ($soloOrganizador !== null) { $sql .= " WHERE t.organizador_id_fk = ?"; $params[] = $soloOrganizador; }
+        if ($soloOrganizador !== null) {
+            $sql .= " WHERE t.organizador_id_fk = ?";
+            $params[] = $soloOrganizador;
+        } else {
+            $sql .= " WHERE (t.estado NOT IN ('en_revision', 'rechazado') OR o.usuario_ci_fk = ? OR 1 = ?)";
+            array_push($params, $ci ?? '', $esAdmin ? 1 : 0);
+        }
         $sql .= " ORDER BY t.torneo_id DESC";
         return array_map([self::class, 'aTorneo'], $this->filas($sql, $params));
     }
@@ -77,6 +82,18 @@ class TorneoRepository extends BaseRepository {
             $this->guardarConfiguracion($t);
             return $id;
         });
+    }
+
+    public function aprobar(int $torneoId): void {
+        $this->ejecutar("UPDATE torneo SET estado = 'pendiente', motivo_rechazo = NULL WHERE torneo_id = ? AND estado = 'en_revision'", [$torneoId]);
+    }
+
+    public function rechazar(int $torneoId, string $motivo): void {
+        $this->ejecutar("UPDATE torneo SET estado = 'rechazado', motivo_rechazo = ? WHERE torneo_id = ? AND estado = 'en_revision'", [$motivo, $torneoId]);
+    }
+
+    public function reenviarARevision(int $torneoId): void {
+        $this->ejecutar("UPDATE torneo SET estado = 'en_revision', motivo_rechazo = NULL WHERE torneo_id = ? AND estado = 'rechazado'", [$torneoId]);
     }
 
     public function actualizar(Torneo $t): void {

@@ -194,9 +194,22 @@ ALTER TABLE admin ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE tipo_torneo ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE moneda ADD COLUMN IF NOT EXISTS activa BOOLEAN NOT NULL DEFAULT TRUE;
 
+ALTER TABLE registro_de_actividad MODIFY admin_id_fk INT NULL;
+ALTER TABLE registro_de_actividad
+    ADD COLUMN IF NOT EXISTS usuario_ci_fk VARCHAR(20) NULL,
+    ADD COLUMN IF NOT EXISTS actor VARCHAR(150) NULL,
+    ADD COLUMN IF NOT EXISTS categoria VARCHAR(20) NOT NULL DEFAULT 'administracion';
+UPDATE registro_de_actividad r JOIN admin a ON a.admin_id = r.admin_id_fk JOIN usuario u ON u.ci = a.usuario_ci_fk
+    SET r.usuario_ci_fk = a.usuario_ci_fk, r.actor = CONCAT(u.nombre, ' ', u.apellido)
+    WHERE r.usuario_ci_fk IS NULL;
+ALTER TABLE torneo ADD COLUMN IF NOT EXISTS motivo_rechazo VARCHAR(255) NULL;
+ALTER TABLE equipo ADD COLUMN IF NOT EXISTS abierto BOOLEAN NOT NULL DEFAULT FALSE;
+
 ALTER TABLE usuario
     ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN NOT NULL DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS motivo_bloqueo VARCHAR(255) NULL;
+    ADD COLUMN IF NOT EXISTS motivo_bloqueo VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS intentos_fallidos TINYINT NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS bloqueo_hasta DATETIME NULL;
 
 ALTER TABLE configuracion_torneo
     ADD COLUMN IF NOT EXISTS vidas TINYINT NULL AFTER competitivo,
@@ -250,6 +263,20 @@ CREATE TABLE IF NOT EXISTS invitacion_equipo (
     FOREIGN KEY (torneo_id_fk)       REFERENCES torneo(torneo_id) ON DELETE CASCADE,
     FOREIGN KEY (invitado_ci_fk)     REFERENCES usuario(ci) ON DELETE CASCADE,
     FOREIGN KEY (invitado_por_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS solicitud_equipo (
+    solicitud_id    INT AUTO_INCREMENT PRIMARY KEY,
+    equipo_id_fk    INT         NOT NULL,
+    torneo_id_fk    INT         NOT NULL,
+    usuario_ci_fk   VARCHAR(20) NOT NULL,
+    estado          ENUM('pendiente','aceptada','rechazada','cancelada') NOT NULL DEFAULT 'pendiente',
+    fecha           DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_solicitud_equipo (equipo_id_fk, estado),
+    INDEX idx_solicitud_usuario (usuario_ci_fk, torneo_id_fk, estado),
+    FOREIGN KEY (equipo_id_fk)  REFERENCES equipo(equipo_id) ON DELETE CASCADE,
+    FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Mensajes del formulario de Contacto (los lee un administrador).

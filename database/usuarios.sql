@@ -42,6 +42,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.premio                     
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.grupo                        TO 'competika_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.avance_llave                 TO 'competika_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE         ON competika_db.invitacion_equipo            TO 'competika_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE         ON competika_db.solicitud_equipo             TO 'competika_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.mensaje_contacto             TO 'competika_app'@'localhost';
 
 -- Catálogos: monedas sin DELETE; de los formatos solo se edita la etiqueta y si está activo

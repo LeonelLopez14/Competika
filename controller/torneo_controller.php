@@ -30,7 +30,9 @@ class TorneoController {
     // =====================================================
 
     public function listar(): array {
-        return ['success' => true, 'tournaments' => array_map(fn(Torneo $t) => $t->toResumen(), $this->torneos->listar(Auth::ci()))];
+        $ci = Auth::ci();
+        $lista = $this->torneos->listar($ci, null, $ci !== null && $this->esAdmin($ci));
+        return ['success' => true, 'tournaments' => array_map(fn(Torneo $t) => $t->toResumen(), $lista)];
     }
 
     public function mios(): array {
@@ -43,10 +45,11 @@ class TorneoController {
     public function ver(Request $req): array {
         $t = $this->torneos->buscar($req->idQuery());
         if ($t === null) throw ApiException::noEncontrado('Torneo');
+        $ci = Auth::ci();
+        if ($t->estaOculto() && ($ci === null || !$this->puedeGestionar($t, $ci))) throw ApiException::noEncontrado('Torneo');
         $t->setEquipos($this->equipos->delTorneo($t->getId()));
         $t->setPartidos($this->partidos->delTorneo($t->getId()));
         $t->setPremios($this->premios->delTorneo($t->getId()));
-        $ci = Auth::ci();
         $t->setEsDelUsuario($ci !== null && $this->puedeGestionar($t, $ci));
         $pid = $ci !== null ? $this->usuarios->participanteId($ci) : null;
         $miEquipo = $pid !== null ? $this->equipos->equipoDelParticipante($t->getId(), $pid) : null;
@@ -94,24 +97,34 @@ class TorneoController {
         $cuenta = $this->usuarios->buscar($ci);
         if ($cuenta === null) throw new ApiException('Necesitás iniciar sesión.', 401);
 
+        $esAdmin = $this->esAdmin($ci);
+        $organizadorId = $this->usuarios->organizadorId($ci);
+        if ($organizadorId === null && !$esAdmin) {
+            throw ApiException::prohibido('Para crear un torneo necesitás el rol de Organizador. Activalo en Configuración.');
+        }
+
         $t = new Torneo(null, '', 0);
         $this->aplicarDatos($t, $d, false);
+        $t->setEstado($esAdmin ? Torneo::PENDIENTE : Torneo::EN_REVISION);
         $this->aplicarConfiguracion($t, $d, false, $cuenta->comoPersona(), $ci);
         $premios = Premio::listaDesdeFormulario(is_array($d['prizes'] ?? null) ? $d['prizes'] : []);
 
-        $id = $this->torneos->transaccion(function () use ($ci, $t, $premios) {
-            $t->setOrganizadorId($this->usuarios->asegurarOrganizador($ci));
+        $id = $this->torneos->transaccion(function () use ($ci, $t, $premios, $organizadorId) {
+            $t->setOrganizadorId($organizadorId ?? $this->usuarios->asegurarOrganizador($ci));
             $id = $this->torneos->crear($t);
             $this->premios->reemplazar($id, $premios);
             return $id;
         });
-        return ['success' => true, 'id' => $id];
+        Auditoria::registrar($ci, Auditoria::TORNEO, 'Creó un torneo', "«{$t->getNombre()}» (#{$id})." . ($t->estaEnRevision() ? ' Queda en revisión.' : ''));
+        if ($t->estaEnRevision()) $this->avisos->torneoPorRevisar($id, $t->getNombre(), $this->usuarios->nombreCompleto($ci));
+        return ['success' => true, 'id' => $id, 'status' => $t->estadoFront()];
     }
 
     public function actualizar(Request $req): array {
         $t = $this->exigirGestion($req->idQuery());
         $d = $req->json();
         $estadoAntes = $t->getEstado();
+        if ($t->estaOculto()) unset($d['status']);
         $this->aplicarDatos($t, $d, true);
         $this->aplicarConfiguracion($t, $d, true, $t->getContactoCuenta(), $this->torneos->ciOrganizador($t->getId()));
         if ($t->getConfiguracion()->getCupo() < $this->equipos->cantidadEnTorneo($t->getId())) {
@@ -121,7 +134,13 @@ class TorneoController {
             $this->torneos->actualizar($t);
             if (is_array($d['prizes'] ?? null)) $this->premios->reemplazar($t->getId(), Premio::listaDesdeFormulario($d['prizes']));
         });
-        $this->registrarAdmin($t, 'Editó un torneo', "Torneo #{$t->getId()} «{$t->getNombre()}».");
+        Auditoria::actual(Auditoria::TORNEO, 'Editó un torneo', "«{$t->getNombre()}» (#{$t->getId()})."
+            . ($t->getEstado() !== $estadoAntes ? " Estado: {$estadoAntes} → {$t->getEstado()}." : ''));
+        if ($estadoAntes === Torneo::RECHAZADO && !$this->esAdmin(Auth::ci())) {
+            $this->torneos->reenviarARevision($t->getId());
+            Auditoria::actual(Auditoria::TORNEO, 'Reenvió un torneo a revisión', "«{$t->getNombre()}» (#{$t->getId()}).");
+            $this->avisos->torneoPorRevisar($t->getId(), $t->getNombre(), $this->usuarios->nombreCompleto((string)Auth::ci()));
+        }
         if ($t->getEstado() !== $estadoAntes && $t->getEstado() !== Torneo::PENDIENTE) $this->avisos->cambioDeEstado($t);
         return ['success' => true];
     }
@@ -133,7 +152,7 @@ class TorneoController {
         }
         $inscriptos = $this->torneos->usuariosInscriptos($t->getId());
         $this->torneos->eliminar($t->getId());
-        $this->registrarAdmin($t, 'Eliminó un torneo', "Torneo #{$t->getId()} «{$t->getNombre()}».");
+        Auditoria::actual(Auditoria::TORNEO, 'Eliminó un torneo', "«{$t->getNombre()}» (#{$t->getId()}).");
         $this->avisos->torneoCancelado($t->getNombre(), $inscriptos);
         return ['success' => true];
     }
@@ -151,7 +170,10 @@ class TorneoController {
         if ($this->torneos->ciOrganizador($t->getId()) === $ci) throw new ApiException('No podés inscribirte en un torneo que organizás.');
 
         $participanteId = $this->usuarios->participanteId($ci);
-        if ($participanteId !== null && $this->equipos->participanteInscripto($t->getId(), $participanteId)) {
+        if ($participanteId === null) {
+            throw ApiException::prohibido('Para inscribirte necesitás el rol de Participante. Activalo en Configuración.');
+        }
+        if ($this->equipos->participanteInscripto($t->getId(), $participanteId)) {
             throw new ApiException('Ya estás inscripto en este torneo.');
         }
         if ($t->getConfiguracion()->esCompetitivo() && !$this->usuarios->tieneCarne($ci)) {
@@ -163,10 +185,10 @@ class TorneoController {
 
         $jugador = $this->usuarios->nombreCompleto($ci);
         $nombreEquipo = Validar::texto($d['teamName'] ?? null, 100) ?? mb_substr($jugador, 0, 100);
-        $this->equipos->transaccion(function () use ($ci, $t, $nombreEquipo) {
-            $pid = $this->usuarios->asegurarParticipante($ci);
-            $this->equipos->crearEnTorneo(new Equipo(null, $nombreEquipo, 1), $t->getId(), $pid);
+        $this->equipos->transaccion(function () use ($participanteId, $t, $nombreEquipo) {
+            $this->equipos->crearEnTorneo(new Equipo(null, $nombreEquipo, 1), $t->getId(), $participanteId);
         });
+        Auditoria::registrar($ci, Auditoria::INSCRIPCION, 'Se inscribió en un torneo', "«{$t->getNombre()}» (#{$t->getId()}) con el equipo «{$nombreEquipo}».");
         $this->avisos->inscripcion($t->getId(), $ci, $jugador, $nombreEquipo);
         return ['success' => true, 'message' => 'Inscripción realizada.'];
     }
@@ -178,16 +200,20 @@ class TorneoController {
         if ($this->equipos->cantidadEnTorneo($t->getId()) >= $t->getConfiguracion()->getCupo()) {
             throw new ApiException('El torneo alcanzó el máximo de participantes.');
         }
-        return ['success' => true, 'id' => $this->equipos->crearEnTorneo($equipo, $t->getId())];
+        $id = $this->equipos->crearEnTorneo($equipo, $t->getId());
+        Auditoria::actual(Auditoria::INSCRIPCION, 'Agregó un equipo', "«{$equipo->getNombre()}» en «{$t->getNombre()}» (#{$t->getId()}).");
+        return ['success' => true, 'id' => $id];
     }
 
     public function actualizarEquipo(Request $req): array {
         $equipoId = $req->idQuery('team_id');
-        $this->exigirEquipoGestionable($equipoId);
+        $torneoId = $this->exigirEquipoGestionable($equipoId);
         $d = $req->json();
+        $nombreAntes = $this->equipos->nombre($equipoId);
         $this->equipos->actualizar($equipoId,
             array_key_exists('name', $d) ? Equipo::validarNombre($d['name']) : null,
             array_key_exists('players', $d) ? Equipo::validarJugadores($d['players']) : null);
+        Auditoria::actual(Auditoria::INSCRIPCION, 'Editó un equipo', "«{$nombreAntes}» → «{$this->equipos->nombre($equipoId)}» en «{$this->torneos->nombre($torneoId)}» (#{$torneoId}).");
         return ['success' => true];
     }
 
@@ -198,9 +224,47 @@ class TorneoController {
             throw new ApiException('El equipo tiene partidos con resultado registrado y no se puede eliminar.');
         }
         $usuarios = $this->equipos->usuarios($equipoId);
+        $nombreEquipo = $this->equipos->nombre($equipoId);
         $this->equipos->quitarDeTorneo($equipoId, $torneoId);
+        Auditoria::actual(Auditoria::INSCRIPCION, 'Dio de baja un equipo', "«{$nombreEquipo}» de «{$this->torneos->nombre($torneoId)}» (#{$torneoId}).");
         $this->avisos->baja($torneoId, $usuarios);
         return ['success' => true];
+    }
+
+    public function integrantesEquipo(Request $req): array {
+        $equipoId = $req->idQuery('team_id');
+        $torneoId = $this->exigirEquipoGestionable($equipoId);
+        $capitan = $this->equipos->capitan($equipoId, $torneoId);
+        return ['success' => true, 'members' => array_map(fn($m) => [
+            'id' => hash('sha256', $m['ci'] . $equipoId),
+            'name' => $m['nombre'],
+            'captain' => $m['ci'] === $capitan,
+        ], $this->equipos->integrantes($equipoId))];
+    }
+
+    public function quitarIntegrante(Request $req): array {
+        $equipoId = $req->idQuery('team_id');
+        $torneoId = $this->exigirEquipoGestionable($equipoId);
+        if ($this->equipos->tieneResultadosEnTorneo($equipoId, $torneoId)) {
+            throw new ApiException('El equipo tiene partidos con resultado registrado y no se puede modificar.');
+        }
+        $integrantes = $this->equipos->integrantes($equipoId);
+        $capitan = $this->equipos->capitan($equipoId, $torneoId);
+        foreach ($integrantes as $m) {
+            if (!hash_equals(hash('sha256', $m['ci'] . $equipoId), (string)($req->json()['member'] ?? ''))) continue;
+            if ($m['ci'] === $capitan) {
+                throw new ApiException(count($integrantes) > 1
+                    ? 'No se puede quitar al capitán mientras haya otros integrantes: dá de baja el equipo completo.'
+                    : 'Es el único integrante: para sacarlo dá de baja el equipo.');
+            }
+            $equipo = $this->equipos->nombre($equipoId);
+            $nombreTorneo = $this->torneos->nombre($torneoId);
+            $this->equipos->quitarIntegrante($equipoId, (int)$this->usuarios->participanteId($m['ci']));
+            Auditoria::actual(Auditoria::INSCRIPCION, 'Quitó a un integrante del equipo', "{$m['nombre']} de «{$equipo}» en «{$nombreTorneo}» (#{$torneoId}).");
+            $this->avisos->enviar($m['ci'], 'baja', "El organizador te quitó del equipo «{$equipo}» en «{$nombreTorneo}».", $torneoId);
+            return ['success' => true];
+        }
+        throw ApiException::noEncontrado('Integrante');
     }
 
     // =====================================================
@@ -268,7 +332,8 @@ class TorneoController {
         $ci = Auth::exigirLogin();
         $d = $req->json();
         $id = (int)($d['torneoId'] ?? 0);
-        if ($this->torneos->buscar($id) === null) throw ApiException::noEncontrado('Torneo');
+        $t = $this->torneos->buscar($id);
+        if ($t === null || ($t->estaOculto() && !$this->puedeGestionar($t, $ci))) throw ApiException::noEncontrado('Torneo');
         $seguir = !empty($d['follow']);
         $this->torneos->seguir($ci, $id, $seguir);
         if ($seguir && !$this->usuarios->roles($ci)['observador']) $this->usuarios->crearObservador($ci);
@@ -419,14 +484,5 @@ class TorneoController {
         $x = $this->partidos->torneoYOrganizador($id);
         if ($x === null) throw ApiException::noEncontrado('Partido');
         return $this->exigirGestion($x[0]);
-    }
-
-    /** Si quien actúa es un administrador que no organiza el torneo, queda registrado. */
-    private function registrarAdmin(Torneo $t, string $accion, string $detalle): void {
-        $ci = Auth::ci();
-        if ($ci === null || $this->usuarios->organizadorId($ci) === $t->getOrganizadorId()) return;
-        $admins = new AdminRepository();
-        $adminId = $admins->adminId($ci);
-        if ($adminId !== null) $admins->registrar($adminId, $accion, $detalle);
     }
 }

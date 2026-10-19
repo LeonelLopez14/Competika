@@ -35,9 +35,11 @@ class AdminController {
         return ['success' => true, 'totals' => $this->admins->totales()];
     }
 
-    public function actividad(): array {
+    public function actividad(Request $req): array {
         $this->adminActual();
-        return ['success' => true, 'activity' => $this->admins->actividad()];
+        $categoria = $req->query('categoria');
+        if (!in_array($categoria, [Auditoria::CUENTA, Auditoria::TORNEO, Auditoria::INSCRIPCION, Auditoria::RESULTADO, Auditoria::ADMINISTRACION], true)) $categoria = null;
+        return ['success' => true, 'activity' => $this->admins->actividad($categoria, Validar::texto($req->query('q'), 100))];
     }
 
     // ── Solicitudes de juez ─────────────────────────────────
@@ -172,11 +174,40 @@ class AdminController {
         $admin = $this->adminActual();
         $d = $req->json();
         $t = $this->torneo($d);
+        if ($t->estaOculto()) throw new ApiException('Ese torneo está en revisión o rechazado: aprobalo o rechazalo primero.');
         $antes = $t->getEstado();
         $t->setEstadoFront((string)($d['status'] ?? ''));
         $this->torneos->actualizar($t);
         $this->admins->registrar($admin, 'Cambió el estado de un torneo', "«{$t->getNombre()}»: {$antes} → {$t->getEstado()}.");
         if ($t->getEstado() !== $antes && $t->getEstado() !== Torneo::PENDIENTE) $this->avisos->cambioDeEstado($t);
+        return ['success' => true];
+    }
+
+    private function torneoEnRevision(Request $req): Torneo {
+        $t = $this->torneo($req->json());
+        if (!$t->estaEnRevision()) throw new ApiException('Ese torneo ya fue revisado.');
+        return $t;
+    }
+
+    public function aprobarTorneo(Request $req): array {
+        $admin = $this->adminActual();
+        $t = $this->torneoEnRevision($req);
+        $this->torneos->aprobar($t->getId());
+        $this->admins->registrar($admin, 'Aprobó un torneo', "«{$t->getNombre()}» (#{$t->getId()}).");
+        $organizador = $this->torneos->ciOrganizador($t->getId());
+        if ($organizador) $this->avisos->torneoAprobado($organizador, $t->getId(), $t->getNombre());
+        return ['success' => true];
+    }
+
+    public function rechazarTorneo(Request $req): array {
+        $admin = $this->adminActual();
+        $t = $this->torneoEnRevision($req);
+        $motivo = Validar::texto($req->json()['motivo'] ?? null, 255);
+        if ($motivo === null || mb_strlen($motivo) < 5) throw new ApiException('Escribí el motivo del rechazo (el organizador lo va a ver).');
+        $this->torneos->rechazar($t->getId(), $motivo);
+        $this->admins->registrar($admin, 'Rechazó un torneo', "«{$t->getNombre()}» (#{$t->getId()}). Motivo: {$motivo}");
+        $organizador = $this->torneos->ciOrganizador($t->getId());
+        if ($organizador) $this->avisos->torneoRechazado($organizador, $t->getId(), $t->getNombre(), $motivo);
         return ['success' => true];
     }
 

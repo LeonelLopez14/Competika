@@ -1,6 +1,8 @@
 # COMPETIKA — Reglas de Apache del proyecto.
 Options -Indexes -MultiViews
 ServerSignature Off
+ErrorDocument 404 /frontend/paginas/404/404.html
+ErrorDocument 403 /frontend/paginas/404/404.html
 DirectoryIndex frontend/index.html index.php index.html
 
 <FilesMatch "\.(sql|md|log|ini|bak|swp|lock|ya?ml)$|^\.|^(Dockerfile|bootstrap\.php|test_conexion\.php)$">
