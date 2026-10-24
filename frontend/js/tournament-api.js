@@ -73,19 +73,6 @@ async function competikaInscribirse(torneoId, teamName = '') {
     const form = document.getElementById('tf-form');
     if (!form) return;
 
-    competikaSession().then(s => {
-        if (!s || (s.roles && (s.roles.organizador || s.roles.admin))) return;
-        const wizard = document.getElementById('tf-wizard');
-        if (!wizard) return;
-        wizard.classList.add('hidden');
-        const aviso = document.createElement('div');
-        aviso.className = 'mx-auto max-w-xl rounded-2xl border border-blue-violet/20 bg-cloud-dancer px-8 py-12 text-center';
-        aviso.innerHTML = '<h2 class="font-display text-xl font-black uppercase">Necesitás el rol de Organizador</h2>'
-            + '<p class="mt-3 text-sm opacity-70">Para crear torneos activá el rol de Organizador en Configuración.</p>'
-            + '<a href="../profile_configuration/profile_configuration.html" class="mt-5 inline-block font-bold underline">Ir a Configuración</a>';
-        wizard.after(aviso);
-    });
-
     // Monedas desde la base (tabla moneda); las opciones del HTML quedan si la API no responde
     competikaApi('catalogs').then(r => {
         if (r.success) document.dispatchEvent(new CustomEvent('competika:formatos', { detail: r.formats.map(f => f.id) }));
@@ -121,9 +108,10 @@ async function competikaInscribirse(torneoId, teamName = '') {
 
     // Contacto del organizador: se precarga con los datos de su cuenta (editable)
     competikaSession().then(user => {
-        if (!user) {
-            const head = document.querySelector('#tf-organizer-name')?.closest('.rounded-2xl')?.querySelector('p');
-            if (head) head.innerHTML = 'Necesitás <a class="underline" href="' + COMPETIKA_LOGIN_URL + '">iniciar sesión</a> para crear un torneo.';
+        if (!user) { competikaGoLogin(); return; }
+        if (!user.roles?.organizador && !user.roles?.admin) {
+            alert('Para crear un torneo necesitás el rol de Organizador. Activalo en Configuración.');
+            window.location.href = new URL('../paginas/profile_configuration/profile_configuration.html', COMPETIKA_BASE).href;
             return;
         }
         const pre = (id, v) => { const el = document.getElementById(id); if (el && !el.value) el.value = v || ''; };
@@ -222,12 +210,10 @@ async function competikaInscribirse(torneoId, teamName = '') {
         if (success) {
             const nameEl = success.querySelector('[data-tf-success-name]');
             if (nameEl) nameEl.textContent = name;
-            const msgEl = success.querySelector('[data-tf-success-msg]');
-            if (msgEl && result.status === 'pending') msgEl.textContent = 'ya está publicado. Gestioná participantes, calendario y resultados desde tu panel.';
             const link = success.querySelector('a');
             if (link) {
                 link.href = `../tournament_dashboard/tournament_dashboard.html?t=${encodeURIComponent(result.id)}`;
-                link.innerHTML = '<i class="ti ti-layout-dashboard"></i> Ir a Mis torneos';
+                link.innerHTML = '<i class="ti ti-layout-dashboard"></i> Ir al Dashboard';
             }
             success.classList.remove('hidden', 'tf-step-anim');
             void success.offsetWidth;

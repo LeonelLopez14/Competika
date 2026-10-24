@@ -690,3 +690,11 @@ a.btn-seguir { text-decoration: none; }
 /* El nombre del torneo lleva a su página pública */
 a.torneo-nombre { color: inherit; text-decoration: none; }
 a.torneo-nombre:hover { color: var(--blue-violet-dark); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 599px) {
+    #deportes-grilla { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .deporte-card { height: 140px; gap: 12px; padding: 16px 6px; }
+    .deporte-icono-box { width: 44px; height: 44px; font-size: 40px; }
+    .deporte-etiqueta { font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
+    .deporte-badge { width: 18px; height: 18px; font-size: 12px; }
+}

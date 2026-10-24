@@ -252,12 +252,12 @@ async function cargarJuez() {
 }
 function initJuez() {
     const dlg = $('juez-dialog');
-    $('settings-juez-btn')?.addEventListener('click', () => { $('juez-error').textContent = ''; dlg.showModal(); $('juez-deportes').focus(); });
+    $('settings-juez-btn')?.addEventListener('click', () => { $('juez-error').textContent = ''; dlg.showModal(); });
     $('juez-cancel')?.addEventListener('click', () => dlg.close());
     $('juez-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const body = { certificado: $('juez-certificado').checked, deportes: $('juez-deportes').value.trim(), experiencia: $('juez-experiencia').value.trim() };
-        if (!body.deportes) { $('juez-error').textContent = 'Indicá en qué deportes podés arbitrar.'; return; }
+        const body = { certificado: $('juez-certificado').checked, deportes: [...document.querySelectorAll('#juez-deportes input:checked')].map(i => i.value).join(', '), experiencia: $('juez-experiencia').value.trim() };
+        if (!body.deportes) { $('juez-error').textContent = 'Elegí al menos un deporte en el que podés arbitrar.'; return; }
         if (body.experiencia.length < 20) { $('juez-error').textContent = 'Contá tu experiencia (al menos 20 caracteres).'; return; }
         busy($('juez-enviar'), true);
         let r;

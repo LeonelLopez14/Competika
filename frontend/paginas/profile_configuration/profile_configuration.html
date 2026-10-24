@@ -312,10 +312,26 @@
                 <input type="checkbox" id="juez-certificado">
                 <span>Tengo certificado o curso de juez / árbitro</span>
             </label>
-            <div class="input-group">
-                <input type="text" id="juez-deportes" class="input-field" placeholder=" " maxlength="150" required>
-                <label for="juez-deportes" class="floating-label">Deportes en los que podés arbitrar</label>
-            </div>
+            <fieldset class="juez-deportes" id="juez-deportes">
+                <legend>Deportes en los que podés arbitrar</legend>
+                <div class="juez-deportes-lista">
+                    <label class="juez-chip"><input type="checkbox" value="Fútbol"><span>Fútbol</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Basketball"><span>Basketball</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Tenis"><span>Tenis</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Ajedrez"><span>Ajedrez</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Juegos de cartas"><span>Juegos de cartas</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Videojuegos"><span>Videojuegos</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Volleyball"><span>Volleyball</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Natación"><span>Natación</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Rugby"><span>Rugby</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Baseball"><span>Baseball</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Running"><span>Running</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Artes marciales"><span>Artes marciales</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Boxeo"><span>Boxeo</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Gimnasia"><span>Gimnasia</span></label>
+                    <label class="juez-chip"><input type="checkbox" value="Otros"><span>Otros</span></label>
+                </div>
+            </fieldset>
             <div class="input-group">
                 <textarea id="juez-experiencia" class="input-field" placeholder=" " maxlength="500" rows="4" required style="height:auto;min-height:110px;padding-top:16px;resize:vertical"></textarea>
                 <label for="juez-experiencia" class="floating-label">Tu experiencia (mín. 20 caracteres)</label>
