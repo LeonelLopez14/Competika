@@ -105,7 +105,7 @@ function updateSidebar() {
 
 const SECTIONS = {
     selector:      ['Mis Torneos', 'Torneos', renderSelector],
-    overview:      ['Visión General del Torneo', 'Overview', renderOverview],
+    overview:      ['Visión General del Torneo', 'Resumen', renderOverview],
     participantes: ['Equipos Participantes', 'Participantes', renderParticipantes],
     resultados:    ['Resultados y Posiciones', 'Resultados', renderResultados],
     configuracion: ['Configuración del Torneo', 'Configuración', renderConfig],
