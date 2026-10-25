@@ -1,19 +1,17 @@
 <?php
 require_once __DIR__ . '/../core/autoload.php';
 
-/** Cuenta logueada: datos, correo, contraseña, foto, actividad y honores. */
+/** Cuenta logueada: datos, correo, contraseña, foto y actividad. */
 class PerfilController {
     private UsuarioRepository $usuarios;
     private TorneoRepository $torneos;
     private ActividadRepository $actividad;
-    private HonorRepository $honores;
     private Notificador $avisos;
 
     public function __construct() {
         $this->usuarios  = new UsuarioRepository();
         $this->torneos   = new TorneoRepository();
         $this->actividad = new ActividadRepository();
-        $this->honores   = new HonorRepository();
         $this->avisos    = new Notificador(null, null, $this->torneos);
     }
 
@@ -169,10 +167,6 @@ class PerfilController {
             'torneos'  => $torneos,
             'seguidos' => array_map(fn($t) => self::torneoFila($t, 'seguido', null), $this->actividad->torneosSeguidos($ci)),
             'partidos' => $partidos,
-            'honores'  => [
-                'dados'     => $this->honores->partidosConHonorDe($ci),
-                'recibidos' => $this->honores->recibidosPor(array_keys($misEquipos)),
-            ],
             'stats' => [
                 'partidos'     => count($jugados),
                 'victorias'    => $v,
@@ -217,18 +211,5 @@ class PerfilController {
             'resultado' => !$jugado ? null : ($yo > $el ? 'win' : ($yo < $el ? 'loss' : 'draw')),
             'marcador'  => $jugado ? Formato::marcador($yo) . '-' . Formato::marcador($el) : null,
         ];
-    }
-
-    /** Dar honor al equipo rival de un partido jugado por uno de mis equipos. */
-    public function honor(Request $req): array {
-        $ci = Auth::exigirLogin();
-        $partidoId = (int)($req->json()['matchId'] ?? 0);
-        $p = $this->honores->partidoJugadoPor($ci, $partidoId);
-        if ($p === null) throw new ApiException('Solo podés dar honor en partidos que jugaste y ya tienen resultado.', 404);
-        [$mio, $rival, $torneoId] = $p;
-        if ($this->honores->dar($partidoId, $ci, $rival)) {
-            $this->avisos->honor($this->usuarios->nombreCompleto($ci) ?: 'Un rival', $mio, $rival, $torneoId, $partidoId);
-        }
-        return ['success' => true];
     }
 }

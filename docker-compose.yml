@@ -36,7 +36,8 @@ services:
       # Se ejecutan en orden alfabético y SOLO la primera vez (volumen vacío)
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./database/ajustes.sql:/docker-entrypoint-initdb.d/02-ajustes.sql:ro
-      - ./docker/db-init.sh:/docker-entrypoint-initdb.d/03-usuario-app.sh:ro
+      - ./database/datos_prueba.sql:/docker-entrypoint-initdb.d/03-datos-prueba.sql:ro
+      - ./docker/db-init.sh:/docker-entrypoint-initdb.d/04-usuario-app.sh:ro
       - ./database/usuarios.sql:/competika/usuarios.sql:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]

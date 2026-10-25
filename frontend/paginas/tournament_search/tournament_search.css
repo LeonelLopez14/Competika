@@ -487,14 +487,16 @@
     font-weight: 700;
     padding: 8px 18px;
     border-radius: 10px;
-    border: 1.5px solid rgba(33, 33, 33, 0.15);
-    background: transparent;
-    color: var(--darkest-hour);
+    border: none;
+    margin-left: 10px;
+    background: var(--blue-violet-dark, #6a23dc);
+    color: #fff;
     cursor: pointer;
     transition: background 0.15s, transform 0.1s;
 }
 
-.btn-seguir:hover { background: rgba(33, 33, 33, 0.06); }
+.btn-seguir:hover { background: var(--blue-violet-light, #824cda); }
+.btn-seguir:active { transform: scale(0.95); }
 
 /* SIN RESULTADOS */
 #sin-resultados {

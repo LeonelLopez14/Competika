@@ -145,6 +145,26 @@ const content = () => $('td-section-content');
 
 // ═════════════════════════════════════════ MIS TORNEOS
 let selTab = null;
+let selFiltro = 'all';
+
+// primero los que están pasando algo ahora, al final los que ya terminaron
+const ORDEN_ESTADO = { active: 0, pending: 1, review: 2, rejected: 3, finished: 4 };
+const ordenarTorneos = arr => [...arr].sort((a, b) => (ORDEN_ESTADO[a.status] ?? 9) - (ORDEN_ESTADO[b.status] ?? 9));
+
+const FILTROS = [
+    ['all',      'Todos'],
+    ['active',   'En curso'],
+    ['pending',  'Abiertos'],
+    ['finished', 'Finalizados'],
+];
+const filtroChips = lista => `
+    <div class="td-status-filtros" role="tablist">
+        ${FILTROS.map(([valor, label]) => {
+            const cant = valor === 'all' ? lista.length : lista.filter(t => t.status === valor).length;
+            return `<button class="td-status-chip ${selFiltro === valor ? 'active' : ''}" role="tab" aria-selected="${selFiltro === valor}" data-action="sel-filtro" data-filtro="${valor}">${label} <span>${cant}</span></button>`;
+        }).join('')}
+    </div>`;
+const aplicarFiltro = lista => selFiltro === 'all' ? lista : lista.filter(t => t.status === selFiltro);
 
 const cardEstado = st => `<span class="td-sc-status" style="background:color-mix(in srgb, ${st.color} 15%, transparent);color:${st.color}">${st.label}</span>`;
 const cardMeta = t => `
@@ -183,9 +203,15 @@ async function renderSelector() {
         </div>`;
 
     if (selTab === 'participante') {
-        content().innerHTML = tabs + (jugados.length ? `
-            <div class="td-selector-grid">
-            ${jugados.map(t => `
+        const jugadosVisibles = ordenarTorneos(aplicarFiltro(jugados));
+        content().innerHTML = tabs + (jugados.length ? filtroChips(jugados) : '') + (!jugados.length ? (roles.participante
+                ? vacio('Todavía no estás inscripto en ningún torneo', 'Buscá un torneo y anotate para verlo acá.',
+                    '<a href="../tournament_search/tournament_search.html" class="td-btn-primary"><i class="ti ti-search"></i> Buscar torneos</a>')
+                : vacio('Necesitás el rol de Participante', 'Para inscribirte en torneos activá el rol de Participante en Configuración.',
+                    '<a href="../profile_configuration/profile_configuration.html" class="td-btn-primary"><i class="ti ti-settings"></i> Ir a Configuración</a>'))
+            : !jugadosVisibles.length ? vacio('No hay torneos con ese filtro', 'Probá con otro estado.')
+            : `<div class="td-selector-grid">
+            ${jugadosVisibles.map(t => `
                 <div class="td-selector-card">
                     <div class="td-sc-header">
                         <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
@@ -196,11 +222,7 @@ async function renderSelector() {
                         <a class="td-btn-primary td-sc-enter" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}"><i class="ti ti-arrow-right"></i> Ver torneo</a>
                     </div>
                 </div>`).join('')}
-            </div>` : roles.participante
-                ? vacio('Todavía no estás inscripto en ningún torneo', 'Buscá un torneo y anotate para verlo acá.',
-                    '<a href="../tournament_search/tournament_search.html" class="td-btn-primary"><i class="ti ti-search"></i> Buscar torneos</a>')
-                : vacio('Necesitás el rol de Participante', 'Para inscribirte en torneos activá el rol de Participante en Configuración.',
-                    '<a href="../profile_configuration/profile_configuration.html" class="td-btn-primary"><i class="ti ti-settings"></i> Ir a Configuración</a>'));
+            </div>`);
         return;
     }
 
@@ -210,9 +232,11 @@ async function renderSelector() {
             puedeCrear ? 'Creá tu primer torneo y volvé acá para gestionarlo.' : 'Para crear torneos activá el rol de Organizador en Configuración.', nuevo);
         return;
     }
-    content().innerHTML = tabs + (nuevo ? `<div class="td-selector-header">${nuevo}</div>` : '') + `
+    const organizadosVisibles = ordenarTorneos(aplicarFiltro(organizados));
+    content().innerHTML = tabs + (nuevo ? `<div class="td-selector-header">${nuevo}</div>` : '') + filtroChips(organizados) +
+        (!organizadosVisibles.length ? vacio('No hay torneos con ese filtro', 'Probá con otro estado.') : `
         <div class="td-selector-grid">
-        ${organizados.map(t => { const st = statusOf(t.status); return `
+        ${organizadosVisibles.map(t => { const st = statusOf(t.status); return `
             <div class="td-selector-card">
                 <div class="td-sc-header">
                     <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
@@ -226,7 +250,7 @@ async function renderSelector() {
                     <button class="td-sc-delete" data-action="delete-tournament" data-id="${t.id}" title="Eliminar torneo"><i class="ti ti-trash"></i></button>
                 </div>
             </div>`; }).join('')}
-        </div>`;
+        </div>`);
 }
 
 async function openTournament(id) {
@@ -623,6 +647,7 @@ const tid = () => ({ id: tdData.id });
 const ACTIONS = {
     'open': el => openTournament(el.dataset.id),
     'sel-tab': el => { selTab = el.dataset.tab; renderSelector(); },
+    'sel-filtro': el => { selFiltro = el.dataset.filtro; renderSelector(); },
 
     'delete-tournament': async el => {
         if (!confirm('¿Eliminar este torneo? Esta acción no se puede deshacer.')) return;

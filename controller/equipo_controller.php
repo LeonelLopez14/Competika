@@ -10,7 +10,6 @@ class EquipoController {
     private SolicitudEquipoRepository $solicitudes;
     private Notificador $avisos;
     private ActividadRepository $actividad;
-    private HonorRepository $honores;
 
     public function __construct() {
         $this->equipos = new EquipoRepository();
@@ -19,7 +18,6 @@ class EquipoController {
         $this->invitaciones = new InvitacionRepository();
         $this->solicitudes = new SolicitudEquipoRepository();
         $this->actividad = new ActividadRepository();
-        $this->honores = new HonorRepository();
         $this->avisos = new Notificador(null, $this->equipos, $this->torneos);
     }
 
@@ -232,7 +230,6 @@ class EquipoController {
             'titles' => count(array_filter($torneos, fn($t) => $t['estado'] === Torneo::FINALIZADO && (int)$t['puesto'] === 1)),
             'matches' => $jugados,
             'wins' => $ganados,
-            'honors' => $this->honores->recibidosPor($equipos),
         ];
         return ['success' => true, 'profile' => $perfil];
     }

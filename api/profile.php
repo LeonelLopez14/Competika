@@ -11,5 +11,4 @@ require_once __DIR__ . '/bootstrap.php';
     ->post('avatar',         'subirAvatar')
     ->post('avatar_delete',  'borrarAvatar')
     ->post('delete_account', 'eliminarCuenta')
-    ->post('honor',          'honor')
     ->despachar(new Request());

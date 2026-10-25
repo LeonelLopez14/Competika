@@ -7,7 +7,7 @@ class Notificacion {
         private string $tipo,
         private string $mensaje,
         private ?int $torneoId = null,
-        private ?int $refId = null,           // ej.: partido del recordatorio u honor
+        private ?int $refId = null,           // ej.: partido del recordatorio
         private bool $leida = false,
         private int $segundosDesde = 0
     ) {

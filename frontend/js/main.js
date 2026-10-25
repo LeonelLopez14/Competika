@@ -949,7 +949,7 @@ function tsCrearModal() {
                     <label for="ts-join-team" class="floating-label">Nombre de tu equipo (opcional)</label>
                 </div>
                 <p class="ts-modal-hint">Si lo dejás vacío, te inscribimos con tu nombre.</p>
-                <button type="button" class="ts-modal-link" id="ts-join-abiertos" hidden><i class="ti ti-users"></i> No tengo equipo, ver equipos abiertos</button>
+                <button type="button" class="ts-modal-link" id="ts-join-abiertos"><i class="ti ti-users"></i> No tengo equipo, ver equipos abiertos</button>
                 <p class="ts-modal-error" id="ts-join-error" hidden></p>
                 <div class="ts-modal-actions">
                     <button type="button" class="btn-seguir" data-close>Cancelar</button>
@@ -1006,7 +1006,7 @@ async function tsVerAbiertos() {
     tsPaso("teams");
     const r = await competikaApi("open_teams", { api: "teams", params: { id: tsModalTorneo.id } });
     if (!r.success || !r.teams.length) {
-        lista.innerHTML = '<li class="ts-modal-teams-vacio">' + (r.success ? "Todavía no hay equipos abiertos en este torneo." : (r.error || "No se pudieron cargar los equipos.")) + "</li>";
+        lista.innerHTML = '<li class="ts-modal-teams-vacio">' + (r.success ? "Todavía no hay equipos abiertos en este torneo. Inscribite con uno nuevo y abrilo para que otros jugadores puedan sumarse." : (r.error || "No se pudieron cargar los equipos.")) + "</li>";
         return;
     }
     lista.innerHTML = r.teams.map(e => `
@@ -1049,7 +1049,6 @@ async function tsAbrirInscripcion(t) {
     tsModalTorneo = t;
     const m = tsCrearModal();
     tsPaso("form");
-    m.querySelector("#ts-join-abiertos").hidden = true;
     m.querySelector("#ts-join-title").textContent = t.nombre;
     m.querySelector("#ts-join-meta").textContent = `${t.formato} · ${t.ciudad} · Inscripción: ${t.inscripcion}` + (t.competitivo ? ' · Competitivo: requiere carné de deportista' : '');
     m.querySelector("#ts-join-team").value = "";
@@ -1057,8 +1056,6 @@ async function tsAbrirInscripcion(t) {
     m.hidden = false;
     document.body.style.overflow = "hidden";
     setTimeout(() => m.querySelector("#ts-join-team").focus(), 50);
-    const ab = await competikaApi("open_teams", { api: "teams", params: { id: t.id } });
-    if (tsModalTorneo === t && ab.success && ab.teams.length) m.querySelector("#ts-join-abiertos").hidden = false;
 }
 
 async function tsConfirmar() {

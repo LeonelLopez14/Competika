@@ -31,7 +31,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.tabla_posiciones           
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.registro_de_actividad        TO 'competika_app'@'localhost';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.notificacion                 TO 'competika_app'@'localhost';
-GRANT SELECT, INSERT                 ON competika_db.honor                       TO 'competika_app'@'localhost';
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON competika_db.persona                      TO 'competika_app'@'localhost';
 GRANT SELECT, INSERT, UPDATE         ON competika_db.solicitud_juez               TO 'competika_app'@'localhost';

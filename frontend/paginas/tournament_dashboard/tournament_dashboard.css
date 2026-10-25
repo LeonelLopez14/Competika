@@ -635,6 +635,16 @@
 .td-selector-tab span { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(95,31,197,0.1); }
 .td-selector-tab.active { background: var(--blue-violet, #5f1fc5); color: #fff; border-color: transparent; }
 .td-selector-tab.active span { background: rgba(255,255,255,0.25); }
+.td-status-filtros { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.td-status-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(95,31,197,0.18); background: transparent;
+    font: inherit; font-size: 13px; font-weight: 600; color: inherit;
+}
+.td-status-chip span { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: rgba(95,31,197,0.1); }
+.td-status-chip.active { background: var(--blue-violet, #5f1fc5); color: #fff; border-color: transparent; }
+.td-status-chip.active span { background: rgba(255,255,255,0.25); }
 .td-sc-aviso { margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; background: rgba(95,31,197,0.08); }
 .td-sc-aviso--no { background: rgba(200,40,40,0.08); }
 

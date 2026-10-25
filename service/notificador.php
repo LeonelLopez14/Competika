@@ -99,11 +99,6 @@ class Notificador {
         }
     }
 
-    public function honor(string $deNombre, int $deEquipo, int $aEquipo, int $torneoId, int $partidoId): void {
-        $this->aEquipo($aEquipo, 'honor', "{$deNombre} (" . $this->equipos->nombre($deEquipo) . ") le dio honor a tu equipo por el juego limpio.",
-            $torneoId, $partidoId);
-    }
-
     /** Recordatorios de partidos de las próximas 24 h (una vez por partido). Se llama al listar o en el stream. */
     public function recordatorios(string $ci): void {
         try {
