@@ -67,19 +67,6 @@ CREATE TABLE IF NOT EXISTS notificacion (
     FOREIGN KEY (torneo_id_fk)  REFERENCES torneo(torneo_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS honor (
-    honor_id              INT AUTO_INCREMENT PRIMARY KEY,
-    enfrentamiento_id_fk  INT          NOT NULL,
-    de_usuario_ci_fk      VARCHAR(20)  NOT NULL,
-    a_equipo_id_fk        INT          NOT NULL,
-    fecha                 DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_honor (enfrentamiento_id_fk, de_usuario_ci_fk),
-    INDEX idx_honor_equipo (a_equipo_id_fk),
-    FOREIGN KEY (enfrentamiento_id_fk) REFERENCES enfrentamiento(enfrentamiento_id) ON DELETE CASCADE,
-    FOREIGN KEY (de_usuario_ci_fk)     REFERENCES usuario(ci) ON DELETE CASCADE,
-    FOREIGN KEY (a_equipo_id_fk)       REFERENCES equipo(equipo_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- 3) Claves foráneas nuevas
 ALTER TABLE torneo
     ADD COLUMN IF NOT EXISTS tipo_torneo_id_fk INT NULL AFTER deporte,

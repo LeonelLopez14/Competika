@@ -551,50 +551,6 @@
 .pf-stat-card--gray i, .pf-stat-card--gray .pf-stat-value { color: rgba(33,33,33,0.55); }
 
 /* Tablas de historial */
-.pf-honor-intro {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    background: rgba(130,76,218,0.08);
-    font-size: 12.5px;
-    color: rgba(33,33,33,0.6);
-    margin-bottom: 16px;
-}
-.pf-honor-intro > span:first-child { display: flex; align-items: center; gap: 8px; }
-.pf-honor-intro i { color: #6a23dc; font-size: 16px; }
-.pf-honor-total { font-family: var(--font-mono); font-size: 11.5px; color: rgba(33,33,33,0.5); white-space: nowrap; }
-.pf-honor-total strong { color: #6a23dc; font-size: 13px; }
-
-.pf-honor-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: 20px;
-    border: 1.5px solid rgba(130,76,218,0.35);
-    background: rgba(130,76,218,0.06);
-    color: #6a23dc;
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.2s, transform 0.15s;
-}
-.pf-honor-btn:hover { background: rgba(130,76,218,0.16); }
-.pf-honor-btn:active { transform: scale(0.95); }
-.pf-honor-btn--given {
-    background: rgba(67,197,158,0.14);
-    border-color: rgba(67,197,158,0.35);
-    color: #1a9a72;
-    cursor: default;
-}
-.pf-honor-btn--given:hover { background: rgba(67,197,158,0.14); }
-
 .pf-table-wrap { overflow-x: auto; }
 .pf-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 .pf-table thead th {

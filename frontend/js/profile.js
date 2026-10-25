@@ -171,20 +171,13 @@ function renderTournamentHistory() {
     }).join('');
 }
 
-/* ── Historial de partidos + honores (guardados en la base) ── */
-const honors = () => data.honores?.dados || [];
-
+/* ── Historial de partidos ── */
 function renderMatches() {
     const tbody = $('pf-match-history-body');
     const jugados = data.partidos.filter(p => p.jugado);
-    $('pf-honor-given-count').textContent = honors().length;
-    const rec = $('pf-honor-received-count');
-    if (rec) rec.textContent = data.honores?.recibidos || 0;
-    if (!jugados.length) { tbody.innerHTML = '<tr><td colspan="6" class="pf-empty">Todavía no jugaste partidos con resultado cargado.</td></tr>'; return; }
-    const given = honors();
+    if (!jugados.length) { tbody.innerHTML = '<tr><td colspan="5" class="pf-empty">Todavía no jugaste partidos con resultado cargado.</td></tr>'; return; }
     const label = { win: ['ti-circle-check', 'Victoria'], loss: ['ti-circle-x', 'Derrota'], draw: ['ti-circle-minus', 'Empate'] };
     tbody.innerHTML = jugados.map(m => {
-        const g = given.includes(m.id);
         const [ic, txt] = label[m.resultado];
         return `<tr>
             <td>${fecha(m.fecha)}</td>
@@ -192,25 +185,8 @@ function renderMatches() {
             <td>${esc(m.rival)}</td>
             <td><span class="pf-result-pill pf-result-pill--${m.resultado}"><i class="ti ${ic}"></i>${txt}</span></td>
             <td>${esc(m.marcador)}</td>
-            <td><button class="pf-honor-btn ${g ? 'pf-honor-btn--given' : ''}" data-match-id="${m.id}" ${g ? 'disabled' : ''}>
-                <i class="ti ${g ? 'ti-heart-filled' : 'ti-heart-handshake'}"></i>${g ? 'Enviado' : 'Dar honor'}</button></td>
         </tr>`;
     }).join('');
-    tbody.querySelectorAll('.pf-honor-btn:not([disabled])').forEach(btn => btn.addEventListener('click', async () => {
-        const id = Number(btn.dataset.matchId);
-        btn.disabled = true;
-        try {
-            const res = await fetch(`${API}?action=honor`, {
-                method: 'POST', credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ matchId: id }),
-            });
-            const r = await res.json();
-            if (!r.success) { btn.disabled = false; alert(r.error || 'No se pudo dar honor.'); return; }
-        } catch (e) { btn.disabled = false; return; }
-        data.honores = data.honores || { dados: [], recibidos: 0 };
-        if (!data.honores.dados.includes(id)) data.honores.dados.push(id);
-        renderMatches();
-    }));
 }
 
 /* ── Estadísticas ── */

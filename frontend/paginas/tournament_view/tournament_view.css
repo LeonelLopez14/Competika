@@ -273,8 +273,8 @@
 
 /* Campeón, invitaciones y mi equipo */
 .tv-campeon { display: flex; align-items: center; gap: 16px; margin: 0 0 20px; padding: 18px 22px; border-radius: 18px;
-    background: linear-gradient(135deg, rgba(255, 196, 0, .22), rgba(108, 92, 231, .12)); }
-.tv-campeon > i { font-size: 2.2rem; color: var(--sun-glare-dark, #e0a800); }
+    background: linear-gradient(135deg, rgba(106, 35, 220, .16), rgba(130, 76, 218, .08)); }
+.tv-campeon > i { font-size: 2.2rem; color: var(--blue-violet-dark, #6a23dc); }
 .tv-campeon-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
 .tv-campeon-nombre { font-size: 1.4rem; font-weight: 800; }
 .tv-invitaciones { display: flex; flex-direction: column; gap: 10px; margin: 0 0 20px; }

@@ -331,7 +331,6 @@ async function verPerfilSolicitante(id) {
         <div><strong>${p.stats.titles}</strong><span>Títulos</span></div>
         <div><strong>${p.stats.matches}</strong><span>Partidos</span></div>
         <div><strong>${p.stats.wins}</strong><span>Victorias</span></div>
-        <div><strong>${p.stats.honors}</strong><span>Honores</span></div>
       </div>
       <ul class="tv-perfil-datos">
         <li><i class="ti ti-id-badge-2"></i> ${p.card ? 'Tiene carné de deportista' : 'Sin carné de deportista'}</li>

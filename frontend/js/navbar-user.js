@@ -168,7 +168,7 @@
     const ICONS = {
         nuevo_inscripto: 'ti-user-plus', inscripcion: 'ti-door-enter', partido: 'ti-calendar-event',
         resultado: 'ti-trophy', recordatorio: 'ti-alarm', torneo_estado: 'ti-tournament', torneo_revision: 'ti-hourglass',
-        torneo_cancelado: 'ti-circle-x', partido_cancelado: 'ti-calendar-x', baja: 'ti-user-minus', honor: 'ti-heart-handshake', arbitraje: 'ti-gavel', juez: 'ti-gavel', solicitud_juez: 'ti-file-description',
+        torneo_cancelado: 'ti-circle-x', partido_cancelado: 'ti-calendar-x', baja: 'ti-user-minus', arbitraje: 'ti-gavel', juez: 'ti-gavel', solicitud_juez: 'ti-file-description',
         anuncio: 'ti-speakerphone', contacto: 'ti-mail', invitacion: 'ti-mail-forward', seguridad: 'ti-shield-lock',
     };
     let notifs = [];
