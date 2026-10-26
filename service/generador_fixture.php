@@ -67,6 +67,8 @@ class GeneradorFixture {
     public function campeon(Torneo $t): ?int {
         $formato = $t->getTipo()?->getClave();
         $todos = $this->partidos->delTorneo($t->getId());
+        $finalizado = $t->getEstado() === Torneo::FINALIZADO;
+        if ($finalizado && $formato === 'suizo') return $this->tabla($t)[0] ?? null;
         if (!$todos || array_filter($todos, fn(Partido $p) => !$p->estaJugado())) return null;
         switch ($formato) {
             case 'eliminacion-simple': case 'blitz': case 'eliminacion-doble': case 'grupos':

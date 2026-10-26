@@ -131,13 +131,23 @@
                     <button class="adm-chip" data-estado="">Todas</button>
                 </div>
                 <ul class="adm-lista" id="adm-lista-solicitudes"></ul>
+                <div class="adm-pager" id="adm-pager-solicitudes"></div>
             </section>
             <section class="adm-seccion tv-card" id="adm-usuarios" hidden>
                 <div class="input-group adm-buscar">
                     <input type="search" id="adm-q" class="input-field" placeholder=" " autocomplete="off">
                     <label for="adm-q" class="floating-label">Buscar por nombre, correo o cédula</label>
                 </div>
+                <div class="adm-filtros" id="adm-filtro-rol">
+                    <button class="adm-chip active" data-rol="">Todos</button>
+                    <button class="adm-chip" data-rol="admin">Administradores</button>
+                    <button class="adm-chip" data-rol="organizador">Organizadores</button>
+                    <button class="adm-chip" data-rol="participante">Participantes</button>
+                    <button class="adm-chip" data-rol="juez">Jueces</button>
+                    <button class="adm-chip" data-rol="observador">Observadores</button>
+                </div>
                 <ul class="adm-lista" id="adm-lista-usuarios"></ul>
+                <div class="adm-pager" id="adm-pager-usuarios"></div>
             </section>
             <section class="adm-seccion tv-card" id="adm-torneos" hidden>
                 <div class="input-group adm-buscar">
@@ -145,6 +155,7 @@
                     <label for="adm-qt" class="floating-label">Buscar por nombre u organizador</label>
                 </div>
                 <ul class="adm-lista" id="adm-lista-torneos"></ul>
+                <div class="adm-pager" id="adm-pager-torneos"></div>
             </section>
             <section class="adm-seccion tv-card" id="adm-mensajes" hidden>
                 <div class="adm-filtros" id="adm-filtro-msg">
@@ -152,6 +163,7 @@
                     <button class="adm-chip" data-unread="0">Todos</button>
                 </div>
                 <ul class="adm-lista" id="adm-lista-mensajes"></ul>
+                <div class="adm-pager" id="adm-pager-mensajes"></div>
             </section>
             <section class="adm-seccion tv-card" id="adm-anuncios" hidden>
                 <form id="adm-anuncio-form" class="adm-anuncio">
@@ -199,6 +211,7 @@
                     <label for="adm-qa" class="floating-label">Buscar por persona, acción o detalle</label>
                 </div>
                 <ul class="adm-log" id="adm-lista-actividad"></ul>
+                <div class="adm-pager" id="adm-pager-actividad"></div>
             </section>
         </div>
 

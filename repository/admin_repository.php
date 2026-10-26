@@ -60,7 +60,7 @@ class AdminRepository extends BaseRepository {
     }
 
     /** Usuarios con roles y estado (búsqueda por nombre, correo o cédula). */
-    public function usuarios(?string $busqueda): array {
+    public function usuarios(?string $busqueda, ?string $rol = null): array {
         $sql = "SELECT u.ci, u.nombre, u.apellido, u.email, u.bloqueado, u.motivo_bloqueo,
                        EXISTS(SELECT 1 FROM admin x WHERE x.usuario_ci_fk = u.ci AND x.activo = 1) AS es_admin,
                        EXISTS(SELECT 1 FROM organizador x WHERE x.usuario_ci_fk = u.ci) AS es_organizador,
@@ -69,10 +69,20 @@ class AdminRepository extends BaseRepository {
                        EXISTS(SELECT 1 FROM observador x WHERE x.usuario_ci_fk = u.ci) AS es_observador
                 FROM usuario u";
         $params = [];
+        $condiciones = [];
         if ($busqueda !== null) {
-            $sql .= " WHERE CONCAT(u.nombre, ' ', u.apellido) LIKE ? OR u.email LIKE ? OR u.ci LIKE ?";
+            $condiciones[] = "(CONCAT(u.nombre, ' ', u.apellido) LIKE ? OR u.email LIKE ? OR u.ci LIKE ?)";
             $params = array_fill(0, 3, self::like($busqueda));
         }
+        $porRol = [
+            'admin'        => "EXISTS(SELECT 1 FROM admin x WHERE x.usuario_ci_fk = u.ci AND x.activo = 1)",
+            'organizador'  => "EXISTS(SELECT 1 FROM organizador x WHERE x.usuario_ci_fk = u.ci)",
+            'participante' => "EXISTS(SELECT 1 FROM participante x WHERE x.usuario_ci_fk = u.ci)",
+            'juez'         => "EXISTS(SELECT 1 FROM juez x WHERE x.usuario_ci_fk = u.ci)",
+            'observador'   => "EXISTS(SELECT 1 FROM observador x WHERE x.usuario_ci_fk = u.ci)",
+        ];
+        if ($rol !== null && isset($porRol[$rol])) $condiciones[] = $porRol[$rol];
+        if ($condiciones) $sql .= " WHERE " . implode(' AND ', $condiciones);
         return array_map(fn($f) => [
             'nombre'    => trim($f['nombre'] . ' ' . $f['apellido']),
             'email'     => $f['email'],

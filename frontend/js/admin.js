@@ -84,14 +84,35 @@ async function cargarResumen() {
     return true;
 }
 
+// ── Paginación en el navegador ──
+const paginasAdm = {};
+const reiniciarPagina = n => { paginasAdm[n] = 1; };
+function paginar(ul, nombre, items, pintar, tam = 10) {
+    const caja = $('adm-pager-' + nombre);
+    const total = Math.max(1, Math.ceil(items.length / tam));
+    const pag = Math.min(paginasAdm[nombre] || 1, total);
+    paginasAdm[nombre] = pag;
+    pintar(items.slice((pag - 1) * tam, pag * tam));
+    if (!caja) return;
+    if (total === 1) { caja.innerHTML = ''; return; }
+    caja.innerHTML = `
+        <button class="tv-btn tv-btn--ghost" data-d="-1" ${pag === 1 ? 'disabled' : ''}><i class="ti ti-chevron-left"></i> Anterior</button>
+        <span class="adm-pager-info">Página ${pag} de ${total}</span>
+        <button class="tv-btn tv-btn--ghost" data-d="1" ${pag === total ? 'disabled' : ''}>Siguiente <i class="ti ti-chevron-right"></i></button>`;
+    caja.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        paginasAdm[nombre] = pag + Number(b.dataset.d);
+        paginar(ul, nombre, items, pintar, tam);
+    }));
+}
+
 // ── Solicitudes de juez ──
 let estadoFiltro = 'pendiente';
 async function cargarSolicitudes() {
     const r = await api('requests', { params: estadoFiltro ? { estado: estadoFiltro } : {} });
     const ul = $('adm-lista-solicitudes');
     if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
-    if (!r.requests.length) { ul.innerHTML = '<li class="tv-vacio">No hay solicitudes en esta lista.</li>'; return; }
-    ul.innerHTML = r.requests.map(s => `
+    if (!r.requests.length) { ul.innerHTML = '<li class="tv-vacio">No hay solicitudes en esta lista.</li>'; $('adm-pager-solicitudes').innerHTML = ''; return; }
+    paginar(ul, 'solicitudes', r.requests, p => { ul.innerHTML = p.map(s => `
         <li class="adm-solicitud">
             <div>
                 <h3>${esc(s.nombre)}</h3>
@@ -104,7 +125,7 @@ async function cargarSolicitudes() {
                 : `<span class="adm-estado adm-estado--${esc(s.estado)}">${esc(s.estado)}</span>`}</div>
             <p class="adm-exp">${esc(s.experiencia)}</p>
             ${s.motivo ? `<p class="adm-exp adm-meta">Motivo del rechazo: ${esc(s.motivo)}</p>` : ''}
-        </li>`).join('');
+        </li>`).join(''); });
 }
 
 $('adm-lista-solicitudes').addEventListener('click', async (e) => {
@@ -124,18 +145,23 @@ $('adm-filtro-estado').addEventListener('click', (e) => {
     const b = e.target.closest('.adm-chip'); if (!b) return;
     $('adm-filtro-estado').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
     estadoFiltro = b.dataset.estado;
+    reiniciarPagina('solicitudes');
     cargarSolicitudes();
 });
 
 // ── Usuarios ──
 const ROLES = [['admin', 'Admin'], ['organizador', 'Organizador'], ['participante', 'Participante'], ['juez', 'Juez'], ['observador', 'Observador']];
 let tBusqueda;
+let rolFiltro = '';
 async function cargarUsuarios() {
     const q = $('adm-q').value.trim();
-    const r = await api('users', { params: q ? { q } : {} });
+    const params = {};
+    if (q) params.q = q;
+    if (rolFiltro) params.role = rolFiltro;
+    const r = await api('users', { params });
     const ul = $('adm-lista-usuarios');
     if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
-    ul.innerHTML = r.users.length ? r.users.map(u => `
+    paginar(ul, 'usuarios', r.users, p => { ul.innerHTML = p.length ? p.map(u => `
         <li class="adm-solicitud ${u.bloqueado ? 'adm-suspendido' : ''}" data-email="${esc(u.email)}" data-nombre="${esc(u.nombre)}">
             <div>
                 <h3>${esc(u.nombre)} ${u.bloqueado ? '<span class="adm-estado adm-estado--rechazada">suspendida</span>' : ''}</h3>
@@ -148,9 +174,17 @@ async function cargarUsuarios() {
             </div>
             <div class="adm-roles">${ROLES.map(([k, l]) => `
                 <label class="adm-rol"><input type="checkbox" data-rol="${k}" ${u.roles[k] ? 'checked' : ''}> ${l}</label>`).join('')}</div>
-        </li>`).join('') : '<li class="tv-vacio">Sin resultados.</li>';
+        </li>`).join('') : '<li class="tv-vacio">Sin resultados.</li>'; });
 }
-$('adm-q').addEventListener('input', () => { clearTimeout(tBusqueda); tBusqueda = setTimeout(cargarUsuarios, 300); });
+$('adm-q').addEventListener('input', () => { clearTimeout(tBusqueda); tBusqueda = setTimeout(() => { reiniciarPagina('usuarios'); cargarUsuarios(); }, 300); });
+
+$('adm-filtro-rol').addEventListener('click', e => {
+    const b = e.target.closest('.adm-chip'); if (!b) return;
+    $('adm-filtro-rol').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
+    rolFiltro = b.dataset.rol;
+    reiniciarPagina('usuarios');
+    cargarUsuarios();
+});
 
 $('adm-lista-usuarios').addEventListener('change', async e => {
     const cb = e.target.closest('[data-rol]');
@@ -186,7 +220,7 @@ async function cargarTorneos() {
     const r = await api('tournaments', { params: q ? { q } : {} });
     const ul = $('adm-lista-torneos');
     if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
-    ul.innerHTML = r.tournaments.length ? r.tournaments.map(t => `
+    paginar(ul, 'torneos', r.tournaments, p => { ul.innerHTML = p.length ? p.map(t => `
         <li class="adm-solicitud" data-id="${t.id}" data-nombre="${esc(t.nombre)}">
             <div>
                 <h3><a href="${SITE}/frontend/paginas/tournament_view/tournament_view.html?t=${t.id}">${esc(t.nombre)}</a>
@@ -207,9 +241,9 @@ async function cargarTorneos() {
                 <button class="tv-btn tv-btn--ghost" data-transferir><i class="ti ti-arrows-exchange"></i> Transferir</button>
                 <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-borrar-torneo ${t.resultados ? 'disabled title="Tiene resultados: marcalo como finalizado"' : ''}><i class="ti ti-trash"></i></button>
             </div>
-        </li>`).join('') : '<li class="tv-vacio">Sin resultados.</li>';
+        </li>`).join('') : '<li class="tv-vacio">Sin resultados.</li>'; });
 }
-$('adm-qt').addEventListener('input', () => { clearTimeout(tBusquedaT); tBusquedaT = setTimeout(cargarTorneos, 300); });
+$('adm-qt').addEventListener('input', () => { clearTimeout(tBusquedaT); tBusquedaT = setTimeout(() => { reiniciarPagina('torneos'); cargarTorneos(); }, 300); });
 
 $('adm-lista-torneos').addEventListener('change', async e => {
     const sel = e.target.closest('[data-estado]');
@@ -242,7 +276,7 @@ async function cargarMensajes() {
     const r = await api('messages', { params: soloNoLeidos ? { unread: 1 } : {} });
     const ul = $('adm-lista-mensajes');
     if (!r.success) { ul.innerHTML = `<li class="tv-vacio">${esc(r.error)}</li>`; return; }
-    ul.innerHTML = r.messages.length ? r.messages.map(m => `
+    paginar(ul, 'mensajes', r.messages, p => { ul.innerHTML = p.length ? p.map(m => `
         <li class="adm-solicitud ${m.leido ? '' : 'adm-no-leido'}" data-id="${m.id}">
             <div>
                 <h3>${esc(m.asunto)}</h3>
@@ -254,12 +288,13 @@ async function cargarMensajes() {
                 <button class="tv-btn tv-btn--ghost adm-btn-peligro" data-borrar-msg aria-label="Borrar mensaje"><i class="ti ti-trash"></i></button>
             </div>
             <p class="adm-exp">${esc(m.mensaje)}</p>
-        </li>`).join('') : `<li class="tv-vacio">${soloNoLeidos ? 'No hay mensajes sin leer.' : 'No hay mensajes.'}</li>`;
+        </li>`).join('') : `<li class="tv-vacio">${soloNoLeidos ? 'No hay mensajes sin leer.' : 'No hay mensajes.'}</li>`; });
 }
 $('adm-filtro-msg').addEventListener('click', e => {
     const b = e.target.closest('.adm-chip'); if (!b) return;
     $('adm-filtro-msg').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
     soloNoLeidos = b.dataset.unread === '1';
+    reiniciarPagina('mensajes');
     cargarMensajes();
 });
 $('adm-lista-mensajes').addEventListener('click', async e => {
@@ -334,18 +369,19 @@ async function cargarActividad() {
     const r = await api('activity', { params });
     const ul = $('adm-lista-actividad');
     if (!r.success) { ul.innerHTML = `<li>${esc(r.error)}</li>`; return; }
-    ul.innerHTML = r.activity.length ? r.activity.map(a => `<li><strong>${esc(a.accion)}</strong> — ${esc(a.descripcion)}
+    paginar(ul, 'actividad', r.activity, p => { ul.innerHTML = p.length ? p.map(a => `<li><strong>${esc(a.accion)}</strong> — ${esc(a.descripcion)}
         <time>${esc(fecha(a.fecha))} · ${esc(a.admin || 'Sin cuenta')} · ${esc(CATEGORIAS[a.categoria] || a.categoria)}</time></li>`).join('')
-        : `<li class="tv-vacio">${categoriaAct || q ? 'No hay actividad que coincida.' : 'Todavía no hay actividad registrada.'}</li>`;
+        : `<li class="tv-vacio">${categoriaAct || q ? 'No hay actividad que coincida.' : 'Todavía no hay actividad registrada.'}</li>`; });
 }
 $('adm-filtro-act').addEventListener('click', e => {
     const b = e.target.closest('[data-cat]');
     if (!b) return;
     $('adm-filtro-act').querySelectorAll('.adm-chip').forEach(x => x.classList.toggle('active', x === b));
     categoriaAct = b.dataset.cat;
+    reiniciarPagina('actividad');
     cargarActividad();
 });
-$('adm-qa').addEventListener('input', () => { clearTimeout(tBusquedaA); tBusquedaA = setTimeout(cargarActividad, 300); });
+$('adm-qa').addEventListener('input', () => { clearTimeout(tBusquedaA); tBusquedaA = setTimeout(() => { reiniciarPagina('actividad'); cargarActividad(); }, 300); });
 
 // ── Pestañas ──
 const cargas = { solicitudes: cargarSolicitudes, usuarios: cargarUsuarios, torneos: cargarTorneos, mensajes: cargarMensajes, anuncios: () => {}, catalogos: cargarCatalogos, actividad: cargarActividad };

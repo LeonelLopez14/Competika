@@ -82,7 +82,9 @@ class AdminController {
 
     public function listarUsuarios(Request $req): array {
         $this->adminActual();
-        return ['success' => true, 'users' => $this->admins->usuarios(Validar::texto($req->query('q'), 100))];
+        $rol = $req->query('role');
+        if (!in_array($rol, ['admin', 'organizador', 'participante', 'juez', 'observador'], true)) $rol = null;
+        return ['success' => true, 'users' => $this->admins->usuarios(Validar::texto($req->query('q'), 100), $rol)];
     }
 
     /** Cuenta indicada por correo (la cédula no viaja al navegador). */

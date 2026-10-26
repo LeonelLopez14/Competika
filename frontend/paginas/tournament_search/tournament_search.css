@@ -691,7 +691,7 @@ a.btn-seguir { text-decoration: none; }
 
 /* El nombre del torneo lleva a su página pública */
 a.torneo-nombre { color: inherit; text-decoration: none; }
-a.torneo-nombre:hover { color: var(--blue-violet-dark); text-decoration: underline; text-underline-offset: 3px; }
+a.torneo-nombre:hover { color: var(--blue-violet-dark); }
 
 @media (max-width: 599px) {
     #deportes-grilla { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }

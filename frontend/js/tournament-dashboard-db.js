@@ -104,7 +104,7 @@ function updateSidebar() {
 }
 
 const SECTIONS = {
-    selector:      ['Mis Torneos', 'Torneos', renderSelector],
+    selector:      ['MIS TORNEOS', 'Torneos', renderSelector],
     overview:      ['Visión General del Torneo', 'Resumen', renderOverview],
     participantes: ['Equipos Participantes', 'Participantes', renderParticipantes],
     resultados:    ['Resultados y Posiciones', 'Resultados', renderResultados],
@@ -120,6 +120,10 @@ function show(id) {
     const [title, crumb, render] = SECTIONS[id];
     $('td-page-title').textContent = title;
     $('td-breadcrumb').textContent = crumb;
+    const compartir = $('td-share-top');
+    if (compartir) compartir.style.display = id === 'selector' ? 'none' : '';
+    const crearTop = $('td-create-top');
+    if (crearTop && id !== 'selector') crearTop.style.display = 'none';
     document.querySelectorAll('#td-sidebar .td-nav-item').forEach(li => li.classList.toggle('active', li.dataset.section === id));
     const c = $('td-section-content');
     c.innerHTML = '';
@@ -164,6 +168,16 @@ const filtroChips = lista => `
             return `<button class="td-status-chip ${selFiltro === valor ? 'active' : ''}" role="tab" aria-selected="${selFiltro === valor}" data-action="sel-filtro" data-filtro="${valor}">${label} <span>${cant}</span></button>`;
         }).join('')}
     </div>`;
+let selPag = 1;
+const TAM_SEL = 10;
+const totalPag = lista => Math.max(1, Math.ceil(lista.length / TAM_SEL));
+const pagina = lista => { selPag = Math.min(selPag, totalPag(lista)); return lista.slice((selPag - 1) * TAM_SEL, selPag * TAM_SEL); };
+const pagerSel = lista => totalPag(lista) === 1 ? '' : `
+    <div class="td-pager">
+        <button class="td-status-chip" data-action="sel-pag" data-d="-1" ${selPag === 1 ? 'disabled' : ''}><i class="ti ti-chevron-left"></i> Anterior</button>
+        <span class="td-pager-info">Página ${selPag} de ${totalPag(lista)}</span>
+        <button class="td-status-chip" data-action="sel-pag" data-d="1" ${selPag === totalPag(lista) ? 'disabled' : ''}>Siguiente <i class="ti ti-chevron-right"></i></button>
+    </div>`;
 const aplicarFiltro = lista => selFiltro === 'all' ? lista : lista.filter(t => t.status === selFiltro);
 
 const cardEstado = st => `<span class="td-sc-status" style="background:color-mix(in srgb, ${st.color} 15%, transparent);color:${st.color}">${st.label}</span>`;
@@ -195,6 +209,8 @@ async function renderSelector() {
     const puedeCrear = !!(roles.organizador || roles.admin);
     const jugados = todos.success ? todos.tournaments.filter(t => t.joined) : [];
     if (!selTab) selTab = (roles.organizador || organizados.length || !roles.participante) ? 'organizador' : 'participante';
+    const crearTop = $('td-create-top');
+    if (crearTop) crearTop.style.display = puedeCrear && organizados.length && selTab === 'organizador' ? '' : 'none';
 
     const tabs = `
         <div class="td-selector-tabs" role="tablist">
@@ -211,7 +227,7 @@ async function renderSelector() {
                     '<a href="../profile_configuration/profile_configuration.html" class="td-btn-primary"><i class="ti ti-settings"></i> Ir a Configuración</a>'))
             : !jugadosVisibles.length ? vacio('No hay torneos con ese filtro', 'Probá con otro estado.')
             : `<div class="td-selector-grid">
-            ${jugadosVisibles.map(t => `
+            ${pagina(jugadosVisibles).map(t => `
                 <div class="td-selector-card">
                     <div class="td-sc-header">
                         <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
@@ -222,7 +238,7 @@ async function renderSelector() {
                         <a class="td-btn-primary td-sc-enter" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(t.id)}"><i class="ti ti-arrow-right"></i> Ver torneo</a>
                     </div>
                 </div>`).join('')}
-            </div>`);
+            </div>` + pagerSel(jugadosVisibles));
         return;
     }
 
@@ -233,10 +249,10 @@ async function renderSelector() {
         return;
     }
     const organizadosVisibles = ordenarTorneos(aplicarFiltro(organizados));
-    content().innerHTML = tabs + (nuevo ? `<div class="td-selector-header">${nuevo}</div>` : '') + filtroChips(organizados) +
+    content().innerHTML = tabs + filtroChips(organizados) +
         (!organizadosVisibles.length ? vacio('No hay torneos con ese filtro', 'Probá con otro estado.') : `
         <div class="td-selector-grid">
-        ${organizadosVisibles.map(t => { const st = statusOf(t.status); return `
+        ${pagina(organizadosVisibles).map(t => { const st = statusOf(t.status); return `
             <div class="td-selector-card">
                 <div class="td-sc-header">
                     <div><p class="td-sc-sport">${esc(t.sport || 'Sin deporte')}</p><h3 class="td-sc-name">${esc(t.name)}</h3></div>
@@ -250,7 +266,7 @@ async function renderSelector() {
                     <button class="td-sc-delete" data-action="delete-tournament" data-id="${t.id}" title="Eliminar torneo"><i class="ti ti-trash"></i></button>
                 </div>
             </div>`; }).join('')}
-        </div>`);
+        </div>` + pagerSel(organizadosVisibles));
 }
 
 async function openTournament(id) {
@@ -646,8 +662,9 @@ const tid = () => ({ id: tdData.id });
 
 const ACTIONS = {
     'open': el => openTournament(el.dataset.id),
-    'sel-tab': el => { selTab = el.dataset.tab; renderSelector(); },
-    'sel-filtro': el => { selFiltro = el.dataset.filtro; renderSelector(); },
+    'sel-tab': el => { selTab = el.dataset.tab; selPag = 1; renderSelector(); },
+    'sel-filtro': el => { selFiltro = el.dataset.filtro; selPag = 1; renderSelector(); },
+    'sel-pag': el => { selPag += Number(el.dataset.d); renderSelector(); },
 
     'delete-tournament': async el => {
         if (!confirm('¿Eliminar este torneo? Esta acción no se puede deshacer.')) return;

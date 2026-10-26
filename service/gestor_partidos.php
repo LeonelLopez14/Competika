@@ -65,7 +65,12 @@ class GestorPartidos {
     }
 
     public function recalcular(int $torneoId): void {
-        $stats = TablaPosiciones::calcular($this->equipos->idsDelTorneo($torneoId), $this->partidos->jugadosDelTorneo($torneoId));
+        $jugados = $this->partidos->jugadosDelTorneo($torneoId);
+        // En grupos + eliminación, la tabla de cada grupo cuenta solo los partidos de la fase de grupos
+        if ($this->torneos->buscar($torneoId)?->getTipo()?->getClave() === 'grupos') {
+            $jugados = array_values(array_filter($jugados, fn(Partido $p) => str_starts_with($p->getFase(), 'Grupo ')));
+        }
+        $stats = TablaPosiciones::calcular($this->equipos->idsDelTorneo($torneoId), $jugados);
         $this->equipos->guardarEstadisticas($torneoId, $stats);
     }
 
