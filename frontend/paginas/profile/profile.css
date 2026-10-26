@@ -1018,3 +1018,19 @@
     .settings-toast { left: 12px; right: 12px; transform: translateY(20px); width: auto; }
     .settings-toast.show { transform: translateY(0); }
 }
+
+.pf-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; }
+.pf-pager:empty { display: none; }
+.pf-pager-info { font-size: 13px; color: rgba(33,33,33,0.6); }
+.pf-pager-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(33,33,33,0.12);
+    background: transparent;
+    color: var(--darkest-hour);
+    font-size: 13px;
+    cursor: pointer;
+}
+.pf-pager-btn:hover:not([disabled]) { background: rgba(95,31,197,0.08); color: var(--blue-violet-dark); border-color: rgba(95,31,197,0.25); }
+.pf-pager-btn[disabled] { opacity: 0.4; cursor: not-allowed; }

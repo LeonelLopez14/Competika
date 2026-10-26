@@ -70,6 +70,26 @@ function renderTopStats() {
     $('pf-stat-victorias').textContent = s.porcentaje == null ? '—' : `${s.porcentaje}%`;
 }
 
+/* ── Paginación en el navegador ── */
+const paginas = {};
+function paginar(id, items, tam, pintar) {
+    const caja = $(id);
+    const total = Math.max(1, Math.ceil(items.length / tam));
+    const pag = Math.min(paginas[id] || 1, total);
+    paginas[id] = pag;
+    pintar(items.slice((pag - 1) * tam, pag * tam));
+    if (!caja) return;
+    if (total === 1) { caja.innerHTML = ''; return; }
+    caja.innerHTML = `
+        <button class="pf-pager-btn" data-d="-1" ${pag === 1 ? 'disabled' : ''}><i class="ti ti-chevron-left"></i>Anterior</button>
+        <span class="pf-pager-info">Página ${pag} de ${total}</span>
+        <button class="pf-pager-btn" data-d="1" ${pag === total ? 'disabled' : ''}>Siguiente<i class="ti ti-chevron-right"></i></button>`;
+    caja.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        paginas[id] = pag + Number(b.dataset.d);
+        paginar(id, items, tam, pintar);
+    }));
+}
+
 /* ── Torneos activos (no finalizados) ── */
 function renderActive() {
     const list = $('pf-tournaments-list');
@@ -81,7 +101,7 @@ function renderActive() {
         list.innerHTML = `<p class="pf-empty">No tenés torneos activos. <a href="../tournament_search/tournament_search.html">Buscá un torneo</a> o <a href="../tournament_form/tournament_form.html">creá uno</a>.</p>`;
         return;
     }
-    list.innerHTML = activos.map(t => {
+    paginar('pf-active-pager', activos, 5, pagina => { list.innerHTML = pagina.map(t => {
         const [icon, bg, color] = sportIcon(t.deporte);
         const curso = t.estado === 'activo';
         const etiqueta = { en_revision: 'En revisión', rechazado: 'Rechazado' }[t.estado] || (curso ? 'En curso' : 'Próximo');
@@ -105,7 +125,7 @@ function renderActive() {
                 ${t.lugar ? `<span class="pf-t-location"><i class="ti ti-map-pin"></i>${esc(t.lugar)}</span>` : ''}
             </div>
         </a>`;
-    }).join('');
+    }).join(''); });
 }
 
 /* ── Logros (calculados con la actividad real) ── */
@@ -152,7 +172,7 @@ function renderSports() {
 function renderTournamentHistory() {
     const tbody = $('pf-tournament-history-body');
     if (!data.torneos.length) { tbody.innerHTML = '<tr><td colspan="5" class="pf-empty">Sin torneos todavía.</td></tr>'; return; }
-    tbody.innerHTML = data.torneos.map(t => {
+    paginar('pf-history-pager', data.torneos, 10, pagina => { tbody.innerHTML = pagina.map(t => {
         let res = 'Inscripto', tipo = 'semifinal';
         if (t.rol === 'organizador') { res = t.estado === 'finalizado' ? 'Finalizado' : (t.estado === 'activo' ? 'En curso' : 'Inscripciones abiertas'); tipo = 'finalizado'; }
         else if (t.estado === 'activo') { res = 'En curso'; }
@@ -168,7 +188,7 @@ function renderTournamentHistory() {
             <td>${esc(rango(t.inicio, t.fin))}</td>
             <td><span class="pf-tournament-result-badge pf-tr--${tipo}">${res}</span></td>
         </tr>`;
-    }).join('');
+    }).join(''); });
 }
 
 /* ── Historial de partidos ── */

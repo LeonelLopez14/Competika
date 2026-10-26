@@ -53,6 +53,7 @@
 }
 .tv-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
 .tv-title-row h1 {
+    margin: 0;
     font-family: var(--font-display);
     font-size: clamp(2rem, 5vw, 3.2rem);
     font-weight: 800;
@@ -272,10 +273,11 @@
 }
 
 /* Campeón, invitaciones y mi equipo */
-.tv-campeon { display: flex; align-items: center; gap: 16px; margin: 0 0 20px; padding: 18px 22px; border-radius: 18px;
+.tv-campeon { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; padding: 10px 18px; border-radius: 18px;
     background: linear-gradient(135deg, rgba(106, 35, 220, .16), rgba(130, 76, 218, .08)); }
+.tv-campeon-img { width: 60px; height: auto; flex-shrink: 0; margin: -9px -2px -5px -6px; }
 .tv-campeon > i { font-size: 2.2rem; color: var(--blue-violet-dark, #6a23dc); }
-.tv-campeon-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+.tv-campeon-label { position: relative; top: -4px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
 .tv-campeon-nombre { font-size: 1.4rem; font-weight: 800; }
 .tv-invitaciones { display: flex; flex-direction: column; gap: 10px; margin: 0 0 20px; }
 .tv-invitacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px;
@@ -286,6 +288,8 @@
 .tv-integrantes { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .tv-integrantes li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
 .tv-integrantes .tv-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(108, 92, 231, .12); }
+.tv-integrantes .tv-tag { white-space: nowrap; }
+.tv-integrantes .tv-tag--cap { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border-radius: 50%; background: var(--blue-violet-dark, #6a23dc); color: #fff; }
 .tv-integrantes .tv-pendiente { opacity: .6; font-style: italic; }
 .tv-icon-btn { border: 0; background: none; cursor: pointer; padding: 4px; border-radius: 8px; color: inherit; opacity: .6; }
 .tv-icon-btn:hover, .tv-icon-btn:focus-visible { opacity: 1; background: rgba(0, 0, 0, .06); }
@@ -299,3 +303,19 @@
 .tv-dialog-nota { font-size: 13px; opacity: .7; margin: -4px 0 12px; }
 .tv-dialog-nota:empty { display: none; }
 .tv-grupo-titulo { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 6px; opacity: .7; }
+.tv-pager { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; }
+.tv-pager-info { font-size: 13px; color: rgba(33,33,33,0.6); }
+.tv-pager .tv-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+/* Llave de eliminación */
+.tv-llave { display: flex; gap: 22px; overflow-x: auto; padding-bottom: 8px; }
+.tv-llave-col { display: flex; flex-direction: column; min-width: 190px; flex: 1; }
+.tv-llave-fase { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(33,33,33,0.55); margin: 0 0 10px; }
+.tv-llave-partidos { display: flex; flex-direction: column; justify-content: space-around; gap: 12px; flex: 1; }
+.tv-llave-partido { border: 1px solid rgba(95,31,197,0.18); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.55); }
+.tv-llave-lado { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+.tv-llave-lado + .tv-llave-lado { border-top: 1px solid rgba(95,31,197,0.12); }
+.tv-llave-lado.tv-gana { color: #1f8a6a; }
+.tv-llave-lado.tv-mio { background: rgba(130,76,218,0.1); }
+.tv-llave-pts { font-weight: 800; }
+.tv-layout--ancho { grid-template-columns: minmax(0, 1fr); }
+.tv-layout--ancho .tv-col--side { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; align-items: start; }

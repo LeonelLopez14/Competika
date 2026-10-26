@@ -150,12 +150,55 @@ function tablaHtml(equipos) {
             <td class="tv-pts">${e.points}</td></tr>`).join('')}</tbody></table></div>`;
 }
 
+// ── Llave de eliminación ───────────────────────────────
+const FORMATOS_LLAVE = ['eliminacion-simple', 'blitz', 'eliminacion-doble'];
+
+function llaveLado(id, puntos, gana) {
+    return `<div class="tv-llave-lado ${gana ? 'tv-gana' : ''} ${t.myTeam && id === t.myTeam ? 'tv-mio' : ''}">
+        <span class="tv-llave-nombre">${esc(nombreEquipo(id))}</span><span class="tv-llave-pts">${puntos ?? ''}</span></div>`;
+}
+
+function llaveColumnas(partidos) {
+    const fases = [];
+    partidos.forEach(m => { if (!fases.includes(m.phase)) fases.push(m.phase); });
+    return `<div class="tv-llave">${fases.map(f => `
+        <div class="tv-llave-col">
+            <p class="tv-llave-fase">${esc(f.replace(/^Ganadores · /, ''))}</p>
+            <div class="tv-llave-partidos">${partidos.filter(m => m.phase === f).map(m => `
+                <div class="tv-llave-partido">
+                    ${llaveLado(m.home, m.played ? m.homeScore : null, m.played && m.homeScore > m.awayScore)}
+                    ${llaveLado(m.away, m.played ? m.awayScore : null, m.played && m.awayScore > m.homeScore)}
+                </div>`).join('')}</div>
+        </div>`).join('')}</div>`;
+}
+
+function llaveHtml(partidos) {
+    const orden = [...partidos].sort((a, b) => Number(a.id) - Number(b.id));
+    if (t.formatSubId !== 'eliminacion-doble') return llaveColumnas(orden);
+    const ganadores = orden.filter(m => m.phase.startsWith('Ganadores'));
+    const perdedores = orden.filter(m => m.phase.startsWith('Perdedores'));
+    const final = orden.filter(m => !m.phase.startsWith('Ganadores') && !m.phase.startsWith('Perdedores'));
+    return [['Llave de ganadores', ganadores], ['Llave de perdedores', perdedores], ['Final', final]]
+        .filter(([, l]) => l.length).map(([titulo, l]) => `<p class="tv-grupo-titulo">${titulo}</p>${llaveColumnas(l)}`).join('');
+}
+
 function renderTabla() {
     const cont = $('tv-tabla');
+    const titulo = cont.closest('section').querySelector('.tv-card-title');
+    // Llaves de eliminación: el contenido va a todo el ancho y la información lateral pasa abajo
+    document.querySelector('.tv-layout').classList.toggle('tv-layout--ancho', FORMATOS_LLAVE.includes(t.formatSubId));
+    if (FORMATOS_LLAVE.includes(t.formatSubId)) {
+        titulo.innerHTML = '<i class="ti ti-hierarchy-3"></i> Llave del torneo';
+        cont.innerHTML = t.matches.length ? llaveHtml(t.matches)
+            : '<p class="tv-vacio">La llave se arma cuando el organizador genera el fixture.</p>';
+        return;
+    }
     if (!t.teams.length) { cont.innerHTML = '<p class="tv-vacio">Todavía no hay equipos inscriptos.</p>'; return; }
     const grupos = [...new Set(t.teams.map(e => e.group).filter(Boolean))].sort();
     cont.innerHTML = grupos.length
         ? grupos.map(g => `<p class="tv-grupo-titulo">Grupo ${esc(g)}</p>${tablaHtml(t.teams.filter(e => e.group === g))}`).join('')
+            + (t.formatSubId === 'grupos' && t.matches.some(m => !m.phase.startsWith('Grupo '))
+                ? `<p class="tv-grupo-titulo">Eliminatorias</p>${llaveHtml(t.matches.filter(m => !m.phase.startsWith('Grupo ')))}` : '')
         : tablaHtml(t.teams);
 }
 
@@ -178,15 +221,31 @@ function partidoHtml(m) {
     </li>`;
 }
 
+const TAM_PARTIDOS = 5;
+const pagPartidos = { 'tv-proximos': 1, 'tv-resultados': 1 };
+
+function listaPartidos(id, lista, vacio) {
+    const cont = $(id);
+    const paginas = Math.max(1, Math.ceil(lista.length / TAM_PARTIDOS));
+    const pag = pagPartidos[id] = Math.min(pagPartidos[id], paginas);
+    const visibles = lista.slice((pag - 1) * TAM_PARTIDOS, pag * TAM_PARTIDOS);
+    cont.innerHTML = lista.length
+        ? `<ul class="tv-partidos">${visibles.map(partidoHtml).join('')}</ul>` + (paginas > 1 ? `
+        <div class="tv-pager">
+            <button class="tv-btn tv-btn--ghost" data-d="-1" ${pag === 1 ? 'disabled' : ''}><i class="ti ti-chevron-left"></i> Anterior</button>
+            <span class="tv-pager-info">Página ${pag} de ${paginas}</span>
+            <button class="tv-btn tv-btn--ghost" data-d="1" ${pag === paginas ? 'disabled' : ''}>Siguiente <i class="ti ti-chevron-right"></i></button>
+        </div>` : '')
+        : `<p class="tv-vacio">${vacio}</p>`;
+    cont.querySelectorAll('.tv-pager button').forEach(b => b.addEventListener('click', () => {
+        pagPartidos[id] += Number(b.dataset.d);
+        listaPartidos(id, lista, vacio);
+    }));
+}
+
 function renderPartidos() {
-    const proximos = t.matches.filter(m => !m.played);
-    const jugados = t.matches.filter(m => m.played).reverse();      // el más reciente primero
-    $('tv-proximos').innerHTML = proximos.length
-        ? `<ul class="tv-partidos">${proximos.map(partidoHtml).join('')}</ul>`
-        : '<p class="tv-vacio">No hay partidos programados.</p>';
-    $('tv-resultados').innerHTML = jugados.length
-        ? `<ul class="tv-partidos">${jugados.map(partidoHtml).join('')}</ul>`
-        : '<p class="tv-vacio">Todavía no se jugó ningún partido.</p>';
+    listaPartidos('tv-proximos', t.matches.filter(m => !m.played), 'No hay partidos programados.');
+    listaPartidos('tv-resultados', t.matches.filter(m => m.played).reverse(), 'Todavía no se jugó ningún partido.');   // el más reciente primero
 }
 
 // ── Información lateral ────────────────────────────────
@@ -286,7 +345,7 @@ async function renderMiEquipo() {
     $('tv-miequipo').innerHTML = `
       <ul class="tv-integrantes">
         ${eq.members.map(m => `<li><span>${esc(m.name)}${m.me ? ' (vos)' : ''}</span><span>
-          ${m.captain ? '<span class="tv-tag">Capitán</span>' : ''}
+          ${m.captain ? '<span class="tv-tag tv-tag--cap" title="Capitán" aria-label="Capitán">C</span>' : ''}
           ${t.rules?.competitive && !m.carne ? '<span class="tv-tag" title="Sin carné de deportista">Sin carné</span>' : ''}
           ${eq.isCaptain && !m.captain ? `<button class="tv-icon-btn" data-quitar="${esc(m.key)}" title="Quitar del equipo" aria-label="Quitar a ${esc(m.name)}"><i class="ti ti-user-minus"></i></button>` : ''}
         </span></li>`).join('')}

@@ -12,3 +12,6 @@
 .jz-carga input:focus { outline: none; border-color: var(--blue-violet-dark); }
 .jz-carga .tv-btn { padding: 9px 14px; }
 @media (max-width: 900px) { .jz-layout { grid-template-columns: 1fr; } }
+.tv-hero { gap: 6px; }
+.tv-hero h1 { margin: 0; text-transform: uppercase; }
+.tv-hero .tv-eyebrow { font-size: 16px; }

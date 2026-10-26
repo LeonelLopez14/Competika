@@ -5,3 +5,7 @@ config/local.php
 uploads/avatars/*
 !uploads/avatars/.gitkeep
 vendor/
+
+
+# Solo para desarrollo local con Docker (monta el código sin reconstruir)
+docker-compose.override.yml
