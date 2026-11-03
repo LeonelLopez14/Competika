@@ -12,6 +12,18 @@ let tdIsAdmin = false;
 // ── Utilidades ────────────────────────────────────────────────────────
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = id => document.getElementById(id);
+
+// Respuesta del juez principal a la invitación del organizador
+const JUEZ_ESTADO = {
+  pendiente: ['ti-hourglass', 'Esperando que acepte la invitación. Hasta entonces no podés iniciar el torneo.'],
+  aceptado:  ['ti-circle-check', 'Aceptó ser el juez principal.'],
+  rechazado: ['ti-circle-x', 'Rechazó la invitación. Elegí a otro juez y guardá las reglas para invitarlo.'],
+};
+function juezEstadoHtml(t) {
+  const r = t.rules, e = JUEZ_ESTADO[r.mainJudgeStatus];
+  if (!r.competitive || !r.mainJudgeId || !e) return '';
+  return `<p class="td-meta-small td-juez-${r.mainJudgeStatus}" id="cfg-judge-status"><i class="ti ${e[0]}"></i> <strong>${esc(r.mainJudgeName || 'El juez')}</strong>: ${e[1]}</p>`;
+}
 const money = n => `${tdData?.costs?.currencySymbol || '$'} ${Number(n).toLocaleString('es-UY')}`;
 // Monedas habilitadas (tabla moneda): se cargan una vez desde la API
 let tdMonedas = [['UYU', 'UYU — Peso uruguayo']];
@@ -169,7 +181,7 @@ const filtroChips = lista => `
         }).join('')}
     </div>`;
 let selPag = 1;
-const TAM_SEL = 10;
+const TAM_SEL = 8;
 const totalPag = lista => Math.max(1, Math.ceil(lista.length / TAM_SEL));
 const pagina = lista => { selPag = Math.min(selPag, totalPag(lista)); return lista.slice((selPag - 1) * TAM_SEL, selPag * TAM_SEL); };
 const pagerSel = lista => totalPag(lista) === 1 ? '' : `
@@ -314,7 +326,10 @@ function renderOverview() {
             <div class="td-resumen-row"><span>Fechas</span><span>${fmtDate(t.startDate)}${t.endDate ? ' → ' + fmtDate(t.endDate) : ''}</span></div>
             <div class="td-resumen-row"><span>Lugar</span><span>${esc([t.venue, t.department].filter(Boolean).join(', ') || '—')}</span></div>
             <div class="td-resumen-row"><span>Jugadores por equipo</span><span>${t.rules.playersPerTeam}</span></div>
-            <div class="td-resumen-row"><span>Competitivo</span><span>${t.rules.competitive ? 'Sí · juez ' + esc(t.rules.mainJudgeName || '—') : 'No'}</span></div>
+            <div class="td-resumen-row"><span>Competitivo</span><span>${t.rules.competitive ? 'Sí' : 'No'}</span></div>
+            ${t.rules.competitive ? `<div class="td-resumen-row"><span>Juez principal</span><span>${esc(t.rules.mainJudgeName || '—')}${
+              { pendiente: '<small class="td-juez-pendiente">Por confirmar</small>', aceptado: '<small class="td-juez-aceptado">Confirmado</small>',
+                rechazado: '<small class="td-juez-rechazado">Rechazó: elegí otro</small>' }[t.rules.mainJudgeStatus] || ''}</span></div>` : ''}
             <div class="td-resumen-row"><span>Inscripción</span><span>${t.costs.entryFee > 0 ? money(t.costs.entryFee) : 'Gratis'}</span></div>
             ${t.costs.fieldCost > 0 ? `<div class="td-resumen-row"><span>Alquiler del lugar</span><span>${money(t.costs.fieldCost)}</span></div>` : ''}
             ${t.costs.refereeCost > 0 ? `<div class="td-resumen-row"><span>Costo de árbitro</span><span>${money(t.costs.refereeCost)}</span></div>` : ''}
@@ -475,15 +490,18 @@ function renderConfig() {
               <span class="absolute left-1 h-5 w-5 rounded-full bg-cloud-dancer shadow transition-transform duration-300 peer-checked:translate-x-5"></span>
             </span></label>
           <div class="input-group" id="cfg-judge-group" style="${t.rules.competitive ? '' : 'display:none'}">
-            <select id="cfg-main-judge" class="input-field"><option value="">Elegí un juez…</option>${tdJueces.map(j =>
-              `<option value="${esc(j.id)}"${j.id === t.rules.mainJudgeId ? ' selected' : ''}>${esc(j.name)}${j.certified ? ' · certificado' : ''}</option>`).join('')}</select>
+            <select id="cfg-main-judge" class="input-field"><option value="">Elegí un juez…</option>${competikaJuezOpciones(tdJueces, t.department, t.rules.mainJudgeId)}</select>
             <label for="cfg-main-judge" class="floating-label" ${FL}>Juez principal (obligatorio)</label></div>
+          <p class="td-meta-small" id="cfg-judge-info" style="${t.rules.competitive ? '' : 'display:none'}">${esc(competikaJuezDetalle(tdJueces.find(j => j.id === t.rules.mainJudgeId), t.department))}</p>
+          <div id="cfg-judge-status-wrap" style="${t.rules.competitive ? '' : 'display:none'}">${juezEstadoHtml(t)}</div>
           <button class="td-btn-primary" data-action="save-rules"><i class="ti ti-device-floppy"></i> Guardar reglas</button>
         </div>
         <div class="td-card">
-          <p class="td-card-label"><i class="ti ti-gavel"></i> Árbitro principal</p>
+          <div id="cfg-ref-block"${t.rules.competitive ? ' style="display:none"' : ''}>
+          <p class="td-card-label"><i class="ti ti-gavel"></i> Árbitro (opcional)</p>
           <div class="mt-4">${field('cfg-ref-name', 'Nombre completo', t.referee?.name, 'text', 'maxlength="150"')}</div>
           <div class="td-ep-row2">${field('cfg-ref-phone', 'Teléfono', t.referee?.phone, 'tel', 'maxlength="20"')}${field('cfg-ref-email', 'Correo electrónico', t.referee?.email, 'email', 'maxlength="150"')}</div>
+          </div>
           <p class="td-card-label mt-4"><i class="ti ti-user-circle"></i> Contacto del organizador</p>
           <div class="mt-4">${field('cfg-org-name', 'Nombre de contacto', t.organizer?.name, 'text', 'maxlength="150"')}</div>
           <div class="td-ep-row2">${field('cfg-org-phone', 'Teléfono de contacto', t.organizer?.phone, 'tel', 'maxlength="20"')}${field('cfg-org-email', 'Correo de contacto', t.organizer?.email, 'email', 'maxlength="150"')}</div>
@@ -630,9 +648,9 @@ function openMatch(id) {
             <span class="absolute left-1 h-5 w-5 rounded-full bg-cloud-dancer shadow transition-transform duration-300 peer-checked:translate-x-5"></span>
           </span></label>
         <div class="td-ep-score-row" id="ep-score-row" style="${m.played ? '' : 'display:none'}">
-          <div class="td-ep-score-team"><span class="td-ep-score-name">Local</span><input type="number" id="ep-home-score" class="td-score-input" value="${m.homeScore ?? ''}" min="0" ${locked ? 'disabled' : ''}></div>
+          <div class="td-ep-score-team"><span class="td-ep-score-name">Local</span><input type="number" id="ep-home-score" class="td-score-input" value="${m.homeScore ?? ''}" min="0" step="1" inputmode="numeric" ${locked ? 'disabled' : ''}></div>
           <span class="td-ep-score-dash">—</span>
-          <div class="td-ep-score-team"><span class="td-ep-score-name">Visitante</span><input type="number" id="ep-away-score" class="td-score-input" value="${m.awayScore ?? ''}" min="0" ${locked ? 'disabled' : ''}></div>
+          <div class="td-ep-score-team"><span class="td-ep-score-name">Visitante</span><input type="number" id="ep-away-score" class="td-score-input" value="${m.awayScore ?? ''}" min="0" step="1" inputmode="numeric" ${locked ? 'disabled' : ''}></div>
         </div>
         ${locked ? '<p class="td-meta-small" style="color:var(--blue-violet-dark)"><i class="ti ti-lock"></i> Torneo competitivo: el resultado lo carga el juez del partido.</p>' : ''}
         <p class="td-meta-small">Los resultados quedan registrados de forma permanente: se pueden corregir, pero el partido ya no podrá eliminarse.</p>
@@ -658,6 +676,11 @@ function closeMatch() {
 
 // ═════════════════════════════════════════ ACCIONES (delegación de eventos)
 const val = id => $(id)?.value.trim() ?? '';
+
+// El marcador solo admite números enteros: se bloquean el punto, la coma, el signo y la "e"
+document.addEventListener('keydown', (e) => {
+    if (e.target.matches?.('.td-score-input') && ['.', ',', 'e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+});
 const tid = () => ({ id: tdData.id });
 
 const ACTIONS = {
@@ -741,7 +764,7 @@ const ACTIONS = {
 
     'save-contacts': async () => {
         const body = {
-            referee: { name: val('cfg-ref-name'), phone: val('cfg-ref-phone'), email: val('cfg-ref-email') },
+            ...($('cfg-competitive')?.checked ? {} : { referee: { name: val('cfg-ref-name'), phone: val('cfg-ref-phone'), email: val('cfg-ref-email') } }),
             contact: { name: val('cfg-org-name'), phone: val('cfg-org-phone'), email: val('cfg-org-email') },
         };
         if (await call('update', { method: 'POST', params: tid(), body }, 'Árbitro y contacto guardados ✓')) { await reload(); rerender(); }
@@ -756,6 +779,9 @@ const ACTIONS = {
     'close-match': () => closeMatch(),
     'save-match': async () => {
         const played = $('ep-played').checked;
+        if (played && !$('ep-played').disabled && !['ep-home-score', 'ep-away-score'].every(id => /^\d+$/.test(val(id)))) {
+            toast('El marcador debe ser un número entero, sin decimales', 'warn'); return;
+        }
         const body = {
             home: val('ep-home'), away: val('ep-away'), date: val('ep-date'), time: val('ep-time'),
             venue: val('ep-venue'), phase: val('ep-phase'), judge: val('ep-judge'),
@@ -791,7 +817,16 @@ root.addEventListener('click', e => {
     if (el && root.contains(el) && ACTIONS[el.dataset.action] && !el.disabled) ACTIONS[el.dataset.action](el);
 });
 root.addEventListener('change', e => {
-    if (e.target.id === 'cfg-competitive') $('cfg-judge-group').style.display = e.target.checked ? '' : 'none';
+    if (e.target.id === 'cfg-main-judge') {
+      const dep = ($('cfg-dep') && $('cfg-dep').value) || (tdData && tdData.department) || '';
+      $('cfg-judge-info').textContent = competikaJuezDetalle(tdJueces.find(j => j.id === e.target.value), dep);
+    }
+    if (e.target.id === 'cfg-competitive') {
+      $('cfg-judge-group').style.display = e.target.checked ? '' : 'none';
+      $('cfg-judge-info').style.display = e.target.checked ? '' : 'none';
+      $('cfg-judge-status-wrap').style.display = e.target.checked ? '' : 'none';
+      if ($('cfg-ref-block')) $('cfg-ref-block').style.display = e.target.checked ? 'none' : '';
+    }
 });
 root.addEventListener('keydown', e => {
     const el = e.target.closest('[data-action="edit-match"]');

@@ -11,11 +11,62 @@ class JuezRepository extends BaseRepository {
         return $v === false ? null : (int)$v;
     }
 
-    /** Jueces habilitados: [{id, nombre, certificado}] para asignarlos a partidos. */
+    /**
+     * Jueces habilitados, con su experiencia (partidos con resultado cargado) para que el organizador elija con datos.
+     * @return array<int, array{id: string, name: string, certified: bool, department: ?string, matches: int, tournaments: int, sports: string[]}>
+     */
     public function todos(): array {
-        return array_map(fn($f) => ['id' => (string)$f['juez_id'], 'name' => $f['nombre'], 'certified' => (bool)$f['certificado']],
-            $this->filas("SELECT j.juez_id, j.certificado, CONCAT(u.nombre, ' ', u.apellido) AS nombre
-                          FROM juez j JOIN usuario u ON u.ci = j.usuario_ci_fk ORDER BY u.nombre, u.apellido"));
+        return array_map(fn($f) => [
+            'id' => (string)$f['juez_id'], 'name' => $f['nombre'], 'certified' => (bool)$f['certificado'],
+            'department' => $f['departamento'] ?: null,
+            'matches' => (int)$f['partidos'], 'tournaments' => (int)$f['torneos'],
+            'sports' => $f['deportes'] !== null && $f['deportes'] !== '' ? explode(', ', $f['deportes']) : [],
+        ], $this->filas("
+            SELECT j.juez_id, j.certificado, j.departamento, CONCAT(u.nombre, ' ', u.apellido) AS nombre,
+                   (SELECT COUNT(DISTINCT ej.enfrentamiento_id_fk) FROM enfrentamiento_juez ej
+                      JOIN resultado r ON r.enfrentamiento_id_fk = ej.enfrentamiento_id_fk AND r.estado <> 'pendiente'
+                     WHERE ej.juez_id_fk = j.juez_id) AS partidos,
+                   (SELECT COUNT(DISTINCT e.torneo_id_fk) FROM enfrentamiento_juez ej
+                      JOIN enfrentamiento e ON e.enfrentamiento_id = ej.enfrentamiento_id_fk
+                      JOIN resultado r ON r.enfrentamiento_id_fk = e.enfrentamiento_id AND r.estado <> 'pendiente'
+                     WHERE ej.juez_id_fk = j.juez_id) AS torneos,
+                   (SELECT GROUP_CONCAT(DISTINCT t.deporte ORDER BY t.deporte SEPARATOR ', ') FROM enfrentamiento_juez ej
+                      JOIN enfrentamiento e ON e.enfrentamiento_id = ej.enfrentamiento_id_fk
+                      JOIN torneo t ON t.torneo_id = e.torneo_id_fk
+                      JOIN resultado r ON r.enfrentamiento_id_fk = e.enfrentamiento_id AND r.estado <> 'pendiente'
+                     WHERE ej.juez_id_fk = j.juez_id AND t.deporte IS NOT NULL AND t.deporte <> '') AS deportes
+            FROM juez j JOIN usuario u ON u.ci = j.usuario_ci_fk
+            WHERE u.bloqueado = 0
+            ORDER BY u.nombre, u.apellido"));
+    }
+
+    public function departamentoDe(string $ci): ?string {
+        $v = $this->valor("SELECT departamento FROM juez WHERE usuario_ci_fk = ? ORDER BY juez_id LIMIT 1", [$ci]);
+        return $v === false || $v === null || $v === '' ? null : (string)$v;
+    }
+
+    public function guardarDepartamento(string $ci, ?string $departamento): void {
+        $this->ejecutar("UPDATE juez SET departamento = ? WHERE usuario_ci_fk = ?", [$departamento, $ci]);
+    }
+
+    /** Torneos competitivos que eligieron a este juez como principal y esperan su respuesta. */
+    public function invitaciones(int $juezId): array {
+        return $this->filas("
+            SELECT t.torneo_id, t.nombre, t.deporte, t.fecha_inicio, t.fecha_fin, t.direccion, t.departamento,
+                   CONCAT(uo.nombre, ' ', uo.apellido) AS organizador
+            FROM configuracion_torneo c
+            JOIN torneo t ON t.torneo_id = c.torneo_id_fk
+            JOIN organizador o ON o.organizador_id = t.organizador_id_fk
+            JOIN usuario uo ON uo.ci = o.usuario_ci_fk
+            WHERE c.juez_principal_fk = ? AND c.competitivo = 1 AND c.juez_estado = 'pendiente' AND t.estado <> 'rechazado'
+            ORDER BY t.torneo_id DESC", [$juezId]);
+    }
+
+    /** Guarda la respuesta del juez; devuelve false si la invitación ya no estaba pendiente (la cambió el organizador). */
+    public function responderInvitacion(int $juezId, int $torneoId, bool $acepta): bool {
+        return $this->ejecutar("UPDATE configuracion_torneo SET juez_estado = ?
+                                WHERE torneo_id_fk = ? AND juez_principal_fk = ? AND competitivo = 1 AND juez_estado = 'pendiente'",
+            [$acepta ? 'aceptado' : 'rechazado', $torneoId, $juezId]) > 0;
     }
 
     /** Alta directa (la hace un administrador, sin solicitud). */

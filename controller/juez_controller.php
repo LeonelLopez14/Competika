@@ -15,7 +15,49 @@ class JuezController {
     public function estado(): array {
         $ci = Auth::exigirLogin();
         return ['success' => true, 'isJudge' => $this->jueces->juezId($ci) !== null,
-                'request' => $this->jueces->ultimaSolicitud($ci)?->toArray()];
+                'request' => $this->jueces->ultimaSolicitud($ci)?->toArray(),
+                'department' => $this->jueces->departamentoDe($ci)];
+    }
+
+    /** Departamento donde el juez suele arbitrar (se muestra a los organizadores al elegir juez). */
+    public function guardarDepartamento(Request $req): array {
+        $this->juezActual();
+        $dep = Validar::texto($req->json()['department'] ?? null, 100);
+        $this->jueces->guardarDepartamento(Auth::ci(), $dep);
+        return ['success' => true, 'department' => $dep];
+    }
+
+    /** Torneos que lo eligieron juez principal y esperan su respuesta. */
+    public function invitaciones(): array {
+        $ci = Auth::exigirLogin();
+        $juez = $this->jueces->juezId($ci);
+        if ($juez === null) throw ApiException::prohibido('Esta sección es solo para jueces.');
+        $miDep = $this->jueces->departamentoDe($ci);
+        return ['success' => true, 'invitations' => array_map(fn($f) => [
+            'tournamentId' => (int)$f['torneo_id'], 'tournament' => $f['nombre'], 'sport' => $f['deporte'],
+            'start' => $f['fecha_inicio'], 'end' => $f['fecha_fin'], 'venue' => $f['direccion'], 'department' => $f['departamento'],
+            'organizer' => $f['organizador'],
+            'sameDepartment' => $miDep !== null && $f['departamento'] !== null && mb_strtolower($miDep) === mb_strtolower($f['departamento']),
+        ], $this->jueces->invitaciones($juez))];
+    }
+
+    public function responderInvitacion(Request $req): array {
+        $ci = Auth::exigirLogin();
+        $juez = $this->jueces->juezId($ci);
+        if ($juez === null) throw ApiException::prohibido('Esta sección es solo para jueces.');
+        $d = $req->json();
+        $torneoId = (int)($d['tournamentId'] ?? 0);
+        $acepta = !empty($d['accept']);
+        if (!$this->jueces->responderInvitacion($juez, $torneoId, $acepta)) {
+            throw new ApiException('Esa invitación ya no está disponible: el organizador pudo elegir a otro juez.');
+        }
+        $torneos = new TorneoRepository();
+        $org = $torneos->ciOrganizador($torneoId);
+        if ($org !== null) {
+            (new Notificador())->respuestaJuez($org, $torneoId, (string)$torneos->nombre($torneoId),
+                (new UsuarioRepository())->nombreCompleto($ci), $acepta);
+        }
+        return ['success' => true, 'accepted' => $acepta];
     }
 
     public function solicitar(Request $req): array {

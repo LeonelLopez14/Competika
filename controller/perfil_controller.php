@@ -178,6 +178,10 @@ class PerfilController {
                 'rivales'      => count(array_unique(array_map(fn($p) => $p['rival'], $jugados))),
                 'organizados'  => count(array_filter($torneos, fn($t) => $t['rol'] === 'organizador')),
                 'participados' => count(array_filter($torneos, fn($t) => $t['rol'] === 'participante')),
+                'arbitrados'   => $this->actividad->partidosArbitrados($ci),
+                'torneosArbitrados' => $this->actividad->torneosArbitrados($ci),
+                'deportesArbitrados' => $this->actividad->deportesArbitrados($ci),
+                'finalesArbitradas' => $this->actividad->finalesArbitradas($ci),
             ],
             'hoy' => date('Y-m-d'),
         ];

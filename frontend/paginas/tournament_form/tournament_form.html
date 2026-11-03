@@ -325,7 +325,8 @@
                                             <select id="tf-main-judge" class="input-field"><option value="">Elegí un juez…</option></select>
                                             <label for="tf-main-judge" class="floating-label" style="top:0;transform:translateY(-50%) scale(0.95);font-size:12px;color:var(--blue-violet-dark)">Juez principal (obligatorio)</label>
                                         </div>
-                                        <p class="mt-2 text-xs text-darkest-hour/55" id="tf-judge-help">Se asigna a todos los partidos; después podés cambiar el juez de cada partido.</p>
+                                        <p class="mt-2 text-xs font-semibold text-blue-violet-dark" id="tf-judge-info"></p>
+                                        <p class="mt-2 text-xs text-darkest-hour/55" id="tf-judge-help">El juez principal es quien arbitra y carga los resultados. Se asigna a todos los partidos; después podés cambiar el juez de cada partido.</p>
                                     </div>
                                 </div>
 
@@ -352,11 +353,11 @@
                                     </div>
                                 </div>
 
-                                <div class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
+                                <div id="tf-referee-card" class="flex flex-col gap-5 rounded-2xl border border-blue-violet/15 bg-cloud-dancer p-6">
                                     <div>
                                         <h3 class="flex items-center gap-2 font-display text-base font-bold uppercase tracking-wide text-darkest-hour">
                                             <i class="ti ti-gavel text-blue-violet-dark"></i>
-                                            Árbitro principal
+                                            Árbitro (opcional)
                                         </h3>
                                         <p class="mt-1 text-xs text-darkest-hour/45">Opcional. Podés completarlo más tarde desde el panel del torneo.</p>
                                     </div>

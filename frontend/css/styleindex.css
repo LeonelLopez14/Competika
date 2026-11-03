@@ -282,6 +282,7 @@
     padding: 0 5%;
 }
 
+.sports-h1 .palabra { display: inline-block; white-space: nowrap; }
 .sports-h1 .letra { display: inline-block; opacity: 0; animation: none; }
 .sports-h1.animate .letra { animation: fadeUp 0.4s ease forwards; }
 

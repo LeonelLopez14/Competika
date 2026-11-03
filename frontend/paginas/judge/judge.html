@@ -115,6 +115,19 @@
             <a class="tv-btn tv-btn--ghost" href="../profile_configuration/profile_configuration.html"><i class="ti ti-settings"></i> Ir a Configuración</a>
         </div>
         <div class="tv-layout jz-layout" id="jz-panel" hidden>
+            <section class="tv-card jz-ancho" id="jz-invit-card" hidden>
+                <h2 class="tv-card-title"><i class="ti ti-mail-forward"></i> Invitaciones para ser juez principal</h2>
+                <p class="tv-descripcion">Un organizador te eligió como juez principal. Mirá si te sirve (fecha, lugar y departamento) y aceptá o rechazá. Si rechazás, el organizador puede elegir a otro juez.</p>
+                <ul class="tv-partidos" id="jz-invitaciones"></ul>
+            </section>
+            <section class="tv-card jz-ancho">
+                <h2 class="tv-card-title"><i class="ti ti-map-pin"></i> Dónde arbitro</h2>
+                <p class="tv-descripcion">Los organizadores ven tu departamento al elegir juez, así saben si te queda cerca.</p>
+                <div class="jz-dep">
+                    <select id="jz-dep" aria-label="Departamento donde arbitrás"></select>
+                    <button class="tv-btn tv-btn--primary" id="jz-dep-guardar"><i class="ti ti-device-floppy"></i> Guardar</button>
+                </div>
+            </section>
             <section class="tv-card">
                 <h2 class="tv-card-title"><i class="ti ti-calendar-event"></i> Por arbitrar</h2>
                 <ul class="tv-partidos" id="jz-pendientes"></ul>
@@ -191,6 +204,7 @@
     <script src="../../js/main.js?v=20261015"></script>
     <script src="../../js/navbar-user.js?v=20261015"></script>
     <script src="../../js/tournament-api.js?v=20261015"></script>
+    <script src="../../js/paginacion.js?v=20261103"></script>
     <script src="../../js/judge.js?v=20261015"></script>
 </body>
 </html>

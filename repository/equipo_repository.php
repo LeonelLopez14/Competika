@@ -137,8 +137,8 @@ class EquipoRepository extends BaseRepository {
 
     /** Integrantes del equipo: [{ci, nombre, carne}] */
     public function integrantes(int $equipoId): array {
-        return array_map(fn($f) => ['ci' => $f['usuario_ci_fk'], 'nombre' => $f['nombre'], 'carne' => (bool)$f['carne_deportista']],
-            $this->filas("SELECT p.usuario_ci_fk, CONCAT(u.nombre, ' ', u.apellido) AS nombre, p.carne_deportista
+        return array_map(fn($f) => ['ci' => $f['usuario_ci_fk'], 'nombre' => $f['nombre'], 'carne' => (bool)$f['carne_deportista'], 'pid' => (int)$f['participante_id']],
+            $this->filas("SELECT p.participante_id, p.usuario_ci_fk, CONCAT(u.nombre, ' ', u.apellido) AS nombre, p.carne_deportista
                           FROM equipo_participante ep JOIN participante p ON p.participante_id = ep.participante_id_fk
                           JOIN usuario u ON u.ci = p.usuario_ci_fk WHERE ep.equipo_id_fk = ? ORDER BY ep.participante_id_fk", [$equipoId]));
     }
@@ -159,9 +159,9 @@ class EquipoRepository extends BaseRepository {
     }
 
     public function abiertosDelTorneo(int $torneoId, int $maximo): array {
-        return array_map(fn($f) => ['id' => (string)$f['equipo_id'], 'name' => $f['nombre'], 'captain' => $f['capitan'],
+        return array_map(fn($f) => ['id' => (string)$f['equipo_id'], 'name' => $f['nombre'], 'captain' => $f['capitan'], 'captainId' => (int)$f['capitan_pid'],
                                     'members' => (int)$f['integrantes'], 'max' => $maximo],
-            $this->filas("SELECT e.equipo_id, e.nombre, CONCAT(uc.nombre, ' ', uc.apellido) AS capitan,
+            $this->filas("SELECT e.equipo_id, e.nombre, CONCAT(uc.nombre, ' ', uc.apellido) AS capitan, pc.participante_id AS capitan_pid,
                                  (SELECT COUNT(*) FROM equipo_participante ep WHERE ep.equipo_id_fk = e.equipo_id) AS integrantes
                           FROM tabla_posiciones tp
                           JOIN equipo e ON e.equipo_id = tp.equipo_id_fk

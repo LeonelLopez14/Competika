@@ -43,15 +43,11 @@ mobileMenu?.querySelectorAll('a').forEach(link => link.addEventListener('click',
 const paragraph = document.querySelector('.info-paragraph');
 
 if (paragraph) {
-    const obs = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                paragraph.classList.add('animate');
-                obs.unobserve(paragraph);
-            }
-        });
-    }, { threshold: 0.1 });
-    obs.observe(paragraph);
+    // Arranca al cargar la página, sin depender del scroll (en el celular el detector fallaba a veces)
+    const iniciarParrafo = () => paragraph.classList.add('animate');
+    if (document.readyState === 'complete') iniciarParrafo();
+    else window.addEventListener('load', iniciarParrafo, { once: true });
+
 }
 
 // ── Título principal ──────────────────────────────
@@ -209,12 +205,20 @@ const sportsH1 = document.querySelector('.sports-h1');
 if (sportsH1) {
     const texto = sportsH1.textContent;
     sportsH1.textContent = '';
-    texto.split('').forEach((char, i) => {
-        const span = document.createElement('span');
-        span.className = 'letra';
-        span.textContent = char === ' ' ? '\u00A0' : char;
-        span.style.animationDelay = `${i * 0.05}s`;
-        sportsH1.appendChild(span);
+    // Las letras van agrupadas por palabra para que el título nunca se corte en medio de una palabra
+    let i = 0;
+    texto.split(' ').forEach((palabra, n, todas) => {
+        const grupo = document.createElement('span');
+        grupo.className = 'palabra';
+        palabra.split('').forEach((char) => {
+            const span = document.createElement('span');
+            span.className = 'letra';
+            span.textContent = char;
+            span.style.animationDelay = `${i++ * 0.05}s`;
+            grupo.appendChild(span);
+        });
+        sportsH1.appendChild(grupo);
+        if (n < todas.length - 1) { sportsH1.appendChild(document.createTextNode(' ')); i++; }
     });
 
     const obsTitle = new IntersectionObserver(entries => {

@@ -3,6 +3,9 @@
 class ConfiguracionTorneo {
     public const CUPO_POR_DEFECTO = 8;
     public const VIDAS_POR_DEFECTO = 3;
+    public const JUEZ_PENDIENTE = 'pendiente';     // el organizador lo eligió y todavía no respondió
+    public const JUEZ_ACEPTADO = 'aceptado';
+    public const JUEZ_RECHAZADO = 'rechazado';
 
     private bool $competitivo = false;
     private int $jugadoresPorEquipo = 1;
@@ -10,6 +13,7 @@ class ConfiguracionTorneo {
     private ?int $cantGrupos = null;
     private ?int $juezPrincipalId = null;
     private ?string $juezPrincipalNombre = null;
+    private string $juezEstado = self::JUEZ_ACEPTADO;
 
     public function __construct(
         private ?int $id = null,
@@ -39,6 +43,7 @@ class ConfiguracionTorneo {
         $c->cantGrupos = isset($f['cant_grupos']) ? (int)$f['cant_grupos'] : null;
         $c->juezPrincipalId = isset($f['juez_principal_fk']) ? (int)$f['juez_principal_fk'] : null;
         $c->juezPrincipalNombre = $f['juez_principal_nombre'] ?? null;
+        $c->juezEstado = $f['juez_estado'] ?? self::JUEZ_ACEPTADO;
         return $c;
     }
 
@@ -55,6 +60,7 @@ class ConfiguracionTorneo {
     public function getVidas(): int { return $this->vidas ?? self::VIDAS_POR_DEFECTO; }
     public function getCantGrupos(): ?int { return $this->cantGrupos; }
     public function getJuezPrincipalId(): ?int { return $this->juezPrincipalId; }
+    public function getJuezEstado(): string { return $this->juezEstado; }
 
     public function setCupo(int $c): void { $this->cupo = $c; }
     public function setPrecioInscripcion(float $v): void { $this->precioInscripcion = $v; }
@@ -68,6 +74,7 @@ class ConfiguracionTorneo {
     public function setVidas(?int $n): void { $this->vidas = $n; }
     public function setCantGrupos(?int $n): void { $this->cantGrupos = $n; }
     public function setJuezPrincipalId(?int $id): void { $this->juezPrincipalId = $id; }
+    public function setJuezEstado(string $e): void { $this->juezEstado = $e; }
 
     public function costosToArray(): array {
         return [
@@ -87,6 +94,7 @@ class ConfiguracionTorneo {
             'groups'         => $this->cantGrupos,
             'mainJudgeId'    => $this->juezPrincipalId !== null ? (string)$this->juezPrincipalId : null,
             'mainJudgeName'  => $this->juezPrincipalNombre,
+            'mainJudgeStatus' => $this->juezPrincipalId !== null ? $this->juezEstado : null,
         ];
     }
 }

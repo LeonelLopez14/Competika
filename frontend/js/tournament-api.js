@@ -37,6 +37,46 @@ async function competikaSession() {
 
 function competikaGoLogin() { window.location.href = COMPETIKA_LOGIN_URL; }
 
+/* ---------- jueces: ayudas para que el organizador elija con datos ---------- */
+
+const competikaMismoDep = (j, dep) => !!dep && !!j.department && j.department.toLowerCase() === dep.toLowerCase();
+
+/** Los del mismo departamento del torneo primero; después los que más partidos arbitraron. */
+function competikaOrdenarJueces(jueces, dep) {
+    return [...jueces].sort((a, b) => (competikaMismoDep(b, dep) - competikaMismoDep(a, dep))
+        || (b.matches - a.matches) || a.name.localeCompare(b.name, 'es'));
+}
+
+/** Texto corto de cada opción (el detalle completo se lee debajo del desplegable, que se adapta al celular). */
+function competikaJuezOpcion(j) {
+    return j.name + ' · ' + (j.matches ? `${j.matches} ${j.matches === 1 ? 'partido' : 'partidos'}` : 'nuevo');
+}
+
+/** <option> agrupadas: primero los del mismo departamento del torneo, después el resto. */
+function competikaJuezOpciones(jueces, dep, elegido) {
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const op = j => `<option value="${esc(j.id)}"${String(j.id) === String(elegido) ? ' selected' : ''}>${esc(competikaJuezOpcion(j))}</option>`;
+    const orden = competikaOrdenarJueces(jueces, dep);
+    const cerca = orden.filter(j => competikaMismoDep(j, dep)), resto = orden.filter(j => !competikaMismoDep(j, dep));
+    if (!cerca.length) return resto.map(op).join('');
+    return `<optgroup label="Mismo departamento (${esc(dep)})">${cerca.map(op).join('')}</optgroup>` +
+           (resto.length ? `<optgroup label="Otros departamentos">${resto.map(op).join('')}</optgroup>` : '');
+}
+
+/** Detalle del juez elegido, para leer debajo del desplegable. */
+function competikaJuezDetalle(j, dep) {
+    if (!j) return '';
+    const exp = j.matches
+        ? `${j.matches} ${j.matches === 1 ? 'partido arbitrado' : 'partidos arbitrados'} en ${j.tournaments} ${j.tournaments === 1 ? 'torneo' : 'torneos'}` +
+          (j.sports.length ? ` (${j.sports.join(', ')})` : '')
+        : 'Todavía no arbitró partidos en Competika';
+    const lugar = j.department
+        ? (dep ? (competikaMismoDep(j, dep) ? `Arbitra en ${j.department}: el mismo departamento del torneo.` : `Arbitra en ${j.department}; el torneo es en ${dep}.`)
+               : `Arbitra en ${j.department}.`)
+        : 'No indicó en qué departamento arbitra.';
+    return `${j.certified ? 'Juez certificado. ' : ''}${exp}. ${lugar} Tiene que aceptar la invitación antes de que puedas iniciar el torneo.`;
+}
+
 /* ---------- funciones usadas por las páginas ---------- */
 
 async function competikaListPublicTournaments() {
@@ -91,6 +131,7 @@ async function competikaInscribirse(torneoId, teamName = '') {
         show('tf-lives-group', sub === 'vidas');
         show('tf-groups-group', sub === 'grupos');
         show('tf-judge-group', !!competitive?.checked);
+        show('tf-referee-card', !competitive?.checked);
         if (judgeSel) judgeSel.required = !!competitive?.checked;
     }
     form.addEventListener('change', e => { if (e.target.name === 'tf-subtype' || e.target === competitive) syncRules(); });
@@ -103,7 +144,16 @@ async function competikaInscribirse(torneoId, teamName = '') {
             if (help) help.textContent = 'Todavía no hay jueces aprobados en el sitio; sin juez no se puede crear un torneo competitivo.';
             return;
         }
-        judgeSel.append(...r.judges.map(j => new Option(j.name + (j.certified ? ' (certificado)' : ''), j.id)));
+        const info = document.getElementById('tf-judge-info');
+        const depSel = document.getElementById('tf-department');
+        const pintar = () => {
+            const actual = judgeSel.value, dep = depSel?.value || '';
+            judgeSel.innerHTML = '<option value="">Elegí un juez…</option>' + competikaJuezOpciones(r.judges, dep, actual);
+            if (info) info.textContent = competikaJuezDetalle(r.judges.find(j => j.id === judgeSel.value), dep);
+        };
+        pintar();
+        depSel?.addEventListener('change', pintar);
+        judgeSel.addEventListener('change', pintar);
     });
 
     // Contacto del organizador: se precarga con los datos de su cuenta (editable)

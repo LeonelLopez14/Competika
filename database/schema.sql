@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS juez (
     juez_id INT AUTO_INCREMENT PRIMARY KEY,
     usuario_ci_fk VARCHAR(20) NOT NULL,
     certificado BOOLEAN,
+    departamento VARCHAR(100) NULL,         -- donde suele arbitrar (lo elige el juez)
     FOREIGN KEY (usuario_ci_fk) REFERENCES usuario(ci)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -137,6 +138,7 @@ CREATE TABLE IF NOT EXISTS configuracion_torneo (
     arbitro_persona_fk INT NULL,            -- árbitro principal
     contacto_persona_fk INT NULL,           -- NULL = datos de la cuenta del organizador
     juez_principal_fk INT NULL,             -- obligatorio si es competitivo
+    juez_estado VARCHAR(10) NOT NULL DEFAULT 'aceptado',   -- pendiente | aceptado | rechazado (respuesta del juez principal)
     torneo_id_fk INT NOT NULL,
     admin_id_fk INT NULL,                   -- solo si lo configuró un administrador
     FOREIGN KEY (torneo_id_fk) REFERENCES torneo(torneo_id),

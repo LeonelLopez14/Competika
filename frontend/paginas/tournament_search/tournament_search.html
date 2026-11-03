@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="tournament_search.css?v=20261015">
     <link rel="stylesheet" href="../../css/style..css?v=20261015">
     <link rel="stylesheet" href="../../css/forms.css?v=20261015">
+    <link rel="stylesheet" href="../../css/perfil-publico.css?v=20261015">
     <title>Buscar Torneos — Competika</title>
 </head>
 <body>
@@ -107,6 +108,10 @@
             <h1 id="buscar-titulo">BUSCAR TORNEOS</h1>
             <p id="buscar-descripcion">Inscribite o seguí los deportes que más te gustan.</p>
         </section>
+        <div id="buscar-tabs" role="tablist" aria-label="Qué querés buscar">
+            <button type="button" class="buscar-tab active" role="tab" aria-selected="true" data-tab="torneos"><i class="ti ti-trophy"></i> Torneos</button>
+            <button type="button" class="buscar-tab" role="tab" aria-selected="false" data-tab="jugadores"><i class="ti ti-users"></i> Jugadores</button>
+        </div>
         <section id="deportes-seccion">
             <div id="deportes-grilla"></div>
         </section>
@@ -147,6 +152,15 @@
                 <p>No se encontraron torneos con esos filtros.</p>
             </div>
 
+        </section>
+        <section id="jugadores-seccion" style="display:none">
+            <div id="jug-buscador-wrap">
+                <i class="ti ti-search" id="jug-buscador-icono"></i>
+                <input type="search" id="jug-buscador" placeholder="Buscá por nombre o @usuario…" autocomplete="off" maxlength="50" aria-label="Buscar jugadores">
+            </div>
+            <p id="jug-estado" role="status" aria-live="polite"></p>
+            <ul id="jug-lista"></ul>
+            <nav id="jug-pager" aria-label="Paginación de jugadores" hidden></nav>
         </section>
         <section id="banner">
             <div class="banner-bg">
@@ -249,5 +263,8 @@
     <script src="../../js/main.js?v=20261015"></script>
     <script src="../../js/navbar-user.js?v=20261015"></script>
     <script src="../../js/tournament-api.js?v=20261015"></script>
+    <script src="../../js/logros.js?v=20261015"></script>
+    <script src="../../js/perfil-publico.js?v=20261015"></script>
+    <script src="../../js/player-search.js?v=20261015"></script>
 </body>
 </html>

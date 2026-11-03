@@ -28,9 +28,17 @@ class GestorPartidos {
         if ($p->getLocalId() === null || $p->getVisitanteId() === null) {
             throw new ApiException('Para cargar un resultado, el partido necesita los dos equipos.');
         }
-        $hs = ($local ?? '') !== '' ? (float)$local : null;
-        $as = ($visitante ?? '') !== '' ? (float)$visitante : null;
-        if ($hs === null || $as === null) throw new ApiException('Ingresá el marcador de ambos equipos.');
+        if (trim((string)($local ?? '')) === '' || trim((string)($visitante ?? '')) === '') {
+            throw new ApiException('Ingresá el marcador de ambos equipos.');
+        }
+        // El marcador son goles/puntos: números enteros, sin decimales ni negativos
+        foreach ([$local, $visitante] as $m) {
+            if (!preg_match('/^\d{1,4}$/', trim((string)$m))) {
+                throw new ApiException('El marcador debe ser un número entero, sin decimales ni negativos.');
+            }
+        }
+        $hs = (float)$local;
+        $as = (float)$visitante;
         if ($hs == $as && $this->esEliminatorio($p)) {
             throw new ApiException('En una llave de eliminación no puede haber empate: cargá el resultado final (por ejemplo, después de los penales).');
         }

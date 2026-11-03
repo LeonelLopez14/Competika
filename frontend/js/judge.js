@@ -34,6 +34,86 @@ function tarjeta(m) {
     </li>`;
 }
 
+const DEPARTAMENTOS = ['Artigas','Canelones','Cerro Largo','Colonia','Durazno','Flores','Florida','Lavalleja','Maldonado','Montevideo','Paysandú','Río Negro','Rivera','Rocha','Salto','San José','Soriano','Tacuarembó','Treinta y Tres'];
+let miDepartamento = '';
+
+async function api(accion, cuerpo) {
+    try {
+        const res = await fetch(`${API}?action=${accion}`, cuerpo === undefined ? { credentials: 'same-origin' }
+            : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+        return await res.json();
+    } catch (e) { return { success: false, error: 'No se pudo conectar con el servidor.' }; }
+}
+
+function fechaCorta(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-').map(Number);
+    return `${d} ${MESES[m - 1]} ${y}`;
+}
+
+function invitacion(i) {
+    const fechas = i.start ? fechaCorta(i.start) + (i.end && i.end !== i.start ? ' → ' + fechaCorta(i.end) : '') : 'Fecha a confirmar';
+    const lugar = [i.venue, i.department].filter(Boolean).join(' · ');
+    let cerca = '';
+    if (i.department && miDepartamento) {
+        cerca = i.sameDepartment ? '<span class="jz-cerca"><i class="ti ti-check"></i> Es de tu departamento</span>'
+                                 : `<span class="jz-lejos"><i class="ti ti-route"></i> Queda en otro departamento (vos: ${esc(miDepartamento)})</span>`;
+    } else if (i.department) cerca = '<span class="jz-lejos">Guardá tu departamento para saber si te queda cerca</span>';
+    return `<li class="tv-partido" data-torneo="${esc(i.tournamentId)}">
+        <a class="jz-torneo" href="../tournament_view/tournament_view.html?t=${encodeURIComponent(i.tournamentId)}">${esc(i.tournament)}</a>
+        <div class="tv-partido-info" style="grid-column:1/-1;justify-content:center">
+            ${i.sport ? `<span><i class="ti ti-ball-football"></i>${esc(i.sport)}</span>` : ''}
+            <span><i class="ti ti-calendar"></i>${esc(fechas)}</span>
+            ${lugar ? `<span><i class="ti ti-map-pin"></i>${esc(lugar)}</span>` : ''}
+            <span><i class="ti ti-user"></i>Organiza ${esc(i.organizer)}</span>
+            ${cerca ? `<span>${cerca}</span>` : ''}
+        </div>
+        <div class="jz-invit-btns">
+            <button class="tv-btn tv-btn--primary" data-resp="1"><i class="ti ti-check"></i> Aceptar</button>
+            <button class="tv-btn tv-btn--ghost" data-resp="0"><i class="ti ti-x"></i> Rechazar</button>
+        </div>
+    </li>`;
+}
+
+async function cargarInvitaciones() {
+    const r = await api('invitations');
+    const lista = r.success ? r.invitations : [];
+    $('jz-invitaciones').innerHTML = lista.map(invitacion).join('');
+    $('jz-invit-card').hidden = lista.length === 0;
+}
+
+async function cargarDepartamento() {
+    const r = await api('status');
+    miDepartamento = (r.success && r.department) || '';
+    $('jz-dep').innerHTML = '<option value="">Sin indicar</option>' +
+        DEPARTAMENTOS.map(d => `<option value="${esc(d)}"${d === miDepartamento ? ' selected' : ''}>${esc(d)}</option>`).join('');
+}
+
+$('jz-dep-guardar').addEventListener('click', async () => {
+    const r = await api('department', { department: $('jz-dep').value });
+    if (!r.success) { toast(r.error || 'No se pudo guardar'); return; }
+    miDepartamento = r.department || '';
+    toast('Departamento guardado ✓');
+    cargarInvitaciones();
+});
+
+$('jz-invitaciones').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-resp]'); if (!b) return;
+    const li = b.closest('[data-torneo]');
+    const acepta = b.dataset.resp === '1';
+    li.querySelectorAll('button').forEach(x => { x.disabled = true; });
+    const r = await api('respond', { tournamentId: Number(li.dataset.torneo), accept: acepta });
+    if (!r.success) toast(r.error || 'No se pudo responder');
+    else toast(acepta ? 'Aceptaste ser el juez principal ✓' : 'Rechazaste la invitación');
+    if (r.success) cargar(); else cargarInvitaciones();
+});
+
+// Cinco partidos por página en cada lista
+const pagPendientes = crearPaginador({ contenedor: $('jz-pendientes'), porPagina: 5, pintar: tarjeta,
+    vacio: '<li class="tv-vacio">No tenés partidos pendientes.</li>' });
+const pagJugados = crearPaginador({ contenedor: $('jz-jugados'), porPagina: 5, pintar: tarjeta,
+    vacio: '<li class="tv-vacio">Todavía no cargaste resultados.</li>' });
+
 async function cargar() {
     let r;
     try { const res = await fetch(`${API}?action=matches`, { credentials: 'same-origin' }); r = await res.json(); r._status = res.status; }
@@ -41,16 +121,23 @@ async function cargar() {
     if (r._status === 403) { $('jz-denegado').hidden = false; $('jz-panel').hidden = true; return; }
     if (!r.success) return;
     const pend = r.matches.filter(m => !m.played), jug = r.matches.filter(m => m.played).reverse();
-    $('jz-pendientes').innerHTML = pend.length ? pend.map(tarjeta).join('') : '<li class="tv-vacio">No tenés partidos pendientes.</li>';
-    $('jz-jugados').innerHTML = jug.length ? jug.map(tarjeta).join('') : '<li class="tv-vacio">Todavía no cargaste resultados.</li>';
+    pagPendientes.mostrar(pend);
+    pagJugados.mostrar(jug);
     $('jz-panel').hidden = false;
+    cargarInvitaciones();
 }
+
+// El marcador solo admite números enteros: se bloquean el punto, la coma, el signo y la "e"
+$('jz-panel').addEventListener('keydown', (e) => {
+    if (e.target.matches('[data-lado]') && ['.', ',', 'e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+});
 
 $('jz-panel').addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-guardar]'); if (!btn) return;
     const li = btn.closest('.tv-partido');
     const home = li.querySelector('[data-lado=home]').value, away = li.querySelector('[data-lado=away]').value;
     if (home === '' || away === '') { toast('Ingresá el marcador de los dos equipos'); return; }
+    if (!/^\d+$/.test(home) || !/^\d+$/.test(away)) { toast('El marcador debe ser un número entero, sin decimales'); return; }
     btn.disabled = true;
     let r;
     try {
@@ -63,5 +150,5 @@ $('jz-panel').addEventListener('click', async (e) => {
     cargar();
 });
 
-(window.competikaSessionReady || Promise.resolve({ logged: false })).then(s => { if (s && s.logged) cargar(); });
+(window.competikaSessionReady || Promise.resolve({ logged: false })).then(s => { if (s && s.logged) cargarDepartamento().then(cargar); });
 })();

@@ -16,7 +16,12 @@ class NotificacionRepository extends BaseRepository {
     /** @return Notificacion[] las más nuevas primero */
     public function ultimas(string $ci, int $limite = 30): array {
         return array_map([Notificacion::class, 'desdeFila'], $this->filas(
-            "SELECT " . self::COLS . " FROM notificacion WHERE usuario_ci_fk = ? ORDER BY notificacion_id DESC LIMIT " . (int)$limite, [$ci]));
+            // Los recordatorios de partidos se generan de a muchos; si compartieran el límite, tapaban avisos importantes
+            // (solicitudes, invitaciones, resultados). Por eso se piden aparte: 30 avisos + los 10 recordatorios más recientes.
+            "(SELECT " . self::COLS . " FROM notificacion WHERE usuario_ci_fk = ? AND tipo <> 'recordatorio' ORDER BY notificacion_id DESC LIMIT " . (int)$limite . ")
+             UNION ALL
+             (SELECT " . self::COLS . " FROM notificacion WHERE usuario_ci_fk = ? AND tipo = 'recordatorio' ORDER BY notificacion_id DESC LIMIT 10)
+             ORDER BY notificacion_id DESC", [$ci, $ci]));
     }
 
     /** @return Notificacion[] con id mayor a $despuesDe, en orden */
