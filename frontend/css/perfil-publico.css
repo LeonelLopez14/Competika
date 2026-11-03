@@ -1,0 +1,38 @@
+/* Ventana con el perfil público de un jugador (frontend/js/perfil-publico.js). La usan tournament_view y tournament_search. */
+.pp-dialog {
+    width: min(440px, calc(100% - 32px));
+    margin: auto;
+    padding: 28px;
+    border: none;
+    border-radius: 20px;
+    background: var(--cloud-dancer);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+.pp-dialog::backdrop { background: rgba(33, 33, 33, 0.45); }
+.pp-dialog h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; margin: 0; }
+.pp-sub { margin: 2px 0 0; color: rgba(33, 33, 33, 0.6); }
+.pp-cab { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.pp-foto { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.pp-foto--vacia { display: flex; align-items: center; justify-content: center; background: rgba(33,33,33,0.08); font-size: 28px; color: rgba(33,33,33,0.4); }
+.pp-bio { margin: 0 0 14px; font-size: 14px; line-height: 1.5; }
+.pp-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.pp-stats div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; border-radius: 12px; background: rgba(33,33,33,0.05); }
+.pp-stats strong { font-size: 18px; font-weight: 800; }
+.pp-stats span { font-size: 11px; color: rgba(33,33,33,0.55); }
+.pp-subtitulo { font-size: 14px; margin: 14px 0 6px; }
+.pp-cuenta { font-weight: 500; color: rgba(33,33,33,0.5); margin-left: 4px; }
+.pp-titulos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.pp-titulo { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: 13px; background: rgba(245,158,11,0.14); }
+.pp-titulo .ti { color: #b45309; }
+.pp-titulo strong { font-weight: 800; }
+.pp-logros { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; max-height: 150px; overflow-y: auto; }
+.pp-logro { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(33,33,33,0.05); }
+.pp-logro-icono { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+.pp-logro--supremo { background: rgba(245,158,11,0.18); }
+.pp-vacio { font-size: 14px; color: rgba(33, 33, 33, 0.45); margin: 0 0 16px; }
+.pp-datos { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.pp-datos .ti { margin-right: 6px; color: var(--blue-violet-dark); }
+.pp-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.pp-cerrar { display: inline-flex; align-items: center; justify-content: center; padding: 12px 22px; border-radius: 12px; border: 1.5px solid rgba(95, 31, 197, 0.25); background: transparent; color: var(--blue-violet-dark); font-family: var(--font-body); font-size: 14px; font-weight: 700; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.pp-cerrar:hover { border-color: var(--blue-violet-dark); background: rgba(95, 31, 197, 0.05); }
+.pp-cerrar:focus-visible { outline: 2px solid var(--blue-violet-dark); outline-offset: 2px; }

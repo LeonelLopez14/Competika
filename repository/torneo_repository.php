@@ -8,7 +8,7 @@ class TorneoRepository extends BaseRepository {
     private const SELECT = "
         SELECT t.*, tt.tipo_torneo_id, tt.nombre AS tt_nombre, tt.clave, tt.etiqueta, tt.categoria,
                c.configuracion_id, c.cant_equipos, c.cant_participante, c.precio_participacion, c.alquiler_lugar, c.precio_juez,
-               c.competitivo, c.vidas, c.cant_grupos, c.juez_principal_fk, CONCAT(uj.nombre, ' ', uj.apellido) AS juez_principal_nombre,
+               c.competitivo, c.vidas, c.cant_grupos, c.juez_principal_fk, c.juez_estado, CONCAT(uj.nombre, ' ', uj.apellido) AS juez_principal_nombre,
                (SELECT descripcion FROM premio pr WHERE pr.torneo_id_fk = t.torneo_id ORDER BY pr.puesto LIMIT 1) AS premio_1,
                m.codigo AS moneda_codigo, m.nombre AS moneda_nombre, m.simbolo AS moneda_simbolo,
                pa.persona_id AS arb_id, pa.nombre AS arb_nombre, pa.telefono AS arb_telefono, pa.email AS arb_email,
@@ -117,17 +117,17 @@ class TorneoRepository extends BaseRepository {
         $contactoId = $c->getContacto() ? $personas->guardar($c->getContacto()) : null;
         $valores = [$c->getCupo(), $c->getJugadoresPorEquipo(), $c->getPrecioInscripcion(), $c->getAlquilerLugar(), $c->getPrecioJuez(),
                     $c->getMoneda()?->getCodigo(), $arbitroId, $contactoId, (int)$c->esCompetitivo(), $c->getJuezPrincipalId(),
-                    $c->getVidas(), $c->getCantGrupos()];
+                    $c->getVidas(), $c->getCantGrupos(), $c->getJuezEstado()];
         if ($anterior === null) {
             $this->insertar("INSERT INTO configuracion_torneo (cant_equipos, cant_participante, precio_participacion, alquiler_lugar,
                                  precio_juez, moneda_codigo_fk, arbitro_persona_fk, contacto_persona_fk, competitivo, juez_principal_fk,
-                                 vidas, cant_grupos, torneo_id_fk)
-                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [...$valores, $t->getId()]);
+                                 vidas, cant_grupos, juez_estado, torneo_id_fk)
+                             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [...$valores, $t->getId()]);
             return;
         }
         $this->ejecutar("UPDATE configuracion_torneo SET cant_equipos = ?, cant_participante = ?, precio_participacion = ?, alquiler_lugar = ?,
                              precio_juez = ?, moneda_codigo_fk = ?, arbitro_persona_fk = ?, contacto_persona_fk = ?, competitivo = ?,
-                             juez_principal_fk = ?, vidas = ?, cant_grupos = ?
+                             juez_principal_fk = ?, vidas = ?, cant_grupos = ?, juez_estado = ?
                          WHERE configuracion_id = ?", [...$valores, $anterior['configuracion_id']]);
         foreach (['arbitro_persona_fk', 'contacto_persona_fk'] as $col) {      // personas que quedaron sin uso
             if ($anterior[$col] !== null) $personas->borrarSiSinUso((int)$anterior[$col]);

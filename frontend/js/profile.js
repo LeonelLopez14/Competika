@@ -49,6 +49,7 @@ async function api(action) {
 
 /* ── Identidad ── */
 function renderIdentity(u) {
+    usuario = u;
     document.querySelectorAll('.pf-name').forEach(el => el.textContent = `${u.nombre} ${u.apellido}`.trim());
     document.querySelectorAll('.pf-email').forEach(el => el.textContent = u.email);
     const bio = document.querySelector('.pf-bio');
@@ -129,26 +130,85 @@ function renderActive() {
 }
 
 /* ── Logros (calculados con la actividad real) ── */
+/* Los logros (catalogoLogros, GRUPOS_LOGROS, desbloqueado) están en logros.js */
+
 function renderAchievements() {
-    const s = data.stats;
-    const all = [
-        [s.organizados >= 1, 'ti-tournament', 'rgba(95,31,197,0.1)',   'var(--blue-violet-dark)', 'Organizador', 'Primer torneo creado'],
-        [s.organizados >= 5, 'ti-medal',      'rgba(67,197,158,0.15)', '#1a9a72', 'Organizador Elite', '5 torneos creados'],
-        [s.participados >= 1,'ti-door-enter', 'rgba(59,130,246,0.12)', '#1d4ed8', 'Debut', 'Primer torneo jugado'],
-        [s.victorias >= 1,   'ti-star',       'rgba(245,158,11,0.14)', '#b45309', 'Primera victoria', 'Ganaste un partido'],
-        [s.racha >= 3,       'ti-flame',      'rgba(239,68,68,0.12)',  '#c2410c', 'En racha', '3 victorias seguidas'],
-        [s.titulos >= 1,     'ti-crown',      'rgba(245,158,11,0.14)', '#b45309', 'Campeón', `${s.titulos} título${s.titulos === 1 ? '' : 's'}`],
-        [s.partidos >= 10,   'ti-target',     'rgba(224,81,122,0.14)', '#b3315a', 'Veterano', '10 partidos jugados'],
-    ].filter(a => a[0]);
+    const all = catalogoLogros(data).filter(desbloqueado);
     $('pf-achievements-count').textContent = `${all.length} total`;
     const grid = $('pf-achievements-grid');
-    grid.innerHTML = all.length ? all.map(([, icon, bg, color, title, sub]) => `
-        <div class="pf-badge">
-            <div class="pf-badge-icon" style="background:${bg};color:${color};"><i class="ti ${icon}"></i></div>
-            <span class="pf-badge-title">${title}</span>
-            <span class="pf-badge-sub">${esc(sub)}</span>
-        </div>`).join('') : '<p class="pf-empty" style="grid-column:1/-1">Jugá u organizá torneos para desbloquear logros.</p>';
+    grid.innerHTML = all.length ? all.map(a => `
+        <div class="pf-badge${a.clase ? ' pf-badge--' + a.clase : ''}">
+            <div class="pf-badge-icon" style="background:${a.bg};color:${a.color};"><i class="ti ${a.icon}"></i></div>
+            <span class="pf-badge-title">${a.title}</span>
+            <span class="pf-badge-sub">${esc(a.subActual || a.sub)}</span>
+        </div>`).join('') : '<p class="pf-empty" style="grid-column:1/-1">Jugá, organizá o arbitrá torneos para desbloquear logros.</p>';
 }
+
+/* ── Ventana con todos los logros, separados por rol ── */
+let usuario = null;
+
+function abrirLogros() {
+    document.getElementById('pf-logros-overlay')?.remove();
+    const cat = catalogoLogros(data);
+    const roles = usuario?.roles || {};
+    let activo = roles.organizador ? 'organizador' : roles.participante ? 'jugador' : roles.juez ? 'juez' : 'jugador';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'pf-logros-overlay';
+    overlay.className = 'pf-logros-overlay';
+    overlay.innerHTML = `
+        <div class="pf-logros-modal" role="dialog" aria-modal="true" aria-labelledby="pf-logros-titulo">
+            <div class="pf-logros-head">
+                <h2 id="pf-logros-titulo"><i class="ti ti-award"></i> Logros e Insignias</h2>
+                <button type="button" class="pf-logros-close" aria-label="Cerrar"><i class="ti ti-x"></i></button>
+            </div>
+            <p class="pf-logros-resumen"></p>
+            <div class="pf-logros-tabs" role="tablist"></div>
+            <div class="pf-logros-grid"></div>
+        </div>`;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    const cerrar = () => {
+        overlay.remove();
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', alTeclear);
+    };
+    const alTeclear = (e) => { if (e.key === 'Escape') cerrar(); };
+    document.addEventListener('keydown', alTeclear);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cerrar(); });
+    overlay.querySelector('.pf-logros-close').addEventListener('click', cerrar);
+
+    function dibujar() {
+        const hechos = cat.filter(desbloqueado).length;
+        overlay.querySelector('.pf-logros-resumen').textContent = `Desbloqueaste ${hechos} de ${cat.length} logros.`;
+        overlay.querySelector('.pf-logros-tabs').innerHTML = GRUPOS_LOGROS.map(([clave, nombre, icono]) => {
+            const del = cat.filter(a => a.grupo === clave);
+            return `<button type="button" role="tab" class="pf-logros-tab${clave === activo ? ' active' : ''}" aria-selected="${clave === activo}" data-grupo="${clave}">
+                <i class="ti ${icono}"></i> ${nombre} <span>${del.filter(desbloqueado).length}/${del.length}</span></button>`;
+        }).join('');
+        overlay.querySelector('.pf-logros-grid').innerHTML = cat.filter(a => a.grupo === activo).map(a => {
+            const ok = desbloqueado(a);
+            const pct = Math.round(Math.min(a.val, a.meta) * 100 / a.meta);
+            return `<div class="pf-badge${a.clase ? ' pf-badge--' + a.clase : ''}${ok ? '' : ' pf-badge--bloqueado'}">
+                <div class="pf-badge-icon" style="background:${a.bg};color:${a.color};"><i class="ti ${a.icon}"></i></div>
+                <span class="pf-badge-title">${a.title}</span>
+                <span class="pf-badge-sub">${esc(ok ? (a.subActual || a.sub) : a.sub)}</span>
+                ${ok
+                    ? '<span class="pf-badge-estado"><i class="ti ti-circle-check"></i> Desbloqueado</span>'
+                    : `<span class="pf-badge-progreso"><span style="width:${pct}%"></span></span>
+                       <span class="pf-badge-estado pf-badge-estado--falta"><i class="ti ti-lock"></i> ${Math.min(a.val, a.meta)} / ${a.meta}</span>`}
+            </div>`;
+        }).join('');
+    }
+    overlay.querySelector('.pf-logros-tabs').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-grupo]'); if (!b) return;
+        activo = b.dataset.grupo;
+        dibujar();
+    });
+    dibujar();
+}
+$('pf-achievements-open')?.addEventListener('click', abrirLogros);
 
 /* ── Deportes favoritos (por cantidad de torneos) ── */
 function renderSports() {

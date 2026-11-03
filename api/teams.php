@@ -14,6 +14,8 @@ require_once __DIR__ . '/bootstrap.php';
     ->post('open',        'abrir')
     ->post('join_request', 'solicitar')
     ->get('join_profile',  'perfilSolicitante')
+    ->get('player_profile', 'perfilJugador')
+    ->get('search_players', 'buscarJugadores')
     ->post('join_respond', 'responderSolicitud')
     ->post('join_cancel', 'cancelarSolicitud')
     ->despachar(new Request());

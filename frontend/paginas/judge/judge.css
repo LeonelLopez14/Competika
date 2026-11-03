@@ -15,3 +15,10 @@
 .tv-hero { gap: 6px; }
 .tv-hero h1 { margin: 0; text-transform: uppercase; }
 .tv-hero .tv-eyebrow { font-size: 16px; }
+.jz-ancho { grid-column: 1 / -1; }
+.jz-dep { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.jz-dep select { padding: 10px 12px; border-radius: 10px; border: 1.5px solid rgba(33,33,33,0.18); background: #fff; font: inherit; min-width: 220px; }
+.jz-dep select:focus { outline: none; border-color: var(--blue-violet-dark); }
+.jz-invit-btns { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+.jz-cerca { color: #1b7a43; font-weight: 700; }
+.jz-lejos { color: rgba(33,33,33,0.55); }

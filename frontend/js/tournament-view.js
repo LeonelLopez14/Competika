@@ -67,7 +67,8 @@ function renderHero() {
         const b = document.createElement('li');
         b.innerHTML = '<span class="tv-badge-comp"><i class="ti ti-shield-check" aria-hidden="true"></i> Competitivo</span>';
         const juez = document.createElement('span');
-        juez.textContent = t.rules.mainJudgeName ? ` Juez: ${t.rules.mainJudgeName}` : '';
+        juez.textContent = !t.rules.mainJudgeName || t.rules.mainJudgeStatus === 'rechazado' ? ''
+            : ` Juez: ${t.rules.mainJudgeName}` + (t.rules.mainJudgeStatus === 'pendiente' ? ' (por confirmar)' : '');
         b.append(juez);
         $('tv-meta').append(b);
     }
@@ -344,10 +345,10 @@ async function renderMiEquipo() {
     const libres = eq.max - eq.members.length - eq.pending.length;
     $('tv-miequipo').innerHTML = `
       <ul class="tv-integrantes">
-        ${eq.members.map(m => `<li><span>${esc(m.name)}${m.me ? ' (vos)' : ''}</span><span>
-          ${m.captain ? '<span class="tv-tag tv-tag--cap" title="Capitán" aria-label="Capitán">C</span>' : ''}
+        ${eq.members.map(m => `<li><span>${m.pid ? `<button class="tv-nombre" data-jugador="${m.pid}" title="Ver perfil">${esc(nombreCorto(m.name))}</button>` : esc(nombreCorto(m.name))}${m.me ? ' (vos)' : ''}</span><span class="tv-fila-der">
           ${t.rules?.competitive && !m.carne ? '<span class="tv-tag" title="Sin carné de deportista">Sin carné</span>' : ''}
-          ${eq.isCaptain && !m.captain ? `<button class="tv-icon-btn" data-quitar="${esc(m.key)}" title="Quitar del equipo" aria-label="Quitar a ${esc(m.name)}"><i class="ti ti-user-minus"></i></button>` : ''}
+          <span class="tv-fila-slot">${m.captain ? '<span class="tv-tag tv-tag--cap" title="Capitán" aria-label="Capitán">C</span>'
+            : eq.isCaptain ? `<button class="tv-icon-btn" data-quitar="${esc(m.key)}" title="Quitar del equipo" aria-label="Quitar a ${esc(m.name)}"><i class="ti ti-user-minus"></i></button>` : ''}</span>
         </span></li>`).join('')}
         ${eq.pending.map(p => `<li class="tv-pendiente"><span>${esc(p.name)} · invitación pendiente</span>
           <button class="tv-icon-btn" data-cancelar="${esc(p.id)}" title="Cancelar invitación" aria-label="Cancelar invitación a ${esc(p.name)}"><i class="ti ti-x"></i></button></li>`).join('')}
@@ -374,30 +375,8 @@ async function renderMiEquipo() {
     $('tv-salir')?.addEventListener('click', () => confirm('¿Dejar el equipo?') && accionEquipo('leave', { torneoId: Number(t.id) }, 'Dejaste el equipo.'));
 }
 
-async function verPerfilSolicitante(id) {
-    const r = await equipos('join_profile', { params: { id } });
-    if (!r.success) { toast(r.error || 'No se pudo cargar el perfil.'); return; }
-    const p = r.profile;
-    const foto = p.photo ? `${window.competikaSiteRoot || '../../..'}/${p.photo}` : '';
-    $('tv-perfil').innerHTML = `
-      <div class="tv-perfil-cab">
-        ${foto ? `<img src="${esc(foto)}" alt="" class="tv-perfil-foto">` : '<span class="tv-perfil-foto tv-perfil-foto--vacia"><i class="ti ti-user"></i></span>'}
-        <div><h2>${esc(p.name)}</h2>${p.username ? `<p class="tv-dialog-sub">@${esc(p.username)}</p>` : ''}</div>
-      </div>
-      <p class="tv-perfil-bio">${p.bio ? esc(p.bio) : 'Todavía no escribió una biografía.'}</p>
-      <div class="tv-perfil-stats">
-        <div><strong>${p.stats.tournaments}</strong><span>Torneos</span></div>
-        <div><strong>${p.stats.titles}</strong><span>Títulos</span></div>
-        <div><strong>${p.stats.matches}</strong><span>Partidos</span></div>
-        <div><strong>${p.stats.wins}</strong><span>Victorias</span></div>
-      </div>
-      <ul class="tv-perfil-datos">
-        <li><i class="ti ti-id-badge-2"></i> ${p.card ? 'Tiene carné de deportista' : 'Sin carné de deportista'}</li>
-      </ul>
-      <div class="tv-dialog-actions"><button type="button" class="tv-btn tv-btn--ghost" id="tv-perfil-cerrar">Cerrar</button></div>`;
-    $('tv-perfil-cerrar').addEventListener('click', () => $('tv-perfil-dialog').close());
-    $('tv-perfil-dialog').showModal();
-}
+// "Mariana Dominguez Barrios" -> "Mariana Dominguez" (primer nombre y primer apellido)
+const nombreCorto = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).join(' ');
 
 async function renderAbiertos(r, eq) {
     const card = $('tv-abiertos-card');
@@ -410,7 +389,7 @@ async function renderAbiertos(r, eq) {
     card.hidden = false;
     $('tv-abiertos').innerHTML = `<p class="tv-nota">¿Sin equipo? Pedí sumarte a uno de estos y el capitán decide.</p>
       <ul class="tv-integrantes">
-      ${a.teams.map(e => `<li><span>${esc(e.name)} · ${e.members}/${e.max}<br><small>Capitán: ${esc(e.captain)}</small></span>
+      ${a.teams.map(e => `<li><span>${esc(e.name)} · ${e.members}/${e.max}<br><small>Capitán: ${e.captainId ? `<button class="tv-nombre" data-jugador="${e.captainId}" title="Ver perfil">${esc(nombreCorto(e.captain))}</button>` : esc(nombreCorto(e.captain))}</small></span>
         ${enviadas.has(e.id)
             ? `<button class="tv-btn tv-btn--ghost tv-btn--sm" data-solcancel="${esc(enviadas.get(e.id))}">Cancelar solicitud</button>`
             : `<button class="tv-btn tv-btn--primary tv-btn--sm" data-solpedir="${esc(e.id)}">Pedir unirme</button>`}</li>`).join('')}
@@ -418,9 +397,10 @@ async function renderAbiertos(r, eq) {
 }
 
 document.addEventListener('click', e => {
-    const b = e.target.closest('[data-inv],[data-quitar],[data-cancelar],[data-sol],[data-solpedir],[data-solcancel],[data-perfil]');
+    const b = e.target.closest('[data-inv],[data-quitar],[data-cancelar],[data-sol],[data-solpedir],[data-solcancel],[data-perfil],[data-jugador]');
     if (!b) return;
-    if (b.dataset.perfil) verPerfilSolicitante(b.dataset.perfil);
+    if (b.dataset.jugador) PerfilPublico.jugador(b.dataset.jugador);
+    else if (b.dataset.perfil) PerfilPublico.solicitante(b.dataset.perfil);
     else if (b.dataset.solpedir) accionEquipo('join_request', { torneoId: Number(t.id), teamId: Number(b.dataset.solpedir) }, 'Solicitud enviada.');
     else if (b.dataset.solcancel) accionEquipo('join_cancel', { id: Number(b.dataset.solcancel) }, 'Solicitud cancelada.');
     else if (b.dataset.sol) accionEquipo('join_respond', { id: Number(b.dataset.sol), accept: b.dataset.accept === '1' }, b.dataset.accept === '1' ? 'Jugador sumado al equipo.' : 'Solicitud rechazada.');

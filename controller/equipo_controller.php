@@ -44,7 +44,7 @@ class EquipoController {
             'requests'   => $capitan === $ci ? array_map(fn($s) => ['id' => $s['id'], 'name' => $s['name'], 'email' => $s['email']],
                                                          $this->solicitudes->pendientesDeEquipo($equipoId)) : [],
             'members'    => array_map(fn($m) => ['name' => $m['nombre'], 'me' => $m['ci'] === $ci,
-                                                 'captain' => $m['ci'] === $capitan, 'carne' => $m['carne'],
+                                                 'captain' => $m['ci'] === $capitan, 'carne' => $m['carne'], 'pid' => $m['pid'],
                                                  'key' => hash('sha256', $m['ci'] . $equipoId)], $this->equipos->integrantes($equipoId)),
             'pending'    => $capitan === $ci ? array_map(fn($i) => ['id' => $i['id'], 'name' => $i['invited'], 'email' => $i['invitedEmail']],
                                                          $this->invitaciones->pendientesDeEquipo($equipoId)) : [],
@@ -215,23 +215,25 @@ class EquipoController {
         if ($sol === null) throw ApiException::noEncontrado('Solicitud');
         $t = $this->torneo($sol['tournamentId']);
         if ((int)$sol['teamId'] !== $this->equipoDeCapitan($ci, $t)) throw ApiException::prohibido('Solo el capitán del equipo puede hacer esto.');
-        $perfil = $this->usuarios->datosParaCapitan($sol['ci']);
-        $torneos = $this->actividad->torneosJugados($sol['ci']);
-        $equipos = array_map('intval', array_column($torneos, 'equipo_id_fk'));
-        $ganados = $jugados = 0;
-        foreach ($this->actividad->partidosDeEquipos($equipos) as $p) {
-            if (!in_array($p['res_estado'], ['finalizado', 'empate'], true)) continue;
-            $jugados++;
-            $local = (int)$p['mio'] === (int)$p['a'];
-            if ((int)($local ? $p['puntaje_a'] : $p['puntaje_b']) > (int)($local ? $p['puntaje_b'] : $p['puntaje_a'])) $ganados++;
-        }
-        $perfil['stats'] = [
-            'tournaments' => count($torneos),
-            'titles' => count(array_filter($torneos, fn($t) => $t['estado'] === Torneo::FINALIZADO && (int)$t['puesto'] === 1)),
-            'matches' => $jugados,
-            'wins' => $ganados,
-        ];
-        return ['success' => true, 'profile' => $perfil];
+        return ['success' => true, 'profile' => (new PerfilPublico())->armar($sol['ci'])];
+    }
+
+    /** Perfil público de un jugador (cualquier persona con sesión): solo datos deportivos, nunca contacto ni cédula. */
+    public function perfilJugador(Request $req): array {
+        Auth::exigirLogin();
+        $ci = $this->usuarios->ciDeParticipante($req->idQuery('p'));
+        if ($ci === null) throw ApiException::noEncontrado('Jugador');
+        return ['success' => true, 'profile' => (new PerfilPublico())->armar($ci)];
+    }
+
+    /** Buscador de jugadores por nombre o @usuario (pestaña "Jugadores"). Pide sesión y al menos 2 letras. */
+    public function buscarJugadores(Request $req): array {
+        Auth::exigirLogin();
+        $texto = mb_substr(trim((string)$req->query('q', '')), 0, 50);
+        $porPagina = 8;
+        if (mb_strlen($texto) < 2) return ['success' => true, 'total' => 0, 'perPage' => $porPagina, 'players' => []];
+        $pagina = max(1, $req->idQuery('page'));
+        return ['success' => true, 'perPage' => $porPagina] + $this->usuarios->buscarJugadores($texto, $porPagina, ($pagina - 1) * $porPagina);
     }
 
     public function responderSolicitud(Request $req): array {

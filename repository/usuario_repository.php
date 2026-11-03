@@ -177,6 +177,28 @@ class UsuarioRepository extends BaseRepository {
                      'photo' => Formato::fotoUrl($f['foto_perfil']), 'card' => $this->tieneCarne($ci)] : null;
     }
 
+    /** CI del jugador con ese participante_id (null si no existe o la cuenta está bloqueada). */
+    public function ciDeParticipante(int $participanteId): ?string {
+        $v = $this->valor("SELECT p.usuario_ci_fk FROM participante p JOIN usuario u ON u.ci = p.usuario_ci_fk
+                           WHERE p.participante_id = ? AND u.bloqueado = 0", [$participanteId]);
+        return $v === false ? null : (string)$v;
+    }
+
+    /** Jugadores (cuentas no bloqueadas) cuyo nombre completo o @usuario contiene $texto; primero los que más torneos jugaron. */
+    public function buscarJugadores(string $texto, int $limite, int $desde): array {
+        $like = '%' . addcslashes($texto, '%_\\') . '%';   // los % y _ que escriba la persona se buscan tal cual
+        $donde = "u.bloqueado = 0 AND (CONCAT(u.nombre, ' ', u.apellido) LIKE ? OR u.nombre_usuario LIKE ?)";
+        $total = (int)$this->valor("SELECT COUNT(*) FROM participante p JOIN usuario u ON u.ci = p.usuario_ci_fk WHERE $donde", [$like, $like]);
+        $filas = $this->filas("SELECT p.participante_id, u.nombre, u.apellido, u.nombre_usuario, u.foto_perfil,
+                   (SELECT COUNT(DISTINCT tp.torneo_id_fk) FROM equipo_participante ep JOIN tabla_posiciones tp ON tp.equipo_id_fk = ep.equipo_id_fk
+                     WHERE ep.participante_id_fk = p.participante_id) AS torneos
+            FROM participante p JOIN usuario u ON u.ci = p.usuario_ci_fk
+            WHERE $donde ORDER BY torneos DESC, u.nombre, u.apellido LIMIT " . (int)$limite . " OFFSET " . (int)$desde, [$like, $like]);
+        return ['total' => $total, 'players' => array_map(fn($f) => [
+            'pid' => (int)$f['participante_id'], 'name' => $f['nombre'] . ' ' . $f['apellido'], 'username' => $f['nombre_usuario'],
+            'photo' => Formato::fotoUrl($f['foto_perfil']), 'tournaments' => (int)$f['torneos']], $filas)];
+    }
+
     public function fotoPerfil(string $ci): ?string {
         return $this->valor("SELECT foto_perfil FROM usuario WHERE ci = ?", [$ci]) ?: null;
     }

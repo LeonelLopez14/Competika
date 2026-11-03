@@ -195,6 +195,7 @@
 /* Sociales + link inferior */
 .form-bottom {
     text-align: center;
+    margin-top: 1.5rem;     /* separado del botón */
 }
 
 .form-socials {

@@ -106,7 +106,7 @@ class TorneoController {
         $t = new Torneo(null, '', 0);
         $this->aplicarDatos($t, $d, false);
         $t->setEstado($esAdmin ? Torneo::PENDIENTE : Torneo::EN_REVISION);
-        $this->aplicarConfiguracion($t, $d, false, $cuenta->comoPersona(), $ci);
+        $juezCambio = $this->aplicarConfiguracion($t, $d, false, $cuenta->comoPersona(), $ci);
         $premios = Premio::listaDesdeFormulario(is_array($d['prizes'] ?? null) ? $d['prizes'] : []);
 
         $id = $this->torneos->transaccion(function () use ($ci, $t, $premios, $organizadorId) {
@@ -117,6 +117,7 @@ class TorneoController {
         });
         Auditoria::registrar($ci, Auditoria::TORNEO, 'Creó un torneo', "«{$t->getNombre()}» (#{$id})." . ($t->estaEnRevision() ? ' Queda en revisión.' : ''));
         if ($t->estaEnRevision()) $this->avisos->torneoPorRevisar($id, $t->getNombre(), $this->usuarios->nombreCompleto($ci));
+        $this->avisarJueces($id, $t->getNombre(), $juezCambio, $ci);
         return ['success' => true, 'id' => $id, 'status' => $t->estadoFront()];
     }
 
@@ -126,7 +127,14 @@ class TorneoController {
         $estadoAntes = $t->getEstado();
         if ($t->estaOculto()) unset($d['status']);
         $this->aplicarDatos($t, $d, true);
-        $this->aplicarConfiguracion($t, $d, true, $t->getContactoCuenta(), $this->torneos->ciOrganizador($t->getId()));
+        $juezCambio = $this->aplicarConfiguracion($t, $d, true, $t->getContactoCuenta(), $this->torneos->ciOrganizador($t->getId()));
+        $cfg = $t->getConfiguracion();
+        if ($t->getEstado() === Torneo::ACTIVO && $estadoAntes !== Torneo::ACTIVO && $cfg->esCompetitivo()
+            && $cfg->getJuezEstado() !== ConfiguracionTorneo::JUEZ_ACEPTADO) {
+            throw new ApiException($cfg->getJuezEstado() === ConfiguracionTorneo::JUEZ_RECHAZADO
+                ? 'El juez principal rechazó la invitación. Elegí otro juez para poder iniciar el torneo.'
+                : 'El juez principal todavía no aceptó la invitación. Cuando acepte vas a poder iniciar el torneo.');
+        }
         if ($t->getConfiguracion()->getCupo() < $this->equipos->cantidadEnTorneo($t->getId())) {
             throw new ApiException('El cupo no puede ser menor que la cantidad de equipos ya inscriptos.');
         }
@@ -142,6 +150,7 @@ class TorneoController {
             $this->avisos->torneoPorRevisar($t->getId(), $t->getNombre(), $this->usuarios->nombreCompleto((string)Auth::ci()));
         }
         if ($t->getEstado() !== $estadoAntes && $t->getEstado() !== Torneo::PENDIENTE) $this->avisos->cambioDeEstado($t);
+        $this->avisarJueces($t->getId(), $t->getNombre(), $juezCambio, (string)Auth::ci());
         return ['success' => true];
     }
 
@@ -370,9 +379,14 @@ class TorneoController {
         if (array_key_exists('status', $d)) $t->setEstadoFront((string)$d['status']);
     }
 
-    /** $cuenta: datos de la cuenta del organizador; $ciOrganizador: no puede ser su propio juez. */
-    private function aplicarConfiguracion(Torneo $t, array $d, bool $parcial, ?Persona $cuenta, ?string $ciOrganizador): void {
+    /**
+     * $cuenta: datos de la cuenta del organizador; $ciOrganizador: no puede ser su propio juez.
+     * Devuelve [juez a invitar, juez que dejó de serlo]: un juez nuevo queda «pendiente» hasta que acepte.
+     * @return array{0: ?int, 1: ?int}
+     */
+    private function aplicarConfiguracion(Torneo $t, array $d, bool $parcial, ?Persona $cuenta, ?string $ciOrganizador): array {
         $c = $t->getConfiguracion();
+        $juezAntes = $c->getJuezPrincipalId();
         if (!$parcial || array_key_exists('maxTeams', $d)) {
             $c->setCupo(Validar::enteroEntre($d['maxTeams'] ?? ConfiguracionTorneo::CUPO_POR_DEFECTO, 2, 1024,
                 'La cantidad de participantes debe estar entre 2 y 1024.'));
@@ -411,6 +425,26 @@ class TorneoController {
             if ($ciOrganizador !== null && $this->jueces->ciDeJuez($juez) === $ciOrganizador) {
                 throw new ApiException('El organizador no puede ser el juez de su propio torneo.');
             }
+        }
+        $juezAhora = $c->esCompetitivo() ? $c->getJuezPrincipalId() : null;
+        if ($juezAhora !== null && $juezAhora !== $juezAntes) $c->setJuezEstado(ConfiguracionTorneo::JUEZ_PENDIENTE);
+        elseif ($juezAhora === null) $c->setJuezEstado(ConfiguracionTorneo::JUEZ_ACEPTADO);
+        return [$juezAhora !== null && $juezAhora !== $juezAntes ? $juezAhora : null,
+                $juezAntes !== null && $juezAntes !== $juezAhora ? $juezAntes : null];
+    }
+
+    /** Avisa al juez nuevo (para que acepte o rechace) y al anterior (ya no es el juez del torneo). */
+    private function avisarJueces(int $torneoId, string $torneo, array $cambio, string $ciOrganizador): void {
+        try {
+            [$invitar, $reemplazado] = $cambio;
+            if ($invitar !== null && ($ci = $this->jueces->ciDeJuez($invitar)) !== null) {
+                $this->avisos->invitacionJuez($ci, $torneoId, $torneo, $this->usuarios->nombreCompleto($ciOrganizador));
+            }
+            if ($reemplazado !== null && ($ci = $this->jueces->ciDeJuez($reemplazado)) !== null) {
+                $this->avisos->juezReemplazado($ci, $torneoId, $torneo);
+            }
+        } catch (Throwable $e) {
+            error_log('[competika] aviso al juez no enviado: ' . $e->getMessage());
         }
     }
 

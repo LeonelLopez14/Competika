@@ -304,3 +304,9 @@ JOIN (SELECT enfrentamiento_id_fk, MIN(equipo_id_fk) AS local_id FROM enfrentami
       GROUP BY enfrentamiento_id_fk HAVING SUM(es_local) = 0 AND COUNT(*) = 2) x
   ON x.enfrentamiento_id_fk = ee.enfrentamiento_id_fk AND x.local_id = ee.equipo_id_fk
 SET ee.es_local = 1;
+
+-- El juez principal tiene que aceptar la invitación del organizador; el juez indica en qué departamento suele arbitrar
+ALTER TABLE configuracion_torneo
+    ADD COLUMN IF NOT EXISTS juez_estado VARCHAR(10) NOT NULL DEFAULT 'aceptado' AFTER juez_principal_fk;
+ALTER TABLE juez
+    ADD COLUMN IF NOT EXISTS departamento VARCHAR(100) NULL;

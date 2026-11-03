@@ -235,6 +235,9 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .pf-badge:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(95,31,197,0.12); }
+/* Logros supremos (100 torneos): marco dorado */
+.pf-badge--supremo { border: 1.5px solid #f5b50a; background: linear-gradient(160deg, #fff8e6, #ffffff); box-shadow: 0 0 0 3px rgba(245,158,11,0.15), 0 8px 20px rgba(245,158,11,0.25); }
+.pf-badge--supremo .pf-badge-title { color: #92400e; }
 
 .pf-badge-icon {
     width: 40px; height: 40px;
@@ -1034,3 +1037,67 @@
 }
 .pf-pager-btn:hover:not([disabled]) { background: rgba(95,31,197,0.08); color: var(--blue-violet-dark); border-color: rgba(95,31,197,0.25); }
 .pf-pager-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Ventana de todos los logros ── */
+.pf-logros-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid rgba(95,31,197,0.25);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--blue-violet-dark);
+    font: inherit; font-size: 12px; font-weight: 700;
+    cursor: pointer;
+}
+/* El título, el contador y el botón pasan a otra línea si no entran */
+.pf-card-header:has(.pf-logros-btn) { flex-wrap: wrap; gap: 8px 12px; }
+.pf-logros-btn { white-space: nowrap; }
+.pf-logros-btn:hover { background: rgba(95,31,197,0.06); border-color: var(--blue-violet-dark); }
+
+.pf-logros-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    background: rgba(20,20,19,0.55);
+}
+.pf-logros-modal {
+    width: min(720px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 22px;
+    border-radius: 20px;
+    background: #fbfaf7;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+}
+.pf-logros-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pf-logros-head h2 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px; color: var(--blue-violet-dark); }
+.pf-logros-close { border: 0; background: rgba(33,33,33,0.06); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+.pf-logros-close:hover { background: rgba(33,33,33,0.12); }
+.pf-logros-resumen { margin: 6px 0 14px; font-size: 13px; color: rgba(33,33,33,0.6); }
+
+.pf-logros-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.pf-logros-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid rgba(33,33,33,0.12);
+    border-radius: 999px;
+    background: transparent;
+    font: inherit; font-size: 13px; font-weight: 700; color: var(--darkest-hour);
+    cursor: pointer;
+}
+.pf-logros-tab span { font-size: 11px; font-weight: 700; color: rgba(33,33,33,0.5); }
+.pf-logros-tab.active { background: var(--blue-violet-dark); border-color: var(--blue-violet-dark); color: #fff; }
+.pf-logros-tab.active span { color: rgba(255,255,255,0.8); }
+
+.pf-logros-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 560px) { .pf-logros-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Logro todavía sin desbloquear: apagado y con barra de avance */
+.pf-badge--bloqueado { background: rgba(33,33,33,0.03); }
+.pf-badge--bloqueado .pf-badge-icon { filter: grayscale(1); opacity: 0.45; }
+.pf-badge--bloqueado .pf-badge-title { color: rgba(33,33,33,0.55); }
+.pf-badge--bloqueado.pf-badge--supremo { box-shadow: none; border-color: rgba(245,181,10,0.5); background: rgba(255,248,230,0.5); }
+.pf-badge-progreso { width: 100%; height: 5px; border-radius: 99px; background: rgba(33,33,33,0.08); overflow: hidden; }
+.pf-badge-progreso span { display: block; height: 100%; border-radius: 99px; background: var(--blue-violet-dark); }
+.pf-badge-estado { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700; color: #1a9a72; }
+.pf-badge-estado--falta { color: rgba(33,33,33,0.5); }

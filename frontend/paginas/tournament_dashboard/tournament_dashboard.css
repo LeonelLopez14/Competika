@@ -270,6 +270,9 @@
     margin-bottom: 14px;
 }
 .td-meta-small { font-size: 12px; color: rgba(33,33,33,0.5); margin-bottom: 10px; }
+.td-juez-pendiente { color: #9a6700; }
+.td-juez-aceptado { color: #1b7a43; }
+.td-juez-rechazado { color: #b3261e; }
 .td-meta-muted { color: rgba(33,33,33,0.3) !important; }
 .td-no-data { font-size: 12px; color: rgba(33,33,33,0.35); font-style: italic; }
  
@@ -369,7 +372,9 @@
 .td-action-no:hover { background: rgba(239,68,68,0.2); }
  
 .td-resumen { border-top: 1px solid rgba(95,31,197,0.1); padding-top: 12px; }
-.td-resumen-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; padding: 5px 0; border-bottom: 1px solid rgba(95,31,197,0.05); }
+.td-resumen-row { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; font-weight: 600; padding: 5px 0; border-bottom: 1px solid rgba(95,31,197,0.05); }
+.td-resumen-row > span:last-child { text-align: right; }
+.td-resumen-row small { display: block; font-size: 11px; font-weight: 700; }
  
 .td-approve-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(95,31,197,0.07); font-size: 13px; flex-wrap: wrap; }
 .td-approve-sub  { font-size: 11px; color: rgba(33,33,33,0.4); flex: 1; }

@@ -25,6 +25,47 @@ class ActividadRepository extends BaseRepository {
             WHERE p.usuario_ci_fk = ? ORDER BY t.fecha_inicio IS NULL, t.fecha_inicio DESC, t.torneo_id DESC", [$ci]);
     }
 
+    /** Partidos que arbitró $ci como juez y ya tienen el resultado cargado. */
+    public function partidosArbitrados(string $ci): int {
+        return (int)$this->valor("SELECT COUNT(DISTINCT ej.enfrentamiento_id_fk)
+            FROM juez j
+            JOIN enfrentamiento_juez ej ON ej.juez_id_fk = j.juez_id
+            JOIN resultado r ON r.enfrentamiento_id_fk = ej.enfrentamiento_id_fk AND r.estado <> 'pendiente'
+            WHERE j.usuario_ci_fk = ?", [$ci]);
+    }
+
+    /** Torneos distintos en los que $ci arbitró al menos un partido (con resultado cargado). */
+    public function torneosArbitrados(string $ci): int {
+        return (int)$this->valor("SELECT COUNT(DISTINCT e.torneo_id_fk)
+            FROM juez j
+            JOIN enfrentamiento_juez ej ON ej.juez_id_fk = j.juez_id
+            JOIN enfrentamiento e ON e.enfrentamiento_id = ej.enfrentamiento_id_fk
+            JOIN resultado r ON r.enfrentamiento_id_fk = e.enfrentamiento_id AND r.estado <> 'pendiente'
+            WHERE j.usuario_ci_fk = ?", [$ci]);
+    }
+
+    /** Deportes distintos en los que $ci arbitró al menos un partido (con resultado cargado). */
+    public function deportesArbitrados(string $ci): int {
+        return (int)$this->valor("SELECT COUNT(DISTINCT t.deporte)
+            FROM juez j
+            JOIN enfrentamiento_juez ej ON ej.juez_id_fk = j.juez_id
+            JOIN enfrentamiento e ON e.enfrentamiento_id = ej.enfrentamiento_id_fk
+            JOIN torneo t ON t.torneo_id = e.torneo_id_fk
+            JOIN resultado r ON r.enfrentamiento_id_fk = e.enfrentamiento_id AND r.estado <> 'pendiente'
+            WHERE j.usuario_ci_fk = ? AND t.deporte IS NOT NULL AND t.deporte <> ''", [$ci]);
+    }
+
+    /** Finales (incluida la gran final de doble eliminación) que $ci arbitró con el resultado ya cargado. */
+    public function finalesArbitradas(string $ci): int {
+        return (int)$this->valor("SELECT COUNT(DISTINCT e.enfrentamiento_id)
+            FROM juez j
+            JOIN enfrentamiento_juez ej ON ej.juez_id_fk = j.juez_id
+            JOIN enfrentamiento e ON e.enfrentamiento_id = ej.enfrentamiento_id_fk
+            JOIN ronda ro ON ro.ronda_id = e.ronda_id_fk
+            JOIN resultado r ON r.enfrentamiento_id_fk = e.enfrentamiento_id AND r.estado <> 'pendiente'
+            WHERE j.usuario_ci_fk = ? AND (ro.nombre = 'Final' OR ro.nombre LIKE 'Gran final%')", [$ci]);
+    }
+
     /** Partidos de los equipos dados, del más reciente al más viejo. */
     public function partidosDeEquipos(array $equipoIds): array {
         if (!$equipoIds) return [];

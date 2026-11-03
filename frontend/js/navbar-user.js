@@ -170,6 +170,7 @@
         resultado: 'ti-trophy', recordatorio: 'ti-alarm', torneo_estado: 'ti-tournament', torneo_revision: 'ti-hourglass',
         torneo_cancelado: 'ti-circle-x', partido_cancelado: 'ti-calendar-x', baja: 'ti-user-minus', arbitraje: 'ti-gavel', juez: 'ti-gavel', solicitud_juez: 'ti-file-description',
         anuncio: 'ti-speakerphone', contacto: 'ti-mail', invitacion: 'ti-mail-forward', seguridad: 'ti-shield-lock',
+        invitacion_juez: 'ti-gavel', juez_respuesta: 'ti-gavel',
     };
     let notifs = [];
     let unread = 0;
@@ -187,7 +188,8 @@
     function linkDe(n) {
         if (n.tipo === 'nuevo_inscripto' && n.torneoId) return `${DASHBOARD}?t=${encodeURIComponent(n.torneoId)}`;
         if (n.tipo === 'torneo_revision') return ADMIN + '#torneos';
-        if (n.tipo === 'arbitraje') return JUDGE;
+        if (n.tipo === 'arbitraje' || n.tipo === 'invitacion_juez') return JUDGE;
+        if (n.tipo === 'juez_respuesta' && n.torneoId) return `${DASHBOARD}?t=${encodeURIComponent(n.torneoId)}`;
         if (n.tipo === 'solicitud_juez') return ADMIN;
         if (n.tipo === 'contacto') return ADMIN + '#mensajes';
         if (n.tipo === 'seguridad') return SETTINGS;

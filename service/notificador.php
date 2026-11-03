@@ -40,6 +40,21 @@ class Notificador {
         $this->seguidores($t->getId(), 'torneo_estado', $msg);
     }
 
+    /** El organizador eligió a este juez como principal: tiene que aceptar o rechazar. */
+    public function invitacionJuez(string $ciJuez, int $torneoId, string $torneo, string $organizador): void {
+        $this->enviar($ciJuez, 'invitacion_juez', "{$organizador} te eligió como juez principal de «{$torneo}». Aceptá o rechazá la invitación.", $torneoId);
+    }
+
+    public function juezReemplazado(string $ciJuez, int $torneoId, string $torneo): void {
+        $this->enviar($ciJuez, 'arbitraje', "Ya no sos el juez principal de «{$torneo}»: el organizador eligió a otra persona.", $torneoId);
+    }
+
+    public function respuestaJuez(string $ciOrganizador, int $torneoId, string $torneo, string $juez, bool $acepto): void {
+        $this->enviar($ciOrganizador, 'juez_respuesta', $acepto
+            ? "{$juez} aceptó ser el juez principal de «{$torneo}»."
+            : "{$juez} rechazó ser el juez principal de «{$torneo}». Elegí a otro juez desde el panel del torneo.", $torneoId);
+    }
+
     public function torneoPorRevisar(int $torneoId, string $nombre, string $organizador): void {
         try {
             foreach ((new AdminRepository())->cisAdmins() as $ci) {
