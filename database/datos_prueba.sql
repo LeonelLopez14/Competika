@@ -12088,3 +12088,9 @@ INSERT INTO mensaje_contacto (nombre, email, asunto, mensaje, usuario_ci_fk, ip_
 -- NOTA: no se cargan datos de prueba en sesion_recordada ni recuperacion_clave
 -- (son tokens de seguridad de uso real — "Recordarme" y recuperación de contraseña —, no tiene sentido fabricarlos).
 -- avance_llave (cruces de las llaves de eliminación) viene del propio generador de fixture, junto con los partidos.
+
+-- Departamento donde suele arbitrar cada juez de prueba (lo elige el juez en su panel;
+-- el organizador lo ve al asignar juez principal). Reparto fijo para que la demo sea repetible.
+UPDATE juez
+SET departamento = ELT(1 + (juez_id MOD 19), 'Montevideo','Canelones','Maldonado','Rivera','Salto','Paysandú','Colonia','Montevideo','Tacuarembó','Rocha','San José','Soriano','Durazno','Florida','Lavalleja','Artigas','Cerro Largo','Treinta y Tres','Río Negro')
+WHERE departamento IS NULL;

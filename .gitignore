@@ -7,5 +7,5 @@ uploads/avatars/*
 vendor/
 
 
-# Solo para desarrollo local con Docker (monta el código sin reconstruir)
+# Solo para desarrollo local con Docker 
 docker-compose.override.yml
